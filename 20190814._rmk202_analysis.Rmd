@@ -3628,7 +3628,7 @@ nrow(sample_relative_safe_woldel)
 sample_relative_safe_final <- sample_relative_safe_woldel[grep("^S\\d",sample_relative_safe_woldel$sample,invert = TRUE),] 
 nrow(sample_relative_safe_final)
 
-## ===========all metagenomes in wide format 
+## ===========all metagenomes in long format 
 sample_relative_safe_final$sample <- droplevels(sample_relative_safe_final$sample)
 
 
@@ -3673,10 +3673,10 @@ unique(sample_relative_safe_final$species)
           )
   
   p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes.pdf",width=9.8,height=20,paper='special')
-p1
-
-dev.off()
+#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes.pdf",width=9.8,height=20,paper='special')
+# p1
+# 
+# dev.off()
 
 
 
@@ -3692,13 +3692,19 @@ library(VennDiagram)
 
 colnames(sample_relative_safe_final_tsne)
 
- sample_relative_safe_final_no_snps <- sample_relative_safe_final_tsne[,c("RMK202","Lyo_202_2014","S72","Lyo_202_2012","L99","L80","Versand_202","L71","L70","Konserve_202","L108","L35","S50","L39","L104","L44")]
+ sample_relative_safe_final_no_snps <- sample_relative_safe_final_tsne[,c("site","RMK202","Lyo_202_2014","S72","Lyo_202_2012","L99","L80","Versand_202","L71","L70","Konserve_202","L108","L35","S50","L39","L104","L44")]
 
  ##meta
-sample_relative_safe_final_snps_meta <- sample_relative_safe_final_tsne[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]
-sum(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)==0)
-sample_relative_safe_final_meta_cleaned <- sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)>0),]
+sample_relative_safe_final_snps_meta <- sample_relative_safe_final_tsne[,c("site","Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]
+sum(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)==0)
+sample_relative_safe_final_meta_cleaned <- sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0),]
+sample_relative_safe_final_meta_cleaned_02 <- sample_relative_safe_final_snps_meta[(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0),]
 # sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)==0),]
+
+which(is.na(sample_relative_safe_final_meta_cleaned_02))
+sample_relative_safe_final_meta_cleaned_02[is.na(sample_relative_safe_final_meta_cleaned_02)] <- 0
+which(is.na(sample_relative_safe_final_meta_cleaned_02))
+   
 
  ##isolates
 sample_relative_safe_final_snps_iso <- sample_relative_safe_final_tsne[,c("S72","L99","L80","L71","L70","L108","L35","S50","L39","L104","L44")]
@@ -3767,23 +3773,22 @@ library(Rtsne)
 library(ggrepel)
 
 
-table(sample_relative_safe_final_tsne_safe$X.CHROM)
-dim(sample_relative_safe_final_tsne_safe)
-length(unique(sample_relative_safe_final_tsne_safe$site))
-
-
-tsne_prep <- sample_relative_safe_final_tsne_safe[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]
-
-(rowSums(tsne_prep,na.rm = TRUE)==0)
-
 
 ##-------------------sterm
 
-sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final_tsne_safe[grep("S_thermophilus_RMK202",sample_relative_safe_final_tsne_safe$site),]
-  
-tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final_meta_cleaned_02[grep("S_thermophilus_RMK202",sample_relative_safe_final_meta_cleaned_02$site),]
+   nrow(sample_relative_safe_final_tsne_safe_sterm)
+
+   # sample_relative_safe_final_tsne_safe_sterm[which(rowSums(is.na(sample_relative_safe_final_tsne_safe_sterm[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]))!=0),]
+
+##duplicate rows
+nrow(sample_relative_safe_final_tsne_safe_sterm)
+sample_relative_safe_final_tsne_safe_sterm_woDuplicates <- sample_relative_safe_final_tsne_safe_sterm[!duplicated(sample_relative_safe_final_tsne_safe_sterm[,-1]), ]
+nrow(sample_relative_safe_final_tsne_safe_sterm_woDuplicates)   
+
+tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
 tsne_plot <- as.data.frame(tsne$Y)
-tsne_plot$site <- sample_relative_safe_final_tsne_safe_sterm[,1]
+tsne_plot$site <- sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,1]
 tsne_plot$contig <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split_fixed(tsne_plot$site, "_", 5)[,2],sep = "_")
 
 
@@ -3823,11 +3828,18 @@ dev.off()
 tsne_plot_sterm <- tsne_plot
 ##------------------Ldel
 
-sample_relative_safe_final_tsne_safe_ldel_plasmid <- sample_relative_safe_final_tsne_safe[grep("L_delbrueckii_RMK202_",sample_relative_safe_final_tsne_safe$site),]
+sample_relative_safe_final_tsne_safe_ldel_plasmid <- sample_relative_safe_final_meta_cleaned_02[grep("L_delbrueckii_RMK202_",sample_relative_safe_final_meta_cleaned_02$site),]
   
-tsne <- Rtsne(sample_relative_safe_final_tsne_safe_ldel_plasmid[,-1], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+##duplicate rows
+nrow(sample_relative_safe_final_tsne_safe_ldel_plasmid)
+sample_relative_safe_final_tsne_safe_ldel_woDuplicates <- sample_relative_safe_final_tsne_safe_ldel_plasmid[!duplicated(sample_relative_safe_final_tsne_safe_ldel_plasmid[,-1]), ]
+nrow(sample_relative_safe_final_tsne_safe_ldel_woDuplicates)   
+
+
+
+tsne <- Rtsne(sample_relative_safe_final_tsne_safe_ldel_woDuplicates[,-1], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
 tsne_plot <- as.data.frame(tsne$Y)
-tsne_plot$site <- sample_relative_safe_final_tsne_safe_ldel_plasmid[,1]
+tsne_plot$site <- sample_relative_safe_final_tsne_safe_ldel_woDuplicates[,1]
 tsne_plot$contig <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split_fixed(tsne_plot$site, "_", 5)[,2],sep = "_")
 
 
@@ -3849,7 +3861,7 @@ ggplot(tsne_plot,aes(x=V1,y=V2))+geom_point()
 
 ##clusters
 hc.norm = hclust(dist(tsne_plot[,c(1,2)]))
-tsne_plot$hclust = factor(cutree(hc.norm, 3))
+tsne_plot$hclust = factor(cutree(hc.norm, 20))
 hc.norm.cent = tsne_plot %>% group_by(hclust) %>% select(V1, 
     V2) %>% summarize_all(mean)
 plotTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, colour = hclust)) + 
@@ -3857,6 +3869,7 @@ plotTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, colour = hclust)) +
     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = hclust), 
     data = hc.norm.cent) + guides(colour = FALSE) + 
     ggtitle("Linkage criterion: Complete")
+  plotTsne
 
   # pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_ldel.pdf",width=5,height=5,paper='special')
 # svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_ldel.svg",width=4,height=4)
@@ -3866,49 +3879,6 @@ png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
 dev.off()
 tsne_plot_ldel <- tsne_plot
 tsne_plot_all <- rbind(tsne_plot_sterm,tsne_plot_ldel)
-
-
-##------------------all
-
-# 
-# tsne <- Rtsne(sample_relative_safe_final_tsne_safe[,-1], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
-# tsne_plot <- as.data.frame(tsne$Y)
-# tsne_plot$site <- sample_relative_safe_final_tsne_safe[,1]
-# tsne_plot$contig <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split_fixed(tsne_plot$site, "_", 5)[,2],sep = "_")
-# 
-# 
-# 
-# 
-# unique(tsne_plot$contig)
-# tsne_plot$species <- tsne_plot$contig
-# # tsne_plot$species <- ifelse(tsne_plot$contig=="contig_1","S.thermophilus",
-# #                                              ifelse(tsne_plot$contig=="contig_2","L.delbrueckii",
-# #                                                     ifelse(tsne_plot$contig=="contig_3","Lactococcus phage",
-# #                                                            ifelse(tsne_plot$contig=="contig_4","Cow",
-# #                                                                   ifelse(tsne_plot$contig=="contig_5","L.delbrueckii plasmid",
-# #                                                                         ifelse(tsne_plot$contig=="plasmidSpades_CowMito","Cow mitogenome",NA))))))
-# 
-# unique(tsne_plot$species)
-# 
-# ##plot blank
-# ggplot(tsne_plot,aes(x=V1,y=V2))+geom_point()
-# 
-# ##clusters
-# hc.norm = hclust(dist(tsne_plot[,c(1,2)]))
-# tsne_plot$hclust = factor(cutree(hc.norm, 13))
-# hc.norm.cent = tsne_plot %>% group_by(hclust) %>% select(V1, 
-#     V2) %>% summarize_all(mean)
-# plotTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, colour = hclust)) + 
-#   facet_grid(species~.)+
-#     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = hclust), 
-#     data = hc.norm.cent) + guides(colour = FALSE) + 
-#     ggtitle("Linkage criterion: Complete")
-# 
-#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot.pdf",width=9.8,height=20,paper='special')
-# plotTsne
-# 
-# dev.off()
-# 
 
 
 ```
@@ -3940,6 +3910,8 @@ sample_relative_safe_final_reduce <- rbind(sample_relative_safe_final_tsne_safe_
          y="alternative allel frequency")+
     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
     #scale_y_continuous(limits = c(0,0.3))+
+   scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous( expand = c(0, 0)) +
     theme_classic()+
    # scale_fill_manual(values=Ldel_colour)+
       # scale_color_manual(values=Ldel_colour)+
@@ -3954,7 +3926,7 @@ sample_relative_safe_final_reduce <- rbind(sample_relative_safe_final_tsne_safe_
   p1
   # pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored.pdf",width=9.8,height=20,paper='special')
 svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored.svg",width=5,height=4)
-png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored.png",width=2000,height=1500,res=300)
+# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored.png",width=2000,height=1500,res=300)
   p1
 
 dev.off()
@@ -4003,15 +3975,11 @@ nrow(sample_relative_safe_final_tsne_safe_sterm )
 nrow(sample_relative_safe_final_tsne_safe_ldel_plasmid)
 
 ##reduce to necessary
-dim(sample_relative)
-sample_relative_Sterm <- sample_relative[,grep("^L\\d",colnames(sample_relative),invert = TRUE)] 
-dim(sample_relative_Sterm)
-sample_relative_Sterm <- sample_relative_Sterm[which(sample_relative_Sterm$X.CHROM=="S_thermophilus_RMK202"),] 
+
+sample_relative_Sterm <- sample_relative_safe_final_meta_cleaned[grep("S_thermophilus_RMK202",sample_relative_safe_final_meta_cleaned$site),] 
 dim(sample_relative_Sterm)
 
-sample_relative_Ldel <-  sample_relative[,grep("^S\\d",colnames(sample_relative),invert = TRUE)] 
-dim(sample_relative_Ldel)
-sample_relative_Ldel <- sample_relative_Ldel[which(sample_relative_Ldel$X.CHROM=="L_delbrueckii_RMK202"),] 
+sample_relative_Ldel <- sample_relative_safe_final_meta_cleaned[grep("L_delbrueckii_RMK202",sample_relative_safe_final_meta_cleaned$site),] 
 dim(sample_relative_Ldel)
 
 ##calculations sterm
@@ -4020,6 +3988,7 @@ dim(sample_relative_Ldel)
 samples <- sample_relative_Sterm[,c("RMK202","Lyo_202_2014","Lyo_202_2012","Versand_202","Konserve_202")]
 nrow(samples)
 samples_count <- colSums(samples>0,na.rm=TRUE)
+nrow(samples_count)
 
 nucleotid_div <- data.frame(samples=factor(names(samples_count)),div=100*(samples_count/sterm_genome))
 
@@ -4029,6 +3998,7 @@ nucleotid_div$samples_02 = factor(nucleotid_div$samples, levels=c("Lyo_202_2012"
 levels(nucleotid_div$samples_02)
 levels(nucleotid_div$samples)
 
+nucleotid_div_sterm <- nucleotid_div
 
  p1 <- ggplot(nucleotid_div,aes(x=samples_02,y=div,group=group))+ geom_point(size=2)+ geom_line()+ #stat_summary(fun.y=sum, geom="line")+
    labs("",
@@ -4079,6 +4049,58 @@ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
 p2
 
 dev.off()
+
+##merge
+
+nucleotid_div_all <- rbind(nucleotid_div_sterm,nucleotid_div)
+
+all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA","#99E9F2") ) 
+
+
+ p2 <- ggplot(nucleotid_div_all,aes(x=samples_02,y=div,group=group,fill=group,color=group))+ geom_point(size=3)+ geom_line()+ #stat_summary(fun.y=sum, geom="line")+
+   labs("",
+         x="",
+         y="nucleotide diversity [%]",
+          title="")+
+   scale_color_manual(values=c("#10B552","#EB4D4D"))+
+  theme_classic()+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          # legend.position="right",
+       legend.justification=c(1,1), legend.position=c(0.7,0.7),
+       legend.title = element_blank()
+       )
+  p2
+  
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_all_nucleotideDiv.svg",width=3,height=3)
+p2
+
+dev.off()
+
+##merge and prep to plot with PTR
+
+nucleotid_div_all <- rbind(nucleotid_div_sterm,nucleotid_div)
+
+all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA","#99E9F2") ) 
+
+
+ p1 <- ggplot(nucleotid_div_all,aes(x=samples_02,y=div,group=group,fill=group,color=group))+ geom_point(size=3)+ geom_line()+ #stat_summary(fun.y=sum, geom="line")+
+   labs("",
+         x="",
+         y="nucleotide diversity [%]",
+          title="")+
+   scale_color_manual(values=c("#10B552","#EB4D4D"))+
+  theme_classic()+
+ theme(axis.text.x = element_blank(),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none"
+       # legend.justification=c(1,1), legend.position=c(0.7,0.7),
+       # legend.title = element_blank()
+       )
+  p1
+  
 
 ```
 
@@ -5743,6 +5765,88 @@ svg("~/Desktop/Projects/2018_culturomics/MetaSNV/genomicLocation_short_Highimpac
 
 
 ####PTR calculation
+
+
+
+own pipeline
+```{bash}
+
+
+##=============
+##bowtie2 mapping
+##=============
+
+num=1
+for NanoSample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt )
+  do
+  echo ${num}"/37  :" ${names}
+  num=$((num+1))
+  echo "======================================"
+bowtie2-build /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes
+
+
+done
+threads=37
+
+num=1
+for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
+  do
+  echo ${num}"/37  :" ${names}
+  num=$((num+1))
+  #rm -r /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}
+
+  mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/
+  
+  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq.gz
+  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq.gz
+  
+  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
+  
+   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
+  
+  #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${NanoSample}/assembly/assembly.fasta
+  
+
+  
+bowtie2 -p ${threads} -x /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes  -1 /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq -2 /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq | samtools sort -@${threads} -O SAM -o /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.sam - 
+
+#samtools index /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
+
+ # gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq
+#  gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq
+  
+  
+  done 
+
+##================
+#irep
+##================
+
+
+
+threads=37
+
+num=1
+for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt | grep "th_K1_")
+  do
+  echo ${num}"/37  :" ${names}
+  num=$((num+1))
+
+  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
+  
+   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
+  
+  mkdir -p /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_th_K1/
+  
+
+iRep -f /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/th_K1_8h/08_eightFreebayes/freebayesOuput/genomes/contig_16.fasta  -s /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam -o /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_th_K1/${names}_PTR.tsv 
+
+done
+
+```
+
+
+
 (irep)[https://github.com/christophertbrown/iRep] of all indiviual and then put into excel manually
 
 ```{r}
@@ -5858,412 +5962,6 @@ ptr_01
  dev.off()
   
 ```
-
-
-
-own pipeline
-```{bash}
-
-
-##=============
-##bowtie2 mapping
-##=============
-
-num=1
-for NanoSample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-  echo "======================================"
-bowtie2-build /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes
-
-
-done
-threads=37
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-  #rm -r /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}
-
-  mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/
-  
-  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq.gz
-  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq.gz
-  
-  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${NanoSample}/assembly/assembly.fasta
-  
-
-  
-bowtie2 -p ${threads} -x /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes  -1 /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq -2 /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq | samtools sort -@${threads} -O SAM -o /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.sam - 
-
-#samtools index /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
-
- # gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq
-#  gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq
-  
-  
-  done 
-
-##=============
-##DEMIC PTR
-##=============
-
-
-threads=37
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt | grep "_K1_")
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-
-  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${NanoSample}/assembly/assembly.fasta
-  #rm -r /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/
-  #mkdir -p /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/
- # cd /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/
-#awk -F "|" '/^>/ {close(F) ; F = $1".fasta"} {print >> F}' < /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta
-
-#rm -r /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_demic/${names}/
-mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${sampleShort}/
-
-cp /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${sampleShort}/
-
-#perl /home/vincent/apps/DEMIC_v1.0.2/DEMIC_v1.0.2/DEMIC.pl -T 35 -S /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/ \
-#-F /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/ \
-#-O /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_demic/${names}/
-
-
-
-done
-
-for names in $(echo "di_K1 th_K1")
-do
-
-
-  #sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$names" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-rm -r /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_demic/${names}/
-mkdir -p /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_demic/${names}/
-
-
-
-perl /home/vincent/apps/DEMIC_v1.0.2/DEMIC_v1.0.2/DEMIC.pl -T 35 -S /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${sampleShort}/ \
--F /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/ \
--O /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_demic/${names}/
-
-
-
-done
-
-
-
-for NanoSample in $(echo "di_K1_10h th_K1_8h")
-do
-num=1
-for i in $(ls /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/ |cut -f 1 )
-do
-
-echo ${i}
-
-
-mv /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/${i}* /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/genomes/contig_${num}.fasta
-
-
- num=$((num+1))
-done
-done
-
-##================
-#irep
-##================
-
-
-
-threads=37
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt | grep "th_K1_")
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-
-  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  mkdir -p /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_th_K1/
-  
-# bPTR -f /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/th_K1_8h/08_eightFreebayes/freebayesOuput/genomes/contig_16.fasta \
- #-s /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam -o /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/${names}/${names}_PTR.tsv -plot /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/${names}/${names}_PTR.pdf -m coverage
-
-iRep -f /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/th_K1_8h/08_eightFreebayes/freebayesOuput/genomes/contig_16.fasta  -s /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam -o /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_th_K1/${names}_PTR.tsv 
-
-done
-
-
-
-threads=37
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt | grep "di_K1_")
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-
-  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  mkdir -p /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_di_K1//
-  
-# bPTR -f /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/th_K1_8h/08_eightFreebayes/freebayesOuput/genomes/contig_16.fasta \
- #-s /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam -o /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/${names}/${names}_PTR.tsv -plot /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/${names}/${names}_PTR.pdf -m coverage
-
-for genome in $(echo "contig_1.fasta contig_9.fasta")
-do
-
-iRep -f /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/di_K1_10h/08_eightFreebayes/freebayesOuput/genomes/${genome}  -s /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_bowtie2/${names}/bwaMapping2DB/*.sam -o /archiv/Projects/2019_Nano_Meta/04_polishing/02_PTR_irep/all_di_K1/${names}_PTR_${genome}.tsv 
-done #genome
-done #names
-
-
-```
-#### chromosome coverages
-Here, I calculate the coverage along all chromosomes
-
-```{bash}
-
-date=20190513
-
-rm /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log/mappingcoverage.txt
-#mkdir -p /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/{99_logs,01_analysis_01}
-
-  threads=37
-
-###------------make a file file
-  num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name_pilotplant.txt )
-    do
-    
-    sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-    
-    echo ${num}"/37  :" ${names} " in group :" ${sampleShort} 
-    num=$((num+1))
-
-
-#samtools depth  -m 80000 /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  |  awk '{sum+=$3} END { print "Average = ",sum/NR}' |awk -F "\t" -v namess="$names"  'BEGIN{OFS="\t"}{print $0, namess}' #>> /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_coverage.txt
-
-##extract from qualimap
-
-grep -A 100 ">>>> Coverage per contig" /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB//bamqc/genome_results.txt | sed '1,2d' | sed '/^$/d' | sed -e 's/^[ \t]*//'  |awk -F "\t" -v namess="$names"  'BEGIN{OFS="\t"}{print $0, namess}' >> /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log/mappingcoverage.txt
-
-done
-
-
-##transfer coverage local
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log/mappingcoverage.txt ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/
-
-```
-
-```{r}
-
-library(readr)
-library("stringr")
-library("ggplot2")
-library(tidyverse)
-
-
-mappingcoverage <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingcoverage.txt",  "\t", escape_double = FALSE, col_names = c("contig","size","readsMapped","coverage","std","sample"),  trim_ws = TRUE)
-
-
-
-   mappingcoverage$day <- str_split_fixed(mappingcoverage$sample, "_", 3)[,1]
-   mappingcoverage$kessel <- str_split_fixed(mappingcoverage$sample, "_", 3)[,2]
-   mappingcoverage$time <- str_split_fixed(mappingcoverage$sample, "_", 3)[,3]
- 
-   mappingcoverage$treatment <- paste0(mappingcoverage$day,"_",mappingcoverage$kessel)
-
-  mappingcoverage$treatment_f = factor(mappingcoverage$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  mappingcoverage$time_f = factor(mappingcoverage$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-  # mappingcoverage$sampleName <- paste0(mappingcoverage$day,"_",mappingcoverage$kessel,"_",mappingcoverage$time)
-  #wide2long
-  
-  mappingcoverage$min <- mappingcoverage$coverage -mappingcoverage$std
-    mappingcoverage$max <- mappingcoverage$coverage +mappingcoverage$std
-
-  # Lactat_long <- gather(Lactat, type, Lactat, "D-Lactat":"L-Lactat", factor_key=TRUE)
- mappingcoverage$time_f_02 <- as.character(gsub("h","",mappingcoverage$time_f) )
-  mappingcoverage$time_f_02 = factor(mappingcoverage$time_f_02, levels=c("0","2","4","6","8","10","12","24"))
-    mappingcoverage$time_f_02 = as.numeric(as.character(mappingcoverage$time_f_02))
-
-  ##plot
-
-p1 <- ggplot()+
-    geom_ribbon(aes(x=time_f_02,ymin = min, ymax = max,group=contig),data = mappingcoverage)+
-    geom_line(data = mappingcoverage,aes(y = coverage, x = time_f_02,group=contig))+
-      facet_grid(contig~treatment )+
-      scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    labs("",
-         x="time [h]",
-         y="Lactate [g/kg]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          axis.text.y.left = element_text(color="#39568CFF"),
-          axis.title.y.left = element_text(color="#39568CFF"),
-          # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-
-
-
-  p1
-# # pdf("~/Desktop/Projects/2019_Pilotplan/Lactose_all_ribbon.pdf",width=3.4,height=3,paper='special')
-# png("~/Desktop/Projects/2019_Pilotplan/Lactate_all_ribbon.png",width=1020,height=900,res=300)
-# 
-# p1
-# dev.off()
-  
-#split 
-
-  splitmapping <- data.frame()
-  splitmapping <- data.frame(split(mappingcoverage, with(mappingcoverage, treatment), drop = TRUE) [[1]])
-typeof(splitmapping)
-
-di_K1_mapping <- mappingcoverage[which(mappingcoverage$treatment=="di_K1"),] %>% filter(contig=="contig_4" |contig=="contig_5")
-di_K2_mapping <- mappingcoverage[which(mappingcoverage$treatment=="di_K2"),] %>% filter(contig=="contig_12" |contig=="contig_10"|contig=="contig_11" |contig=="contig_2"|contig=="contig_4")
-th_K1_mapping <- mappingcoverage[which(mappingcoverage$treatment=="th_K1"),] %>% filter(contig=="contig_6" |contig=="contig_13")
-th_K2_mapping <- mappingcoverage[which(mappingcoverage$treatment=="th_K2"),] %>% filter(contig=="contig_7" |contig=="contig_4")
-
-##-------di_K1
-p1 <- ggplot()+
-    geom_ribbon(aes(x=time_f_02,ymin = min, ymax = max,group=contig),data = di_K1_mapping)+
-    geom_line(data = di_K1_mapping,aes(y = coverage, x = time_f_02,group=contig))+
-      facet_grid(contig~treatment )+
-      scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    labs("",
-         x="time [h]",
-         y="Lactate [g/kg]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          axis.text.y.left = element_text(color="#39568CFF"),
-          axis.title.y.left = element_text(color="#39568CFF"),
-          # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-
-##-------di_K2
-p1 <- ggplot()+
-    geom_ribbon(aes(x=time_f_02,ymin = min, ymax = max,group=contig),data = di_K2_mapping)+
-    geom_line(data = di_K2_mapping,aes(y = coverage, x = time_f_02,group=contig))+
-      facet_grid(contig~treatment )+
-      scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    labs("",
-         x="time [h]",
-         y="Lactate [g/kg]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          axis.text.y.left = element_text(color="#39568CFF"),
-          axis.title.y.left = element_text(color="#39568CFF"),
-          # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-
-
-##-------th_K1
-p1 <- ggplot()+
-    geom_ribbon(aes(x=time_f_02,ymin = min, ymax = max,group=contig),data = th_K1_mapping)+
-    geom_line(data = th_K1_mapping,aes(y = coverage, x = time_f_02,group=contig))+
-      facet_grid(contig~treatment )+
-      scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    labs("",
-         x="time [h]",
-         y="Lactate [g/kg]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          axis.text.y.left = element_text(color="#39568CFF"),
-          axis.title.y.left = element_text(color="#39568CFF"),
-          # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-
-
-##-------th_K2
-p1 <- ggplot()+
-    geom_ribbon(aes(x=time_f_02,ymin = min, ymax = max,group=contig),data = th_K2_mapping)+
-    geom_line(data = th_K2_mapping,aes(y = coverage, x = time_f_02,group=contig))+
-      facet_grid(contig~treatment )+
-      scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    labs("",
-         x="time [h]",
-         y="Lactate [g/kg]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          axis.text.y.left = element_text(color="#39568CFF"),
-          axis.title.y.left = element_text(color="#39568CFF"),
-          # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-
-
-```
-
-
 
 
 
@@ -6567,10 +6265,9 @@ all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA"
 # colours_phages_02 <- c(rest_colours,lactococcus_colours,Ldel_colours,Sterm_colours,mito_colours)
 
 
+##----------------plot
 
-
-
-p2 <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
+PrelAbundance <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
     labs("",
          x="",
          y="relative abundance")+
@@ -6578,2412 +6275,256 @@ p2 <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample, group=inte
    # scale_color_viridis(discrete=TRUE)+
    scale_fill_manual(values=all_colours)+
   # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
+    theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        axis.text.x = element_blank(),
+          legend.position="right",
           #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
+          legend.title = element_blank()
           )
 
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/02_percent_stacked_bar_allReplicates.pdf",width=8,height=8,paper='special')
-p2
+  PrelAbundance
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.svg",width=7,height=4)
+   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+
+PrelAbundance
 
 dev.off()
+
+#  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.svg",width=7,height=4)
+png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 2000, height = 1000,res=300)
+
+PrelAbundance
+
+dev.off()
+
+
+##----------------amount of Streptococci and Lactobacilli
+
+
+all_final$genus <- ifelse(grepl("S_",all_final$species),"Streptococcus","Lactobacillus")
+
+all_final %>% 
+  group_by(sample,genus) %>% 
+  summarize(sum = sum(percent_coverage))  %>% 
+   group_by(genus) %>% 
+  summarize(min = min(sum),
+            max = max(sum))  
+
+##----------------amount of Lactobacillus delbrueckii RMK202
+
+
+all_final %>% 
+  group_by(species) %>% 
+  summarize(min = min(percent_coverage),
+            max = max(percent_coverage))  
+
+
+##----------------coverage of Lactobacillus delbrueckii RMK202
+table(all_final$species)
+
+all_final[which(all_final$species=="L_delbrueckii_RMK202"),]
 
 ```
 
+##PTR with segmented
 
 
-####analyse Data
-
-######Phages
-
-[Cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/plot_grid.html) is an ideal way to arrange plots. 
-The sample counts need to be normalised. I will do it with [FPKM](https://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/).
 
 ```{r}
-
 library(readr)
+library(segmented)
+library(plotly)
 library(ggplot2)
-library(dplyr)
-library(tidyverse)
-library(grid)
 library(gridExtra)
-library(cowplot) ## for arranging plots
-library(stringr) ##for split string
-library(rlist) ##rbind all dataframe of list
-##===================================
-#-------------file import
-# startingGff <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/phageDBmapping/di_K2_6h2phageDB_final.bed","\t", escape_double = FALSE, col_names = c("species","chr","start","end","orientation","OG","group","gene","genome","genomeSize","count","length_unmapped","geneLength","percent","name","day","kessel","time"),trim_ws = TRUE)
+library(cowplot)
 
-samples_names <- read_csv("~/Desktop/Projects/2019_Pilotplan/samples_ordered.txt", col_names = FALSE)
-listcsv <- as.vector(paste0("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/phageDBmapping/",samples_names$X1,"2phageDB_final.bed"))
-
-read_count <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow/Mulitqc/table_count_final.txt", 
-    "\t", escape_double = FALSE, col_names = c("name","MioReads"), 
-    trim_ws = TRUE)
-
-phage <- list()
-for (k in 1:length(listcsv)){
- phage[[k]] <- read_delim(listcsv[[k]],"\t", escape_double = FALSE, col_names = c("species","chr","start","end","orientation","OG","group","gene","genome","genomeSize","count","length_unmapped","geneLength","percent","name","day","kessel","time"),trim_ws = TRUE)
-}
-#phage[[1]]
-
-# head(phage[[2]])
-# 
-# dim(startingGff)
-# table(startingGff$count)
-# startingGff$geneCoverage <- (startingGff$count*600)/startingGff$geneLength
-
-# ggplot(startingGff,aes(x=group,y=geneCoverage,fill=species,colour=species) )+geom_boxplot()+
-#     theme(axis.text.x = element_text(angle = 75, hjust = 1),
-#           #legend.position="top",
-#           legend.justification=c(1,1), legend.position=c(1,1),
-#           legend.title = element_blank()
-#           )
-##===================================
-###---TPKM calculations
+coverage <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/mapping2SCOG_reference/coverage_2_referenceGenome_allSamples.bed","\t", escape_double = FALSE, col_names = c("contig","annotation","gene","start","end","unknown1","orientation","unknown2","id","count","length_unmapped","geneLength","percent","name"), trim_ws = TRUE)
 
 
-# startingGff$RawReads <- unlist(read_count[match(startingGff$name,read_count$name),2])
-# # aggregate(startingGff$RawReads, list(startingGff$name), mean)
-# startingGff$TPKM <- ((startingGff$count*600)/startingGff$RawReads)/startingGff$geneLength
-# summary(startingGff$TPKM)
+  coverage <- read_delim("/home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Bacteria_allSamples.txt","\t", escape_double = FALSE, col_names = c("chr","type","sort","start","end","unknown2","orientation","unknown","description","count","length_mapped","geneLength","covered","sample"),trim_ws = TRUE)
 
 
-p <- list()
-for (i in  1:length(listcsv)){
-  phage[[i]]$geneCoverage  <- (phage[[i]]$count*600)/phage[[i]]$geneLength
+coverage$coverage <- (coverage$count*600)/coverage$geneLength
+
+#coverage$species <- ifelse(coverage$contig=="contig_1","S. thermophilus","L. delbrueckii")
+coverage <- coverage[which(coverage$end-coverage$start>600),]
+
+
+##-------------Ldel
+
+
+psterm  <- list()
+pldel  <- list()
+namesss = NULL
+PTRss= NULL
+#coverage_sample <- list
+# p <- list()
+for (i in  1:length(unique(coverage$sample))){
   
-  phage[[i]]$RawReads <- unlist(read_count[match(phage[[i]]$name,read_count$name),"MioReads"])
-  phage[[i]]$TPKM <- ((phage[[i]]$count)/phage[[i]]$RawReads)/phage[[i]]$geneLength
-
-  p[[i]] <- ggplot(phage[[i]],aes(x=group,y=TPKM,fill=species,colour=species) )+geom_boxplot()+
-    labs(title = paste0(unique(phage[[i]]$name)),
-         x="",
-         y="")+
-    theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-          axis.text.x =element_blank(),
-          plot.title = element_text(size=20),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
   
+  sample <- unique(coverage$sample)[i]
+  coverage_sample  <- coverage[which(coverage$sample==sample),]
+  coverage_sample_Ldel <- coverage_sample[which(coverage_sample$chr=="L_delbrueckii_RMK202"),]
+  mean_ldel <- max(coverage_sample_Ldel$end)/2
+
+  y <- as.double(coverage_sample_Ldel$coverage)
+  x <- as.double(coverage_sample_Ldel$start)
+
+  lin.mod <- lm(y~x)
+summary( lin.mod)
+  segmented.mod <- segmented(lin.mod, seg.Z = ~x, psi=mean_ldel)
+  midpoint <- segmented.mod$psi[2]
+  maxpoint <- max(coverage_sample_Ldel$end)
+  summary(segmented.mod)
+  slope_01 <- segmented.mod$coefficients[2]
+  slope_02 <- segmented.mod$coefficients[3]+segmented.mod$coefficients[2]
+  intercept_01 <- segmented.mod$coefficients[1]
+  break1 <- segmented.mod$psi[[3]]
+  intercept_02 <-  intercept_01 + (slope_01* midpoint) - (slope_02* midpoint) 
+  
+  minValue_01 <- intercept_01 + (slope_01* midpoint)
+  minValue_02 <- intercept_02 + (slope_02* midpoint)
+  
+  maxValue_01 <- intercept_01
+  maxValue_02 <- intercept_02 + (slope_02* maxpoint)
+  
+  maxValue_total <- max(maxValue_01,maxValue_02)
+  minValue_total <- min(minValue_01,minValue_02)
+  PTR <- maxValue_total/ minValue_total
+  
+    namesss = append(namesss, as.character(sample))
+  PTRss = append(PTRss, PTR)
+  
+  fit <- numeric(length(x)) * NA
+  fit[complete.cases(rowSums(cbind(y, x)))] <- broken.line(segmented.mod)$fit
+  data1 <- data.frame(x = x, y = y, fit = fit,geneID=coverage_sample_Ldel$description,geneStart=coverage_sample_Ldel$start,geneSize=coverage_sample_Ldel$end-coverage_sample_Ldel$start,Species=coverage_sample_Ldel$chr,Name=coverage_sample_Ldel$sample)
+
+pldel[[i]] <- ggplot(data1, aes(x=x,y=y,label=geneID,label2=geneStart,label3=Name))+
+  geom_point(aes(size=geneSize,color=Species))+
+  annotate(geom="text", x=500000, y=max(data1$y)-(0.2*max(data1$y)), label=paste0(sample," (PTR= ",round(PTR,digits = 2),")"),color="black")+
+  geom_line(aes(x = x, y = fit),size=2, color = 'grey')+
+  labs(x="genome location",y="coverage")+
+  scale_color_manual(values="#10B552")+
+  theme_bw()+
+  theme(legend.position="none")
+
+
 }
-
- 
-
+dldel = data.frame(namesss,PTRss,species="Lactobacillus delbrueckii")
 
 
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/allSubproupsPhagesCoverage.pdf",width=8,height=16,paper='special') 
+# htmlwidgets::saveWidget(pldel, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/PTR_ldel.html")
 
-# do.call(grid.arrange, c(p, ncol=4))
-
-do.call(plot_grid, c(p, labels = "TPKM", align = 'h', ncol=4))
-
-
+# pdf("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/mapping2SCOG_reference/mapping2ONTreference_ldel.pdf",width=16,height=32,paper='special') 
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/PTR_ldel.svg",width=20,height=4)
+do.call(plot_grid, c(pldel, align = 'h', ncol=5))
 dev.off()
 
 
-##-----------mean over genome
-
-#withoutZero <- startingGff[which(startingGff$count!=0),]
-#View(withoutZero)
-#table(withoutZero$group)
-##===================================
-##-------Averaging over zero coverage OGs
-# startingGff$geneCoverage <- (startingGff$count*600)/startingGff$geneLength
-# startingGff_withoutzero <- startingGff[which(startingGff$geneCoverage>0),]
-#  # genomeAverage <-aggregate(. ~OG+group, data=startingGff[,c("OG","group","geneCoverage")], sum, na.rm=TRUE)
-# genomeAverage <-aggregate(. ~genome+group, data=startingGff_withoutzero[,c("genome","group","geneCoverage")], mean, na.rm=TRUE)
-#  # colnames(genomeAverage) <- c("OG","group","geneCoverage")
-#  colnames(genomeAverage) <- c("genome","group","geneCoverage")
-# ##-------removing zero coverage OG
-# genomeAverage_cleaned <- genomeAverage[which(genomeAverage$geneCoverage>0),]
-# # print(paste0("Following OGs where removed for ",unique(ldel_s9$group),": ",removedOGs))
-# # genomeAverage_cleaned <- genomeAverage %>% filter(OG %in% removeOGs)
-# ##-------summing over group
-# groupSum <- aggregate(genomeAverage_cleaned$geneCoverage, list(genomeAverage_cleaned$group), sum)
-# colnames(groupSum) <- c("group","geneCoverage")
-# subgroupsum_final <- groupSum[with(groupSum, order(-geneCoverage)), ]
-# subgroupsum_final
-# ##-------plotting table
-# 
-# 
-# pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/mostAbundantGroups_phages.pdf", height=11, width=8.5,paper='special')
-# grid.table(subgroupsum_final)
-# dev.off()
-
-
-###----Sterm_without test
-
-# Sterm_withoutClust <- startingGff_withoutzero[which(startingGff_withoutzero$group=="Sterm_withoutCluster"),]
-# ggplot(Sterm_withoutClust,aes(x=reorder(genome, -geneCoverage),y=geneCoverage))+geom_boxplot()+
-#     labs(title = "",
-#          x="genome",
-#          y="Coverage")+
-#     theme_classic()+
-#     theme(axis.text.x = element_text(angle = 75, hjust = 1),
-#           #legend.position="top",
-#           legend.justification=c(1,1), legend.position=c(1,1),
-#           legend.title = element_blank()
-#           )
-
-##========in loop
-
-
-##intialise lists
-startingGff_withoutzero <- list()
-genomeAverage <- list()
-groupSum <- list()
-subgroupsum_final <- list()
-p <- list()
-subgroupsum_final_02 <- list()
-##loop through loops
-for (i in  1:length(phage)){
-  # phage[[i]]$geneCoverage  <- (phage[[i]]$count*600)/phage[[i]]$geneLength
-  startingGff_withoutzero[[i]] <- phage[[i]][which(phage[[i]]$TPKM>0),]
-  genomeAverage[[i]] <-aggregate(. ~genome+group, data=startingGff_withoutzero[[i]][,c("genome","group","TPKM")], mean, na.rm=TRUE)
-  colnames(genomeAverage[[i]]) <- c("genome","group","TPKM")
+##-------------Sterm
+# table(coverage_sample$chr)
+psterm  <- list()
+pldel  <- list()
+namesss = NULL
+PTRss= NULL
+# PTR_total <- data.frame(c("name","PTR"))
+#coverage_sample <- list
+# p <- list()
+for (i in  1:length(unique(coverage$sample))){
   
-   p[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(group, -TPKM), fill = genome), data = genomeAverage[[i]], stat="identity")+
-    labs(title = paste0(unique(phage[[i]]$name)),
-         x="",
-         y="")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
+  sample <- unique(coverage$sample)[i]
+  coverage_sample  <- coverage[which(coverage$sample==sample),]
+  coverage_sample_Ldel <- coverage_sample[which(coverage_sample$chr=="S_thermophilus_RMK202"),]
+  mean_ldel <- max(coverage_sample_Ldel$end)/2
+
+  y <- as.double(coverage_sample_Ldel$coverage)
+  x <- as.double(coverage_sample_Ldel$start)
+
+  lin.mod <- lm(y~x)
+summary( lin.mod)
+  segmented.mod <- segmented(lin.mod, seg.Z = ~x, psi=mean_ldel)
+  midpoint <- segmented.mod$psi[2]
+  maxpoint <- max(coverage_sample_Ldel$end)
+  summary(segmented.mod)
+  slope_01 <- segmented.mod$coefficients[2]
+  slope_02 <- segmented.mod$coefficients[3]+segmented.mod$coefficients[2]
+  intercept_01 <- segmented.mod$coefficients[1]
+  break1 <- segmented.mod$psi[[3]]
+  intercept_02 <-  intercept_01 + (slope_01* midpoint) - (slope_02* midpoint) 
   
- #  groupSum[[i]] <- aggregate(genomeAverage[[i]]$geneCoverage, list(genomeAverage[[i]]$group), sum)
- #  colnames(groupSum[[i]]) <- c("group","geneCoverage")
- #  subgroupsum_final[[i]] <- groupSum[[i]][with(groupSum[[i]], order(-geneCoverage)), ]
- #  # p[[i]] <-grid.table(subgroupsum_final[[i]])
- # subgroupsum_final_02[[i]] <- cbind(subgroupsum_final[[i]],unique(startingGff_withoutzero[[i]]$name))
- #  print(subgroupsum_final_02[[i]])
-}
-
-##-------plotting table
-
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/subgroupsMostAbundantPhages.pdf",width=8,height=32,paper='special')
-# do.call(grid.arrange, c(p, ncol=4))
-do.call(plot_grid, c(p, labels = "TPKM subgroups", align = 'h', ncol=4))
-
-dev.off()
-##===================================
-###=================sum over all Ldel and Sterm phages
-SpeciesPlot <- list()
-for (i in  1:length(phage)){
-
-  genomeAverage[[i]] <-aggregate(. ~genome+group, data=startingGff_withoutzero[[i]][,c("genome","group","TPKM")], mean, na.rm=TRUE)
-  colnames(genomeAverage[[i]]) <- c("genome","group","TPKM")
-  genomeAverage[[i]]$species <- str_split_fixed(genomeAverage[[i]]$group, "_", 2)[,1]
-  genomeAverage[[i]]$name <- unique(phage[[i]]$name)
- 
+  minValue_01 <- intercept_01 + (slope_01* midpoint)
+  minValue_02 <- intercept_02 + (slope_02* midpoint)
   
+  maxValue_01 <- intercept_01
+  maxValue_02 <- intercept_02 + (slope_02* maxpoint)
   
-   SpeciesPlot[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(species, -TPKM), fill = group), data = genomeAverage[[i]], stat="identity")+
-    labs(title = paste0(unique(phage[[i]]$name)),
-         x="",
-         y="")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
+  maxValue_total <- max(maxValue_01,maxValue_02)
+  minValue_total <- min(minValue_01,minValue_02)
+  PTR <- maxValue_total/ minValue_total
   
-}
+  # PTR[[i,]] <- c(as.character(sample),PTR)
+  namesss = append(namesss, as.character(sample))
+  PTRss = append(PTRss, PTR)
 
-##====plotting
-  genomeAverage_allSpecies <- list.rbind(genomeAverage)
+  fit <- numeric(length(x)) * NA
+  fit[complete.cases(rowSums(cbind(y, x)))] <- broken.line(segmented.mod)$fit
+  data1 <- data.frame(x = x, y = y, fit = fit,geneID=coverage_sample_Ldel$description,geneStart=coverage_sample_Ldel$start,geneSize=coverage_sample_Ldel$end-coverage_sample_Ldel$start,Species=coverage_sample_Ldel$chr,Name=coverage_sample_Ldel$sample)
 
-   genomeAverage_allSpecies$day <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,1]
-  genomeAverage_allSpecies$kessel <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,2]
-  genomeAverage_allSpecies$time <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,3]
-  genomeAverage_allSpecies$treatment <- paste0(genomeAverage_allSpecies$day,"_",genomeAverage_allSpecies$kessel)
- 
-  genomeAverage_allSpecies$treatment_f = factor(genomeAverage_allSpecies$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies$time_f = factor(genomeAverage_allSpecies$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
- # droplevels(genomeAverage_allSpecies)
-  
-##-------plotting table
-   p1 <-  ggplot() + geom_bar(aes(y = TPKM, x = reorder(species, -TPKM), fill = group), data = genomeAverage_allSpecies, stat="identity")+
-     facet_grid(time ~treatment )+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="bottom"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-
-   
-
-  
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/SpeciesMostAbundantPhages.pdf",width=8,height=32,paper='special')
-p1
-
-dev.off()
-
-
-##===================================
-####-----------------sum all subgroups per species 
-
-  genomeAverage_allSpecies_summed <-aggregate(. ~name+species, data=genomeAverage_allSpecies[,c("name","species","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed$day <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,1]
-  genomeAverage_allSpecies_summed$kessel <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,2]
-  genomeAverage_allSpecies_summed$time <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,3]
-  genomeAverage_allSpecies_summed$treatment <- paste0(genomeAverage_allSpecies_summed$day,"_",genomeAverage_allSpecies_summed$kessel)
- 
-  genomeAverage_allSpecies_summed$treatment_f = factor(genomeAverage_allSpecies_summed$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies_summed$time_f = factor(genomeAverage_allSpecies_summed$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed$phage <- paste0(genomeAverage_allSpecies_summed$species," phages")
-  
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed,aes(y = TPKM, x = time_f, group=interaction(day, phage),colour=phage,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/SpeciesMostAbundantPhages_line.pdf",width=8,height=6,paper='special')
-p2
-
-dev.off()
-
-
-##===================================
-####-----------------plot only grouping=Ldel_subgroup_9
-
-
-ldel_s9_list <- list()
-p1 <- list()
-p2 <- list()
-ldels9Plot <- list()
-OG_ldels9_sum_list <- list()
-for (i in  1:length(phage)){
-
-  ldel_s9_list[[i]] <- phage[[i]][phage[[i]]$group=="Ldel_subgroup_9",]
-
-  p1[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(OG, -TPKM), fill = genome), data = ldel_s9_list[[i]], stat="identity")+
-    labs(title = paste0(unique(ldel_s9_list[[i]]$group), " from ",unique(ldel_s9_list[[i]]$name)),
-         x="Orthologous groups",
-         y="")+
-    theme_classic()+
-    theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-          axis.text.x = element_blank(),
-          legend.position="none",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  OG_ldels9_sum_list[[i]] <- aggregate(ldel_s9_list[[i]]$TPKM, list(ldel_s9_list[[i]]$OG), sum)
-  
-  p2[[i]] <- ggplot(OG_ldels9_sum_list[[i]],aes(y=x)) +geom_boxplot()+
-  labs(title = " ",
-         x=" ",
-         y="")+
-     theme_classic()+
-    theme(axis.text.x =element_blank(),
-          legend.position="none",
-          axis.ticks.x = element_blank()          )
-
-ldels9Plot[[i]] <- plot_grid(p1[[i]], p2[[i]], labels = " ", align = 'h',rel_widths = c(4,1))
+pldel[[i]] <- ggplot(data1, aes(x=x,y=y,label=geneID,label2=geneStart,label3=Name))+
+  geom_point(aes(size=geneSize,color=Species))+
+  annotate(geom="text", x=500000, y=max(data1$y)-(0.2*max(data1$y)), label=paste0(sample," (PTR= ",round(PTR,digits = 2),")"),color="black")+
+  geom_line(aes(x = x, y = fit),size=2, color = 'grey')+
+  labs(x="genome location",y="coverage")+
+  scale_color_manual(values="#10B552")+
+  theme_bw()+
+  theme(legend.position="none")
 
 
 }
 
+d = data.frame(namesss,PTRss,species="Streptococcus thermophilus")
+PTR_all <- rbind(dldel,d)
 
-
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/ldel_subgroup_9_OGs.pdf",width=20,height=32,paper='special')
-do.call(plot_grid, c(ldels9Plot, labels = "none", align = 'h', ncol=4))
-
-
-dev.off()
-
-# sum_ldels9 <- quantile(OG_ldels9_sum$x)
-# sum_ldels9 <- c(unique(ldel_s9$group),unique(ldel_s9$name),unique(ldel_s9$day),unique(ldel_s9$kessel),unique(ldel_s9$time),sum_ldels9)
-# names(sum_ldels9) <- c("subgroup","name","day","kessel","time","min","1st","median","3rd","max")
-# sum_ldels9
-
-
-##===================================
-##sum over all and get percent
-
-  genomeAverage_allSpecies_summed_all <-aggregate(. ~name, data=genomeAverage_allSpecies_summed[,c("name","TPKM")], sum, na.rm=TRUE)
-
-genomeAverage_allSpecies_summed$total_TPKM <- genomeAverage_allSpecies_summed_all[match(genomeAverage_allSpecies_summed$name,genomeAverage_allSpecies_summed_all$name),"TPKM"]
-genomeAverage_allSpecies_summed$percent_TPKM <- 100*(genomeAverage_allSpecies_summed$TPKM/genomeAverage_allSpecies_summed$total_TPKM)
-
-
-
-
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed,aes(y = percent_TPKM, x = time_f, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percebt TPKM")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/percent_species_bacteria.pdf",width=8,height=8,paper='special')
-p2
-
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/PTR_sterm.svg",width=20,height=4)
+do.call(plot_grid, c(pldel, align = 'h', ncol=5))
 dev.off()
 
 
-p2
+##--------------PTR plot
+
+PTR_all$namesss = factor(PTR_all$namesss, levels=c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202"))
 
 
-##==============================
-##-----summed genomes per subgroup
+ggplot(PTR_all,aes(x=namesss,y=PTRss,))
 
 
-
-  genomeAverage_allSpecies_summed_genomes <-aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed_genomes$day <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,1]
-  genomeAverage_allSpecies_summed_genomes$kessel <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,2]
-  genomeAverage_allSpecies_summed_genomes$time <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,3]
-  genomeAverage_allSpecies_summed_genomes$treatment <- paste0(genomeAverage_allSpecies_summed_genomes$day,"_",genomeAverage_allSpecies_summed_genomes$kessel)
- 
-  genomeAverage_allSpecies_summed_genomes$treatment_f = factor(genomeAverage_allSpecies_summed_genomes$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies_summed_genomes$time_f = factor(genomeAverage_allSpecies_summed_genomes$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed_genomes$phage <- paste0(genomeAverage_allSpecies_summed_genomes$group,"_phages")
-  genomeAverage_allSpecies_summed_genomes$phage_02 <- paste0(str_split_fixed(genomeAverage_allSpecies_summed_genomes$group, "_", 3)[,1],"_phages")
+all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA","#99E9F2") ) 
 
 
-  
-  ##PTR
-   qunatiles <- data.frame(aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], quantile , na.rm=TRUE))
-  qunatiles$PTR <- qunatiles$TPKM[,4]/qunatiles$TPKM[,2]
-  
-  genomeAverage_allSpecies_summed_genomes <- cbind(genomeAverage_allSpecies_summed_genomes,PTR=qunatiles$PTR)
-  
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed_genomes,aes(y = TPKM, x = time_f, group=interaction(day, phage),colour=phage,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
+ pPTR <- ggplot(PTR_all,aes(x=namesss,y=PTRss,group=species,fill=species,color=species))+ geom_point(size=3)+ geom_line()+ #stat_summary(fun.y=sum, geom="line")+
+   labs("",
          x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/SpeciesMostAbundantPhages_line.pdf",width=8,height=6,paper='special')
-p2
-
-dev.off()
-
-
- ##PTR
-   qunatiles <- data.frame(aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], quantile , na.rm=TRUE))
-  qunatiles$PTR <- qunatiles$TPKM[,4]/qunatiles$TPKM[,2]
-  
-  genomeAverage_allSpecies_summed_genomes <- cbind(genomeAverage_allSpecies_summed_genomes,PTR=qunatiles$PTR)
-  
-write.csv(genomeAverage_allSpecies_summed_genomes,"~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/phages_final.csv")
-
-
-
- 
-```
-
-
-
-######bacteria
-
-[Cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/plot_grid.html) is an ideal way to arrange plots. 
-The sample counts need to be normalised. I will do it with [FPKM](https://www.rna-seqblog.com/rpkm-fpkm-and-tpm-clearly-explained/).
-[Viridsi](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html) colour scale. 
-
-```{r}
-source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(tidyverse)
-library(grid)
-library(gridExtra)
-library(cowplot) ## for arranging plots
-library(stringr) ##for split string
-library(rlist) ##rbind all dataframe of list
-library(viridis) ##colour palette
-##===================================
-#-------------file import
-# startingGff <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/phageDBmapping/di_K2_6h2phageDB_final.bed","\t", escape_double = FALSE, col_names = c("species","chr","start","end","orientation","OG","group","gene","genome","genomeSize","count","length_unmapped","geneLength","percent","name","day","kessel","time"),trim_ws = TRUE)
-
-samples_names <- read_csv("~/Desktop/Projects/2019_Pilotplan/samples_ordered.txt", col_names = FALSE)
-listcsv <- as.vector(paste0("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/BacteriaDBmapping/",samples_names$X1,"2BacteriaDB_final.bed"))
-
-read_count <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow/Mulitqc/table_count_final.txt", 
-    "\t", escape_double = FALSE, col_names = c("name","MioReads"), 
-    trim_ws = TRUE)
-# k <- 1
-ldf <- list()
-for (k in 1:length(listcsv)){
- ldf[[k]] <- read_delim(listcsv[[k]],"\t", escape_double = FALSE, col_names = c("species","chr","start","end","orientation","OG","group","gene","genome","genomeSize","count","length_unmapped","geneLength","percent","name","day","kessel","time"),trim_ws = TRUE)
-}
-#ldf[[1]]
-
-# head(ldf[[2]])
-# 
-# dim(startingGff)
-# table(startingGff$count)
-# startingGff$geneCoverage <- (startingGff$count*600)/startingGff$geneLength
-
-# ggplot(startingGff,aes(x=group,y=geneCoverage,fill=species,colour=species) )+geom_boxplot()+
-#     theme(axis.text.x = element_text(angle = 75, hjust = 1),
-#           #legend.position="top",
-#           legend.justification=c(1,1), legend.position=c(1,1),
-#           legend.title = element_blank()
-#           )
-##===================================
-###---TPKM calculations
-
-
-# startingGff$RawReads <- unlist(read_count[match(startingGff$name,read_count$name),2])
-# # aggregate(startingGff$RawReads, list(startingGff$name), mean)
-# startingGff$TPKM <- ((startingGff$count*600)/startingGff$RawReads)/startingGff$geneLength
-# summary(startingGff$TPKM)
-
-
-p <- list()
-for (i in  1:length(listcsv)){
-  ldf[[i]]$geneCoverage  <- (ldf[[i]]$count*600)/ldf[[i]]$geneLength
-  
-  ldf[[i]]$RawReads <- unlist(read_count[match(ldf[[i]]$name,read_count$name),"MioReads"])
-  ldf[[i]]$TPKM <- ((ldf[[i]]$count)/ldf[[i]]$RawReads)/ldf[[i]]$geneLength
-
-  p[[i]] <- ggplot(ldf[[i]],aes(x=group,y=TPKM,fill=species,colour=species) )+geom_boxplot()+
-    labs(title = paste0(unique(ldf[[i]]$name)),
-         x="",
-         y="")+
-    theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-          axis.text.x =element_blank(),
-          plot.title = element_text(size=20),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-}
-
- 
-
-
-
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/allSubproupsPhagesCoverage.pdf",width=8,height=16,paper='special') 
-
-# do.call(grid.arrange, c(p, ncol=4))
-
-do.call(plot_grid, c(p, labels = "TPKM", align = 'h', ncol=4))
-
-
-dev.off()
-
-
-##-----------mean over genome
-
-#withoutZero <- startingGff[which(startingGff$count!=0),]
-#View(withoutZero)
-#table(withoutZero$group)
-##===================================
-##-------Averaging over zero coverage OGs
-# startingGff$geneCoverage <- (startingGff$count*600)/startingGff$geneLength
-# startingGff_withoutzero <- startingGff[which(startingGff$geneCoverage>0),]
-#  # genomeAverage <-aggregate(. ~OG+group, data=startingGff[,c("OG","group","geneCoverage")], sum, na.rm=TRUE)
-# genomeAverage <-aggregate(. ~genome+group, data=startingGff_withoutzero[,c("genome","group","geneCoverage")], mean, na.rm=TRUE)
-#  # colnames(genomeAverage) <- c("OG","group","geneCoverage")
-#  colnames(genomeAverage) <- c("genome","group","geneCoverage")
-# ##-------removing zero coverage OG
-# genomeAverage_cleaned <- genomeAverage[which(genomeAverage$geneCoverage>0),]
-# # print(paste0("Following OGs where removed for ",unique(ldel_s9$group),": ",removedOGs))
-# # genomeAverage_cleaned <- genomeAverage %>% filter(OG %in% removeOGs)
-# ##-------summing over group
-# groupSum <- aggregate(genomeAverage_cleaned$geneCoverage, list(genomeAverage_cleaned$group), sum)
-# colnames(groupSum) <- c("group","geneCoverage")
-# subgroupsum_final <- groupSum[with(groupSum, order(-geneCoverage)), ]
-# subgroupsum_final
-# ##-------plotting table
-# 
-# 
-# pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/mostAbundantGroups_phages.pdf", height=11, width=8.5,paper='special')
-# grid.table(subgroupsum_final)
-# dev.off()
-
-
-###----Sterm_without test
-
-# Sterm_withoutClust <- startingGff_withoutzero[which(startingGff_withoutzero$group=="Sterm_withoutCluster"),]
-# ggplot(Sterm_withoutClust,aes(x=reorder(genome, -geneCoverage),y=geneCoverage))+geom_boxplot()+
-#     labs(title = "",
-#          x="genome",
-#          y="Coverage")+
-#     theme_classic()+
-#     theme(axis.text.x = element_text(angle = 75, hjust = 1),
-#           #legend.position="top",
-#           legend.justification=c(1,1), legend.position=c(1,1),
-#           legend.title = element_blank()
-#           )
-
-##========in loop
-
-
-##intialise lists
-startingGff_withoutzero <- list()
-genomeAverage <- list()
-groupSum <- list()
-subgroupsum_final <- list()
-Orthogroups_sum <- list()
-Orthogoups_quartile <- list()
-p <- list()
-PTR <- list()
-subgroupsum_final_02 <- list()
-##loop through loops
-for (i in  1:length(ldf)){
-  # ldf[[i]]$geneCoverage  <- (ldf[[i]]$count*600)/ldf[[i]]$geneLength
-  startingGff_withoutzero[[i]] <- ldf[[i]][which(ldf[[i]]$TPKM>0),]
-  genomeAverage[[i]] <-aggregate(. ~genome+group, data=startingGff_withoutzero[[i]][,c("genome","group","TPKM")], mean, na.rm=TRUE)
-  colnames(genomeAverage[[i]]) <- c("genome","group","TPKM")
-  
-   p[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(group, -TPKM), fill = genome), data = genomeAverage[[i]], stat="identity")+
-    labs(title = paste0(unique(ldf[[i]]$name)),
-         x="",
-         y="")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
- #  groupSum[[i]] <- aggregate(genomeAverage[[i]]$geneCoverage, list(genomeAverage[[i]]$group), sum)
- #  colnames(groupSum[[i]]) <- c("group","geneCoverage")
- #  subgroupsum_final[[i]] <- groupSum[[i]][with(groupSum[[i]], order(-geneCoverage)), ]
- #  # p[[i]] <-grid.table(subgroupsum_final[[i]])
- # subgroupsum_final_02[[i]] <- cbind(subgroupsum_final[[i]],unique(startingGff_withoutzero[[i]]$name))
- #  print(subgroupsum_final_02[[i]])
-}
-
-#============================
-##-PTR
-#============================
-for (i in  1:length(ldf)){
-
-  Orthogroups_sum[[i]] <- aggregate(. ~OG+group+name, data=startingGff_withoutzero[[i]][,c("name","OG","group","geneCoverage")], sum, na.rm=TRUE)
-  Orthogoups_quartile[[i]] <- aggregate(. ~group+name, data=startingGff_withoutzero[[i]][,c("name","group","geneCoverage")], quantile, na.rm=TRUE)
-  PTR[[i]] <- data.frame(group=as.matrix(Orthogoups_quartile[[i]])[,1],PTR=as.numeric(as.matrix(Orthogoups_quartile[[i]])[,6])/as.numeric(as.matrix(Orthogoups_quartile[[i]])[,4]))
-  
-  
-    #  p[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(group, -TPKM), fill = genome), data = Orthogroups_sum[[i]], stat="identity")+
-    # labs(title = paste0(unique(ldf[[i]]$name)),
-    #      x="",
-    #      y="")+
-    # theme_classic()+
-    # theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-    #   #axis.text.x = element_blank(),
-    #       legend.position="none"
-    #       #legend.justification=c(1,1), legend.position=c(1,1),
-    #       #legend.title = element_blank()
-    #       )
-    # 
-
-}
-
-##-------plotting table
-
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/subgroupsMostAbundantPhages.pdf",width=8,height=32,paper='special')
-# do.call(grid.arrange, c(p, ncol=4))
-do.call(plot_grid, c(p, labels = "TPKM subgroups", align = 'h', ncol=4))
-
-dev.off()
-##===================================
-###=================sum over all Ldel and Sterm phages
-SpeciesPlot <- list()
-for (i in  1:length(ldf)){
-
-  genomeAverage[[i]] <-aggregate(. ~genome+group, data=startingGff_withoutzero[[i]][,c("genome","group","TPKM")], mean, na.rm=TRUE)
-  colnames(genomeAverage[[i]]) <- c("genome","group","TPKM")
-  genomeAverage[[i]]$species <- str_split_fixed(genomeAverage[[i]]$group, "_", 2)[,1]
-  genomeAverage[[i]]$name <- unique(ldf[[i]]$name)
- 
-  
-  
-   SpeciesPlot[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(species, -TPKM), fill = group), data = genomeAverage[[i]], stat="identity")+
-    labs(title = paste0(unique(ldf[[i]]$name)),
-         x="",
-         y="")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-}
-
-##====plotting
-  genomeAverage_allSpecies <- list.rbind(genomeAverage)
-
-   genomeAverage_allSpecies$day <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,1]
-  genomeAverage_allSpecies$kessel <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,2]
-  genomeAverage_allSpecies$time <- str_split_fixed(genomeAverage_allSpecies$name, "_", 3)[,3]
-  genomeAverage_allSpecies$treatment <- paste0(genomeAverage_allSpecies$day,"_",genomeAverage_allSpecies$kessel)
- 
-  genomeAverage_allSpecies$treatment_f = factor(genomeAverage_allSpecies$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies$time_f = factor(genomeAverage_allSpecies$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
- # droplevels(genomeAverage_allSpecies)
-  
-##-------plotting table
-   p1 <-  ggplot() + geom_bar(aes(y = TPKM, x = reorder(species, -TPKM), fill = group), data = genomeAverage_allSpecies, stat="identity")+
-     facet_grid(time_f ~treatment_f )+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="bottom"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-
-   
-
-  
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/SpeciesMostAbundantPhages.pdf",width=8,height=32,paper='special')
-p1
-
-dev.off()
-
-
-##===================================
-####-----------------sum all subgroups per species 
-
-  genomeAverage_allSpecies_summed <-aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed$day <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,1]
-  genomeAverage_allSpecies_summed$kessel <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,2]
-  genomeAverage_allSpecies_summed$time <- str_split_fixed(genomeAverage_allSpecies_summed$name, "_", 3)[,3]
-  genomeAverage_allSpecies_summed$treatment <- paste0(genomeAverage_allSpecies_summed$day,"_",genomeAverage_allSpecies_summed$kessel)
- 
-  genomeAverage_allSpecies_summed$treatment_f = factor(genomeAverage_allSpecies_summed$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies_summed$time_f = factor(genomeAverage_allSpecies_summed$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed$genus <- str_split_fixed(genomeAverage_allSpecies_summed$group, "_", 6)[,1]
-  genomeAverage_allSpecies_summed$species_01 <- str_split_fixed(genomeAverage_allSpecies_summed$group, "_", 6)[,2]
-  genomeAverage_allSpecies_summed$species <- paste(genomeAverage_allSpecies_summed$genus, genomeAverage_allSpecies_summed$species_01,sep="_")
-
-  
-  
-
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed,aes(y = TPKM, x = time_f, group=interaction(day, group),colour=species,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/SpeciesMostAbundantPhages_line.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-# Streptococcus_thermophilus_group_subgroup_4
-# Lactobacillus_delbrueckii_group_subgroup_2
-
-##===================================
-####-----------------plot only which ever group
-
-group <- "Streptococcus_thermophilus_group_subgroup_4"
-
-for (groupsss in 1:length(unique(ldf[[1]]$group))){
-# print(groupss)}
-  
-  groupss <- unique(ldf[[1]]$group)[groupsss]
-sterm_s4_list <- list()
-p1 <- list()
-p2 <- list()
-sterm_s4Plot <- list()
-OG_sterm_s4_sum_list <- list()
-# OG_Ldel_s2_sum_list <- list()
-OG_sterm_s4_quantile_list <- as.data.frame(matrix(0, ncol = 7, nrow = 32))
-colnames(OG_sterm_s4_quantile_list) <- c("sample","0%","25%","50%","75%","100%","PTR")
-
-for (i in  1:length(ldf)){
-
-  sterm_s4_list[[i]] <- ldf[[i]][ldf[[i]]$group==groupss,]
-
-   p1[[i]] <- ggplot() + geom_bar(aes(y = geneCoverage, x = reorder(OG, -geneCoverage), fill = genome), data = sterm_s4_list[[i]], stat="identity")+
-     labs(title = paste0(unique(sterm_s4_list[[i]]$group), " from ",unique(sterm_s4_list[[i]]$name)),
-          x="Orthologous groups",
-          y="")+
-     theme_classic()+
-     theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-           axis.text.x = element_blank(),
-           plot.title = element_text(size=9,hjust = 0.5),
+         y="Peak-to-trough ratio",
+          title="")+
+   scale_color_manual(values=c("#10B552","#EB4D4D"))+
+  theme_classic()+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
            legend.position="none"
-           #legend.justification=c(1,1), legend.position=c(1,1),
-           #legend.title = element_blank()
-           )
-
-   OG_sterm_s4_sum_list[[i]] <- aggregate(sterm_s4_list[[i]]$geneCoverage, list(sterm_s4_list[[i]]$OG), sum)
-#   OG_sterm_s4_sum_list[[i]] <- aggregate(sterm_s4_list[[i]]$geneCoverage, list(sterm_s4_list[[i]]$OG), sum)
-# 
-#    # OG_Ldel_s2_sum_list[[i]] <- aggregate(Ldel_s2_list[[i]]$TPKM, list(Ldel_s2_list[[i]]$OG), sum)
-#     OG_sterm_s4_quantile_list[i,1:6] <- c(unique(sterm_s4_list[[i]]$name),quantile(OG_sterm_s4_sum_list[[i]]$x))
-# OG_sterm_s4_quantile_list[i,7] <- as.numeric(OG_sterm_s4_quantile_list[i,5])/as.numeric(OG_sterm_s4_quantile_list[i,3])
-#   
+       #egend.justification=c(1,1), legend.position=c(0.9,0.9),
+       #legend.title = element_blank()
+       )
+  pPTR
   
-  
-   p2[[i]] <- ggplot(OG_sterm_s4_sum_list[[i]],aes(y=x)) +geom_boxplot()+
-   labs(title = " ",
-          x=" ",
-          y="")+
-      theme_classic()+
-       ylim(0, max(OG_sterm_s4_sum_list[[i]]$x))+
-     theme(axis.text.x =element_blank(),
-           legend.position="none",
-           axis.ticks.x = element_blank()          )
- 
- sterm_s4Plot[[i]] <- plot_grid(p1[[i]], p2[[i]], labels = " ", align = 'h',rel_widths = c(4,1))
-
-
-}
-
-#do.call(plot_grid, c(sterm_s4Plot, labels = "S_the_subgroup_4", align = 'h', ncol=4))
-
-##viridis
-
-pathfile <- paste("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/subgroupPlots/",groupss,"_OGs.pdf")
-
-  pdf(pathfile,width=20,height=32,paper='special')
- # svg(pathfile,width=10,height=16)
- # do.call(plot_grid, c(sterm_s4Plot, align = 'h', ncol=4))
- print(do.call(plot_grid, c(sterm_s4Plot, align = 'h', ncol=4)))
-
-
- dev.off()
-}
-
-
-##===================================
-####-----------------plot only grouping=Streptococcus_thermophilus_group_subgroup_4
-
-
-sterm_s4_list <- list()
-p1 <- list()
-p2 <- list()
-sterm_s4Plot <- list()
-OG_sterm_s4_sum_list <- list()
-# OG_Ldel_s2_sum_list <- list()
-OG_sterm_s4_quantile_list <- as.data.frame(matrix(0, ncol = 7, nrow = 32))
-colnames(OG_sterm_s4_quantile_list) <- c("sample","0%","25%","50%","75%","100%","PTR")
-
-for (i in  1:length(ldf)){
-
-  sterm_s4_list[[i]] <- ldf[[i]][ldf[[i]]$group=="Streptococcus_thermophilus_group_subgroup_4",]
-
-  # p1[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(OG, -TPKM), fill = genome), data = sterm_s4_list[[i]], stat="identity")+
-  #   labs(title = paste0(unique(sterm_s4_list[[i]]$group), " from ",unique(sterm_s4_list[[i]]$name)),
-  #        x="Orthologous groups",
-  #        y="")+
-  #   theme_classic()+
-  #   theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-  #         axis.text.x = element_blank(),
-  #         plot.title = element_text(size=9,hjust = 0.5),
-  #         legend.position="none",
-  #         #legend.justification=c(1,1), legend.position=c(1,1),
-  #         #legend.title = element_blank()
-  #         )
-
-  # OG_sterm_s4_sum_list[[i]] <- aggregate(sterm_s4_list[[i]]$TPKM, list(sterm_s4_list[[i]]$OG), sum)
-  OG_sterm_s4_sum_list[[i]] <- aggregate(sterm_s4_list[[i]]$geneCoverage, list(sterm_s4_list[[i]]$OG), sum)
-
-   # OG_Ldel_s2_sum_list[[i]] <- aggregate(Ldel_s2_list[[i]]$TPKM, list(Ldel_s2_list[[i]]$OG), sum)
-    OG_sterm_s4_quantile_list[i,1:6] <- c(unique(sterm_s4_list[[i]]$name),quantile(OG_sterm_s4_sum_list[[i]]$x))
-OG_sterm_s4_quantile_list[i,7] <- as.numeric(OG_sterm_s4_quantile_list[i,5])/as.numeric(OG_sterm_s4_quantile_list[i,3])
-  
-  
-  
-#   p2[[i]] <- ggplot(OG_sterm_s4_sum_list[[i]],aes(y=x)) +geom_boxplot()+
-#   labs(title = " ",
-#          x=" ",
-#          y="")+
-#      theme_classic()+
-#       ylim(0, max(OG_sterm_s4_sum_list[[i]]$x))+
-#     theme(axis.text.x =element_blank(),
-#           legend.position="none",
-#           axis.ticks.x = element_blank()          )
-# 
-# sterm_s4Plot[[i]] <- plot_grid(p1[[i]], p2[[i]], labels = " ", align = 'h',rel_widths = c(4,1))
-
-
-}
-
-  OG_sterm_s4_quantile_list$day <- str_split_fixed(OG_sterm_s4_quantile_list$sample, "_", 3)[,1]
-  OG_sterm_s4_quantile_list$kessel <- str_split_fixed(OG_sterm_s4_quantile_list$sample, "_", 3)[,2]
-  OG_sterm_s4_quantile_list$time <- str_split_fixed(OG_sterm_s4_quantile_list$sample, "_", 3)[,3]
-  OG_sterm_s4_quantile_list$treatment <- paste0(OG_sterm_s4_quantile_list$day,"_",OG_sterm_s4_quantile_list$kessel)
- 
-  OG_sterm_s4_quantile_list$treatment_f = factor(OG_sterm_s4_quantile_list$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  OG_sterm_s4_quantile_list$time_f = factor(OG_sterm_s4_quantile_list$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-OG_sterm_s4_quantile_list$species <- "S. thermophilus"
-
-ggplot(OG_sterm_s4_quantile_list,aes(x=time_f,y=PTR,group=treatment_f,color=treatment_f,fill=treatment_f))+geom_line()+geom_point()+facet_grid(~kessel)
-
-##viridis
-
-#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/Streptococcus_thermophilus_group_subgroup_4_OGs.pdf",width=20,height=32,paper='special')
-# do.call(plot_grid, c(sterm_s4Plot, labels = "S_the_subgroup_4", align = 'h', ncol=4))
-# 
-# 
-# dev.off()
-
-# sum_ldels9 <- quantile(OG_ldels9_sum$x)
-# sum_ldels9 <- c(unique(ldel_s9$group),unique(ldel_s9$name),unique(ldel_s9$day),unique(ldel_s9$kessel),unique(ldel_s9$time),sum_ldels9)
-# names(sum_ldels9) <- c("subgroup","name","day","kessel","time","min","1st","median","3rd","max")
-# sum_ldels9
-
-##===================================
-####-----------------plot only grouping=Lactobacillus_delbrueckii_group_subgroup_2
-
-
-Ldel_s2_list <- list()
-p1 <- list()
-p2 <- list()
-Ldel_s2Plot <- list()
-OG_Ldel_s2_sum_list <- list()
-OG_Ldel_s2_quantile_list <- as.data.frame(matrix(0, ncol = 7, nrow = 32))
-colnames(OG_Ldel_s2_quantile_list) <- c("sample","0%","25%","50%","75%","100%","PTR")
-# OG_Ldel_s2_quantile_list <- data.frame()
-
-for (i in  1:length(ldf)){
-
-  Ldel_s2_list[[i]] <- ldf[[i]][ldf[[i]]$group=="Lactobacillus_delbrueckii_group_subgroup_2",]
-
-  # p1[[i]] <- ggplot() + geom_bar(aes(y = TPKM, x = reorder(OG, -TPKM), fill = genome), data = Ldel_s2_list[[i]], stat="identity")+
-  #   labs(title = paste0(unique(Ldel_s2_list[[i]]$group), " from ",unique(Ldel_s2_list[[i]]$name)),
-  #        x="Orthologous groups",
-  #        y="")+
-  #   theme_classic()+
-  #   theme(#axis.text.x = element_text(angle = 75, hjust = 1),
-  #         axis.text.x = element_blank(),
-  #         plot.title = element_text(size=9,hjust = 0.5),
-  #         legend.position="none"
-  #         #legend.justification=c(1,1), legend.position=c(1,1),
-  #         #legend.title = element_blank()
-  #         )
-
-  # OG_Ldel_s2_sum_list[[i]] <- aggregate(Ldel_s2_list[[i]]$TPKM, list(Ldel_s2_list[[i]]$OG), sum)
-  OG_Ldel_s2_sum_list[[i]] <- aggregate(Ldel_s2_list[[i]]$geneCoverage, list(Ldel_s2_list[[i]]$OG), sum)
-    OG_Ldel_s2_quantile_list[i,1:6] <- c(unique(Ldel_s2_list[[i]]$name),quantile(OG_Ldel_s2_sum_list[[i]]$x))
-OG_Ldel_s2_quantile_list[i,7] <- as.numeric(OG_Ldel_s2_quantile_list[i,5])/as.numeric(OG_Ldel_s2_quantile_list[i,3])
-  
-  
-  # p2[[i]] <- ggplot(OG_Ldel_s2_sum_list[[i]],aes(y=x)) +geom_boxplot()+
-  # labs(title = paste0(unique(Ldel_s2_list[[i]]$group), " from ",unique(Ldel_s2_list[[i]]$name)),
-  #        x=" ",
-  #        y="")+
-  #    theme_classic()+
-  #     ylim(0, max(OG_Ldel_s2_sum_list[[i]]$x))+
-  #   theme(axis.text.x =element_blank(),
-  #         legend.position="none",
-  #         axis.ticks.x = element_blank()          )
-
-# sterm_s4Plot[[i]] <- plot_grid(p1[[i]], p2[[i]], labels = " ", align = 'h',rel_widths = c(4,1))
-
-
-}
-
-
-
-
-  OG_Ldel_s2_quantile_list$day <- str_split_fixed(OG_Ldel_s2_quantile_list$sample, "_", 3)[,1]
-  OG_Ldel_s2_quantile_list$kessel <- str_split_fixed(OG_Ldel_s2_quantile_list$sample, "_", 3)[,2]
-  OG_Ldel_s2_quantile_list$time <- str_split_fixed(OG_Ldel_s2_quantile_list$sample, "_", 3)[,3]
-  OG_Ldel_s2_quantile_list$treatment <- paste0(OG_Ldel_s2_quantile_list$day,"_",OG_Ldel_s2_quantile_list$kessel)
- 
-  OG_Ldel_s2_quantile_list$treatment_f = factor(OG_Ldel_s2_quantile_list$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  OG_Ldel_s2_quantile_list$time_f = factor(OG_Ldel_s2_quantile_list$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-OG_Ldel_s2_quantile_list$species <- "L. delbrueckii"
-
-all_OG <- rbind(OG_Ldel_s2_quantile_list,OG_sterm_s4_quantile_list)
-
-
-ggplot(OG_Ldel_s2_quantile_list,aes(x=time_f,y=PTR,group=treatment_f,color=treatment_f,fill=treatment_f))+geom_line()+geom_point()
-
-ggplot(all_OG,aes(x=time_f,y=PTR,group=treatment_f,color=treatment_f,fill=treatment_f))+geom_line()+geom_point(aes_string(size=as.numeric(all_OG$`50%`)))+facet_grid(~species~kessel)
-
-
-all_OG$Method <-  "mapping_ReferenceDB"
-
-all_OG_final <- rbind(all_OG,all_OG_ONT)
-
-
-
-ggplot(all_OG_final,aes(x=time_f,y=PTR,group=treatment_f,color=Method,fill=Method))+geom_line()+geom_point(aes_string(size=as.numeric(all_OG_final$`50%`)))+facet_grid(~species~kessel)
-
-
-png("~/Desktop/Projects/2019_Pilotplan/PTR_referenceDB.png",width=1500,height=1200,res=300)
-
-ggplot(all_OG,aes(x=time_f,y=PTR,group=treatment_f,color=treatment_f,fill=treatment_f))+geom_line()+geom_point(aes_string(size=as.numeric(all_OG$`50%`)))+facet_grid(~species~kessel)+
-      labs("",
-         x="time",
-         y="Peak-to-trough ratio")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-dev.off()
-
-##viridis
-
-
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/Lactobacillus_delbrueckii_group_subgroup_2_OGs_boxpolot.pdf",width=20,height=32,paper='special')
-do.call(plot_grid, c(p2, labels = "Ldel_subgroup_2", align = 'h', ncol=4))
-
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/06_PTR_relAbundance.svg",width=3.5,height=8)
+grid.arrange(PrelAbundance,PrelAbundance+theme(legend.position = "none"),pPTR,ncol=1, heights=c(3,3,3))
 
 dev.off()
-# 
-#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/Lactobacillus_delbrueckii_group_subgroup_2_OGs.pdf",width=20,height=32,paper='special')
-# do.call(plot_grid, c(sterm_s4Plot, labels = "Ldel_subgroup_2", align = 'h', ncol=4))
-# 
-# 
-# dev.off()
-
-# sum_ldels9 <- quantile(OG_ldels9_sum$x)
-# sum_ldels9 <- c(unique(ldel_s9$group),unique(ldel_s9$name),unique(ldel_s9$day),unique(ldel_s9$kessel),unique(ldel_s9$time),sum_ldels9)
-# names(sum_ldels9) <- c("subgroup","name","day","kessel","time","min","1st","median","3rd","max")
-# sum_ldels9
-
-##===================================
-##sum over all and get percent
-
-  genomeAverage_allSpecies_summed_all <-aggregate(. ~name, data=genomeAverage_allSpecies_summed[,c("name","TPKM")], sum, na.rm=TRUE)
-
-genomeAverage_allSpecies_summed$total_TPKM <- genomeAverage_allSpecies_summed_all[match(genomeAverage_allSpecies_summed$name,genomeAverage_allSpecies_summed_all$name),"TPKM"]
-genomeAverage_allSpecies_summed$percent_TPKM <- 100*(genomeAverage_allSpecies_summed$TPKM/genomeAverage_allSpecies_summed$total_TPKM)
-
-
-
-
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed,aes(y = percent_TPKM, x = time_f, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percebt TPKM")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/percent_species_bacteria.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-##===================================
-##get absolute values
-
-###--------calculate cell count per TPKM
-cell_count <- read_csv("~/Desktop/Manuscripts/20190130_powerplantExperiment/cell_count/KBE_Pilotplant_prepR_final.csv")
-  cell_count_mean <-aggregate(. ~name, data=cell_count[,c("name","count")], mean, na.rm=TRUE)
-cell_count_mean$count_01 <- round(cell_count_mean$count,digits = 0)
-cell_count_mean$total_TPKM <- genomeAverage_allSpecies_summed_all[match(cell_count_mean$name,genomeAverage_allSpecies_summed_all$name),"TPKM"]
-cell_count_mean$cellCountperTPKM <- cell_count_mean$count_01/cell_count_mean$total_TPKM
-
-write_csv(cell_count_mean,"~/Desktop/Manuscripts/20190130_powerplantExperiment/cell_count/KBE_Pilotplant_prepR_final_forR.csv")
-
-genomeAverage_allSpecies_summed$cellCountperTPKM <- cell_count_mean[match(genomeAverage_allSpecies_summed$name,cell_count_mean$name),"cellCountperTPKM"]
-genomeAverage_allSpecies_summed$absCount <- round((genomeAverage_allSpecies_summed$TPKM*genomeAverage_allSpecies_summed$cellCountperTPKM),digits = 0)
-
-###---------------------check if it is good
-# aggregate(. ~time+kessel+name, data=genomeAverage_allSpecies_summed[,c("time","kessel","name","absCount")], sum, na.rm=TRUE)
-
-
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed,aes(y = absCount, x = time_f, group=interaction(day, group),colour=species))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    #coord_trans(y = "log10")+
-    # scale_y_log10(breaks = scales::pretty_breaks())+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="bottom",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          legend.title = element_blank()
-          )
-
-
-
- legend <- g_legend(p2)
-
-  
-#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/abs_count_Bacteria_line.pdf",width=8,height=8,paper='special')
-# p2
-# 
-# dev.off()
-
-
-###------------------log scale with ribon
-
-  genomeAverage_allSpecies_summed_meaned <-aggregate(. ~time+kessel+group, data=genomeAverage_allSpecies_summed[,c("time","kessel","group","absCount")], mean, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_min <-aggregate(. ~time+kessel+group, data=genomeAverage_allSpecies_summed[,c("time","kessel","group","absCount")], min, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~time+kessel+group, data=genomeAverage_allSpecies_summed[,c("time","kessel","group","absCount")], max, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed_ribbon <- data.frame(time=genomeAverage_allSpecies_summed_meaned$time,kessel=genomeAverage_allSpecies_summed_meaned$kessel,group=genomeAverage_allSpecies_summed_meaned$group,meanAbs=genomeAverage_allSpecies_summed_meaned$absCount,minAbs=genomeAverage_allSpecies_summed_min$absCount,maxAbs=genomeAverage_allSpecies_summed_max$absCount)
-  
-  
-  genomeAverage_allSpecies_summed_ribbon$time_f = factor(genomeAverage_allSpecies_summed_ribbon$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed_ribbon$genus <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,1]
-  genomeAverage_allSpecies_summed_ribbon$species_01 <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,2]
-  genomeAverage_allSpecies_summed_ribbon$species <- paste(genomeAverage_allSpecies_summed_ribbon$genus, genomeAverage_allSpecies_summed_ribbon$species_01,sep="_")
-
-  
-  
- p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon,aes(y = meanAbs, x = time_f, group=group,colour=species))+
-geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=species),linetype=0, alpha=0.3)+
-    geom_line()+
-    facet_grid(~kessel)+
-    scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/abs_count_Bacteria_line.pdf",width=8,height=8,paper='special')
-grid.arrange(p2+theme(legend.position="none"),p1,legend,nrow=3,heights=c(3,3,1))
-
-dev.off()
-
-##===================================
-##stacked line plot
-
-genomeAverage_allSpecies_summed_ribbon$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon$time_f) )
-
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon, aes(x = time_f_02, y = meanAbs, fill = group)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-   labs("",
-         x="time",
-         y="abs count")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/stacked_line_bacteria_meanAbs.pdf",width=8,height=12,paper='special')
-p1
-dev.off()
-
-genomeAverage_allSpecies_summed_ribbon$log10meanAbs <- log10(genomeAverage_allSpecies_summed_ribbon$meanAbs)
-
-##---------order the group nammes
-  # levels(genomeAverage_allSpecies_summed_ribbon$group)
-
-  genomeAverage_allSpecies_summed_ribbon$groups_fs = factor(genomeAverage_allSpecies_summed_ribbon$group, levels=c('Streptococcus_thermophilus_group_subgroup_2','Streptococcus_thermophilus_group_subgroup_4','Streptococcus_thermophilus_group_subgroup_1','Lactobacillus_delbrueckii_group_subgroup_2',"Lactobacillus_delbrueckii_group_subgroup_3","Lactobacillus_delbrueckii_group_subgroup_1","Lactobacillus_delbrueckii_group_subgroup_4","Lactobacillus_helveticus_subgroup_1","Lactobacillus_helveticus_subgroup_4","Lactobacillus_helveticus_subgroup_2","Lactobacillus_helveticus_subgroup_3","Lactobacillus_casei_group_subgroup_1","Lactobacillus_casei_group_subgroup_4","Lactobacillus_casei_group_subgroup_2","Lactobacillus_casei_group_subgroup_3","Lactobacillus_fermentum_subgroup_2","Lactobacillus_fermentum_subgroup_3","Lactobacillus_fermentum_subgroup_1","Lactobacillus_fermentum_subgroup_4","Lactobacillus_rhamnosus_subgroup_3","Lactobacillus_rhamnosus_subgroup_1","Lactobacillus_rhamnosus_subgroup_4","Lactobacillus_rhamnosus_subgroup_2","Lactococcus_lactis_subgroup_2","Lactococcus_lactis_subgroup_1"))
-  
-  
- p2 <- ggplot(genomeAverage_allSpecies_summed_ribbon, aes(x = time_f_02, y = meanAbs, fill = groups_fs)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-   labs("",
-         x="time",
-         y="abs count")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-p2
-
-
-##==============================
-##-----summed genomes per subgroup
-
-
-  genomeAverage_allSpecies_summed_genomes <-aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed_genomes$day <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,1]
-  genomeAverage_allSpecies_summed_genomes$kessel <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,2]
-  genomeAverage_allSpecies_summed_genomes$time <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,3]
-  genomeAverage_allSpecies_summed_genomes$treatment <- paste0(genomeAverage_allSpecies_summed_genomes$day,"_",genomeAverage_allSpecies_summed_genomes$kessel)
- 
-  genomeAverage_allSpecies_summed_genomes$treatment_f = factor(genomeAverage_allSpecies_summed_genomes$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies_summed_genomes$time_f = factor(genomeAverage_allSpecies_summed_genomes$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed_genomes$phage <- paste0(genomeAverage_allSpecies_summed_genomes$group,"_bacteria")
-  genomeAverage_allSpecies_summed_genomes$phage_02 <- paste(str_split_fixed(genomeAverage_allSpecies_summed_genomes$group, "_", 3)[,1],str_split_fixed(genomeAverage_allSpecies_summed_genomes$group, "_", 3)[,2],sep="_")
-
-  
-  
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed_genomes,aes(y = TPKM, x = time_f, group=interaction(day, phage),colour=phage,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/SpeciesMostAbundantBacteria_line.pdf",width=8,height=6,paper='special')
-p2
-
-dev.off()
-
-
-
- ##PTR
-   qunatiles <- data.frame(aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], quantile , na.rm=TRUE))
-  qunatiles$PTR <- qunatiles$TPKM[,4]/qunatiles$TPKM[,2]
-
-  genomeAverage_allSpecies_summed_genomes <- cbind(genomeAverage_allSpecies_summed_genomes,PTR=qunatiles$PTR)
-
-
-write.csv(genomeAverage_allSpecies_summed_genomes,"~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/bacteria_final.csv")
-
-
-##==========================
-##PTR plot
-
-genomeAverage_allSpecies_summed_genomes_ptr <- genomeAverage_allSpecies_summed_genomes[which(genomeAverage_allSpecies_summed_genomes$PTR < 10),]
-
-p3 <-  ggplot( data = genomeAverage_allSpecies_summed_genomes_ptr,aes(y = PTR, x = time_f, group=interaction(day, phage),colour=phage,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p3
-
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/01_PTR_all_subspecies.pdf",width=8,height=6,paper='special')
-p3
-
-dev.off()
-
-##-------------
-
-```
-
-######cow
-
-```{r}
-
-# di_K1_0h_Cow <- read_table2("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/CowGenomemapping/th_K1_0h_CowGenomeMapping.txt", 
-#     col_names = c("name","count","GenomeSize"))
-# 
-# di_K1_0h_Cow <- cbind(di_K1_0h_Cow,group=c("CowGenome","CowMito"))
-# 
-
-
-samples_names <- read_csv("~/Desktop/Projects/2019_Pilotplan/samples_ordered.txt", col_names = FALSE)
-listcsv <- as.vector(paste0("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/CowGenomemapping/",samples_names$X1,"_CowGenomeMapping.txt"))
-
-read_count <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow/Mulitqc/table_count_final.txt", 
-    "\t", escape_double = FALSE, col_names = c("name","MioReads"), 
-    trim_ws = TRUE)
-
-cow <- list()
-for (k in 1:length(listcsv)){
- cow[[k]] <- read_table2(listcsv[[k]],col_names = c("name","count","GenomeSize","group"))
- #cow[[k]] <- cbind(cow[[k]],group=c("CowGenome","CowMito"))
-}
-
-
-##=========================
-##normalise
-
-
-for (i in  1:length(listcsv)){
-  cow[[i]]$geneCoverage  <- (cow[[i]]$count*600)/cow[[i]]$GenomeSize
-  
-  cow[[i]]$RawReads <- unlist(read_count[match(cow[[i]]$name,read_count$name),"MioReads"])
-  cow[[i]]$TPKM <- ((cow[[i]]$count)/cow[[i]]$RawReads)/cow[[i]]$GenomeSize
-}
-
- 
-cow_counts <- list.rbind(cow)
-
-
-genomeAverage_allSpecies_summed_genomes <- cow_counts[,c("name","group","TPKM")]
-
-
-
-  genomeAverage_allSpecies_summed_genomes$day <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,1]
-  genomeAverage_allSpecies_summed_genomes$kessel <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,2]
-  genomeAverage_allSpecies_summed_genomes$time <- str_split_fixed(genomeAverage_allSpecies_summed_genomes$name, "_", 3)[,3]
-  genomeAverage_allSpecies_summed_genomes$treatment <- paste0(genomeAverage_allSpecies_summed_genomes$day,"_",genomeAverage_allSpecies_summed_genomes$kessel)
- 
-  genomeAverage_allSpecies_summed_genomes$treatment_f = factor(genomeAverage_allSpecies_summed_genomes$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_allSpecies_summed_genomes$time_f = factor(genomeAverage_allSpecies_summed_genomes$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  genomeAverage_allSpecies_summed_genomes$phage <- genomeAverage_allSpecies_summed_genomes$group
-  genomeAverage_allSpecies_summed_genomes$phage_02 <- genomeAverage_allSpecies_summed_genomes$group
-
-  
-  
-p2 <-  ggplot( data = genomeAverage_allSpecies_summed_genomes,aes(y = TPKM, x = time_f, group=interaction(day, phage),colour=phage,fill = day,shape = day))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/SpeciesMostAbundantCow_line.pdf",width=8,height=6,paper='special')
-p2
-
-dev.off()
-
- # qunatiles <- data.frame(aggregate(. ~name+group, data=genomeAverage_allSpecies[,c("name","group","TPKM")], quantile , na.rm=TRUE))
- #  qunatiles$PTR <- qunatiles$TPKM[,4]/qunatiles$TPKM[,2]
-
-  genomeAverage_allSpecies_summed_genomes <- cbind(genomeAverage_allSpecies_summed_genomes,PTR=NA)
-
-
-
-write.csv(genomeAverage_allSpecies_summed_genomes,"~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/cow_final.csv")
-
-
 
 
 
 ```
-
-#####bring together
-
-
-I choose colours from [here](https://uxplanet.org/designing-systematic-colors-b5d2605b15c)
-```{r}
-
-library("colorspace")
-library("RColorBrewer")
-phages_final <- read_csv("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/phages_final.csv")
-bacteria_final <- read_csv("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/bacteria_final.csv")
-cow_final <- read_csv("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/cow_final.csv")
-
-total_samples <- rbind(bacteria_final,phages_final,cow_final)
-
-###-----------------normalize with cell count
-#
-cell_count <- read_csv("~/Desktop/Manuscripts/20190130_powerplantExperiment/cell_count/KBE_Pilotplant_prepR_final_forR.csv")
-
-# summary(cell_count$total_TPKM)
-
-total_samples$cellCountperTPKM <- unlist(cell_count[match(total_samples$name,cell_count$name),"cellCountperTPKM"])
-# 
-# table(total_samples$name)
-# table(match(total_samples$name,cell_count$name))
-
-total_samples$absCount <- unlist(total_samples$TPKM*total_samples$cellCountperTPKM)
-
-levels(total_samples$time_f)
-  total_samples$treatment_f = factor(total_samples$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  total_samples$time_f = factor(total_samples$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-levels(total_samples$time_f)
-
-
-###================================
-##line plot of all replicates and all subgroups
-
-
-
-p2 <-  ggplot( data = total_samples,aes(y = absCount, x = time_f, group=interaction(day, group),colour=phage_02))+ geom_line()+geom_point()+
-     facet_grid(~kessel)+
-    #coord_trans(y = "log10")+
-    # scale_y_log10(breaks = scales::pretty_breaks())+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="bottom",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          legend.title = element_blank()
-          )
-
-p2
-
- # legend <- g_legend(p2)
-
-  
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/01_abs_count_line.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-###================================
-##percent with all replicates
-
-
-  total_samples_sumTreatment <-aggregate(. ~name, data=total_samples[,c("name","TPKM")], sum, na.rm=TRUE)
-
-total_samples$total_TPKM <- total_samples_sumTreatment[match(total_samples$name,total_samples_sumTreatment$name),"TPKM"]
-total_samples$percent_TPKM <- 100*(total_samples$TPKM/total_samples$total_TPKM)
-
-total_samples$phage_02 <- as.factor(total_samples$phage_02)
-
-levels(total_samples$phage_02)
-
-total_samples$phage_02 <- factor(total_samples$phage_02, levels=c("Lactobacillus_rhamnosus","Lactobacillus_fermentum","Lactobacillus_casei","Lactobacillus_helveticus","Lactococcus_phages","Lactococcus_lactis","Ldel_phages","Lactobacillus_delbrueckii","Sterm_phages","Streptococcus_thermophilus","cow_mito","cow_genome"))
-
-# table(total_samples$phage) %>% length()
-
-
-
-Sterm_colours <- c("#FAA0A0","#FAA0A0","#EB4D4D")
-Ldel_colours <- c("#6CF5A3","#36E37B","#10B552")  
-
-mito_colours <- c("#AFBACC","#BE99AB") # sequential_hcl(5,palette="Grays")[c(4,3)]
-Sterm_colours <- c("#FCC2C2","#EB4D4D")# c("#FAA0A0","#EB4D4D") #c("#FF7D87","#E71D32")    
-Ldel_colours <- c("#6CF5A3","#10B552")  # c("#8CD211","#4C8400")   # c("#5AA700","#2D660A") #brewer.pal(9,name="YlGnBu")[c(4,6)] #sequential_hcl(5,palette="Purples 3")[c(3,2)]
-lactococcus_colours <- c("#5AAAFA","#4178BE")  #sequential_hcl(5,palette="Terrain 2")[c(3,2)]
-rest_colours <-  c("#C5F6FA","#99E9F2","#66D9E8","#3BC9DB") #brewer.pal(9,name="YlOrBr")[c(5,7,8,9)] #sequential_hcl(5,palette="BluGrn")[2:5]
-colours_phages_02 <- c(rest_colours,lactococcus_colours,Ldel_colours,Sterm_colours,mito_colours)
-
-
-
-
-
-p2 <-  ggplot( data = total_samples,aes(y = percent_TPKM, x = time_f, group=interaction(phage_02),fill = phage_02))+ geom_bar( stat="identity")+
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percent copy number")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/02_percent_stacked_bar_allReplicates.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-##=====================================================
-##-----------------------------making dominat subdominat naming
- # levels(as.factor(total_samples$phage))
-sterm_phages_subdominant <- levels(as.factor(total_samples$phage)) %>% grep("Sterm",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Streptococcus phages subdominant") %>% data.frame()
-Ldel_phages_subdominant <- levels(as.factor(total_samples$phage)) %>% grep("Ldel",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus phages subdominant") %>% data.frame()
-Lcas <- levels(as.factor(total_samples$phage)) %>% grep("Lactobacillus_casei_group",.) %>% levels(as.factor(total_samples$phage))[.]  %>% cbind(group=.,group_03="Lactobacillus casei") %>% data.frame()
-Lferm <- levels(as.factor(total_samples$phage)) %>% grep("Lactobacillus_fermentum_subgroup",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus fermentum") %>% data.frame()
-Llac <- levels(as.factor(total_samples$phage)) %>% grep("Lactococcus_lactis_subgroup",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactococcus lactis") %>% data.frame()
-lrha <- levels(as.factor(total_samples$phage)) %>% grep("Lactobacillus_rhamnosus",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus rhamnosus") %>% data.frame()
-Lhelv <- levels(as.factor(total_samples$phage)) %>% grep("Lactobacillus_helveticus",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus helveticus") %>% data.frame()
-Llac_phage <- levels(as.factor(total_samples$phage)) %>% grep("Lactococcus_subgroup",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactococcus phages") %>% data.frame()
-sterm_subdominant <- levels(as.factor(total_samples$phage)) %>% grep("Streptococcus_thermophilus_group",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Streptococcus thermophilus subdominant") %>% data.frame()
-Ldel_subdominant <- levels(as.factor(total_samples$phage)) %>% grep("Lactobacillus_delbrueckii_group_",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus delbreuckii subdominant") %>% data.frame()
-Ldel_phages <- levels(as.factor(total_samples$phage)) %>% grep("Ldel_subgroup_9_phages",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Lactobacillus phages subgroup 9") %>% data.frame()
-Sterm_phages <-  levels(as.factor(total_samples$phage)) %>% grep("Sterm_withoutCluster_phages",.) %>% levels(as.factor(total_samples$phage))[.] %>% cbind(group=.,group_03="Streptococcus phages subgroup 1") %>% data.frame()
-Sterm <- "Streptococcus_thermophilus_group_subgroup_4_bacteria" %>% cbind(group=.,group_03="Streptococcus thermophilus subgroup 4") %>% data.frame()
-Ldel <- "Lactobacillus_delbrueckii_group_subgroup_2_bacteria" %>% cbind(group=.,group_03="Lactobacillus delbrueckii subgroup 2") %>% data.frame()
-cow_mito <- "cow_mito" %>% cbind(group=.,group_03="Cow Mitogenome") %>% data.frame()
-cow_genome <- "cow_genome" %>% cbind(group=.,group_03="Cow Genome") %>% data.frame()
-
-
-all_grouping_03 <- rbind(lrha,Lferm,Lcas,Lhelv,Llac_phage,Llac,Ldel_phages,Ldel_phages_subdominant,Ldel,Ldel_subdominant,Sterm_phages,sterm_phages_subdominant,Sterm,sterm_subdominant,cow_mito,cow_genome)
-
-total_samples$grouping_03 <- all_grouping_03[match(total_samples$phage,all_grouping_03$group),"group_03"]
-table(total_samples$grouping_03 )
-
-
-
-# Sterm_colours <- c("#FAA0A0","#FCC2C2","#EB4D4D","EB4D4D")
-# Ldel_colours <- c("#6CF5A3","#BF3FCD1","#10B552","#088A3C")  
-
-mito_colours <- c("#AFBACC","#BE99AB") # sequential_hcl(5,palette="Grays")[c(4,3)]
-Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-lactococcus_colours <- c("#5AAAFA","#4178BE")  #sequential_hcl(5,palette="Terrain 2")[c(3,2)]
-rest_colours <-  c("#C5F6FA","#99E9F2","#66D9E8","#3BC9DB") #brewer.pal(9,name="YlOrBr")[c(5,7,8,9)] #sequential_hcl(5,palette="BluGrn")[2:5]
-colours_phages_02 <- c(rest_colours,lactococcus_colours,Ldel_colours,Sterm_colours,mito_colours)
-
-
-
-
-
-p2 <-  ggplot( data = total_samples,aes(y = percent_TPKM, x = time_f, group=interaction(grouping_03),fill = grouping_03))+ geom_bar( stat="identity")+
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percent copy number")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-
-  p2
-   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/03_percent_stacked_bar_allReplicates_newLabeling.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-##=====================================================
-##-----------------------------merge replicates
-
- genomeAverage_allSpecies_summed_meaned <-aggregate(. ~time+kessel+grouping_03, data=total_samples[,c("time","kessel","grouping_03","absCount")], mean, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_min <-aggregate(. ~time+kessel+grouping_03, data=total_samples[,c("time","kessel","grouping_03","absCount")], min, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~time+kessel+grouping_03, data=total_samples[,c("time","kessel","grouping_03","absCount")], max, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~time+kessel+grouping_03, data=total_samples[,c("time","kessel","grouping_03","absCount")], max, na.rm=TRUE)
-
-  genomeAverage_allSpecies_summed_ribbon <- data.frame(time=genomeAverage_allSpecies_summed_meaned$time,kessel=genomeAverage_allSpecies_summed_meaned$kessel,group=genomeAverage_allSpecies_summed_meaned$grouping_03,meanAbs=genomeAverage_allSpecies_summed_meaned$absCount,minAbs=genomeAverage_allSpecies_summed_min$absCount,maxAbs=genomeAverage_allSpecies_summed_max$absCount)
-  
-  
-  genomeAverage_allSpecies_summed_ribbon$time_f = factor(genomeAverage_allSpecies_summed_ribbon$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  # genomeAverage_allSpecies_summed_ribbon$genus <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,1]
-  # genomeAverage_allSpecies_summed_ribbon$species_01 <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,2]
-  # genomeAverage_allSpecies_summed_ribbon$species <- paste(genomeAverage_allSpecies_summed_ribbon$genus, genomeAverage_allSpecies_summed_ribbon$species_01,sep="_")
-
-  
-  
- p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon,aes(y = meanAbs, x = time_f, group=group,colour=group))+
-geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=group),linetype=0, alpha=0.3)+
-    geom_line()+
-    facet_grid(~kessel)+
-    scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-   scale_fill_manual(values=colours_phages_02)+
-   scale_color_manual(values=colours_phages_02)+
-    #annotation_logticks()+
-    labs("",
-         x="",
-         y="TPKM")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  p1
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/04_abscount_ribbon.pdf",width=8,height=8,paper='special')
-p1
-
-dev.off()
-
-##=======================================
-##stacked lineplot
-
-genomeAverage_allSpecies_summed_ribbon$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon$time_f) )
-
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon, aes(x = time_f_02, y = meanAbs, fill = group)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    scale_fill_manual(values=colours_phages_02)+
-   scale_color_manual(values=colours_phages_02)+
-   labs("",
-         x="time",
-         y="abs count")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/Bacteria/stacked_line_bacteria_meanAbs.pdf",width=8,height=12,paper='special')
-p1
-dev.off()
-
-genomeAverage_allSpecies_summed_ribbon$log10meanAbs <- log10(genomeAverage_allSpecies_summed_ribbon$meanAbs)
-
-
-
-###================================
-##percent
-total_samples$trement_03 <- paste(total_samples$kessel,total_samples$time,sep="_")
-
-genomeAverage_totalTPKM_perName <-aggregate(. ~trement_03+grouping_03, data=total_samples[,c("trement_03","grouping_03","TPKM")], mean, na.rm=TRUE)
-
-  genomeAverage_totalTPKM_perName$time <- str_split_fixed(genomeAverage_totalTPKM_perName$trement_03, "_", 2)[,2]
-  genomeAverage_totalTPKM_perName$kessel <- str_split_fixed(genomeAverage_totalTPKM_perName$trement_03, "_", 2)[,1]
-  
-  genomeAverage_totalTPKM_perName_summed <-aggregate(. ~trement_03 , data=genomeAverage_totalTPKM_perName[,c("trement_03","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_totalTPKM_perName$total_TPKM <- genomeAverage_totalTPKM_perName_summed[match(genomeAverage_totalTPKM_perName$trement_03,genomeAverage_totalTPKM_perName_summed$trement_03),"TPKM"]
-
-
-  genomeAverage_totalTPKM_perName$percent_TPKM <- 100*(genomeAverage_totalTPKM_perName$TPKM/genomeAverage_totalTPKM_perName$total_TPKM)
-
-  
-# genomeAverage_allSpecies_summed_ribbon
-# 
-# genomeAverage_totalTPKM_perName$trement_03 <- as.factor(genomeAverage_totalTPKM_perName$trement_03)
-# 
-# levels(genomeAverage_totalTPKM_perName$grouping_03)
-# 
-# total_samples$phage_02 <- factor(total_samples$phage_02, levels=c("Lactobacillus_rhamnosus","Lactobacillus_fermentum","Lactobacillus_casei","Lactobacillus_helveticus","Lactococcus_phages","Lactococcus_lactis","Ldel_phages","Lactobacillus_delbrueckii","Sterm_phages","Streptococcus_thermophilus","cow_mito","cow_genome"))
-
-# table(total_samples$phage) %>% length()
-
-
-levels(genomeAverage_totalTPKM_perName$time)
-  # genomeAverage_totalTPKM_perName$treatment_f = factor(genomeAverage_totalTPKM_perName$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  genomeAverage_totalTPKM_perName$time_f = factor(genomeAverage_totalTPKM_perName$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-levels(genomeAverage_totalTPKM_perName$time_f)
-levels(genomeAverage_totalTPKM_perName$grouping_03)
-
-p2 <-  ggplot( data = genomeAverage_totalTPKM_perName,aes(y = percent_TPKM, x = time_f, group=interaction(grouping_03),fill = grouping_03))+ geom_bar( stat="identity")+
-     facet_grid(~kessel)+
-    labs("",
-         x="time",
-         y="percent copy number")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          legend.title = element_blank()
-          )
-
-  p2
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/05_percent_stacked_bar_meanReplicates.pdf",width=8,height=8,paper='special')
-p2
-
-dev.off()
-
-##=======================================
-##stacked lineplot
-
-genomeAverage_totalTPKM_perName$time_f_02 <- as.numeric(gsub("h","",genomeAverage_totalTPKM_perName$time_f) )
-
-
-p1 <- ggplot(genomeAverage_totalTPKM_perName, aes(x = time_f_02, y = percent_TPKM, fill = grouping_03)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #annotation_logticks()+
-    scale_fill_manual(values=colours_phages_02)+
-   scale_color_manual(values=colours_phages_02)+
-   labs("",
-         x="time [h]",
-         y="rel. abundance [%]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="right",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          legend.title = element_blank()
-          )
-p1
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/06_percent_stacked_line_meanReplicates.pdf",width=9.8,height=4,paper='special')
-p1
-dev.off()
-
-
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/07_percent_stacked_both_meanReplicates.pdf",width=8,height=12,paper='special')
-grid.arrange(p2,p1,nrow=2)
-dev.off()
-
-##=================stacked lineplot without subdominant
-
-unique(genomeAverage_totalTPKM_perName$grouping_03)
-
-genomeAverage_totalTPKM_perName_dominantOnly <- genomeAverage_totalTPKM_perName[genomeAverage_totalTPKM_perName$grouping_03 %in% c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant"),]
-
-genomeAverage_totalTPKM_perName_dominantOnly$grouping_03 <- droplevels(genomeAverage_totalTPKM_perName_dominantOnly$grouping_03)
-
-unique(genomeAverage_totalTPKM_perName_dominantOnly$grouping_03)
-
-##calculate average
-
-  genomeAverage_totalTPKM_perName_dominantOnly_summed <-aggregate(. ~trement_03 , data=genomeAverage_totalTPKM_perName_dominantOnly[,c("trement_03","TPKM")], sum, na.rm=TRUE)
-
-  genomeAverage_totalTPKM_perName_dominantOnly$total_TPKM <- genomeAverage_totalTPKM_perName_dominantOnly_summed[match(genomeAverage_totalTPKM_perName_dominantOnly$trement_03,genomeAverage_totalTPKM_perName_dominantOnly_summed$trement_03),"TPKM"]
-
-
-
-  genomeAverage_totalTPKM_perName_dominantOnly$percent_TPKM <- 100*(genomeAverage_totalTPKM_perName_dominantOnly$TPKM/genomeAverage_totalTPKM_perName_dominantOnly$total_TPKM)
-
-
-
-genomeAverage_totalTPKM_perName_dominantOnly$time_f_02 <- as.numeric(gsub("h","",genomeAverage_totalTPKM_perName_dominantOnly$time_f) )
-
-##only keep K1
-
-genomeAverage_totalTPKM_perName_dominantOnly <- genomeAverage_totalTPKM_perName_dominantOnly[which(genomeAverage_totalTPKM_perName_dominantOnly$kessel=="K1"),]
-
-##plotting
-
-Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-
-colours_dominant<- c(Ldel_colours,Sterm_colours)
-
-
-p1 <- ggplot(genomeAverage_totalTPKM_perName_dominantOnly, aes(x = time_f_02, y = percent_TPKM, fill = grouping_03)) + geom_area(position = 'stack')+
-#facet_grid(~kessel)+
-    scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #annotation_logticks()+
-    scale_fill_manual(values=colours_dominant)+
-   scale_color_manual(values=colours_dominant)+
-   labs("",
-         x="time [h]",
-         y="rel. abundance [%]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="right",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          legend.title = element_blank()
-          )
-p1
-  
-   svg("~/Desktop/posters/2019_ISCB/figures/dominant_relAbundance.svg",width=5,height=5)
-p1
- dev.off()
- 
-    svg("~/Desktop/posters/2019_ISCB/figures/dominant_relAbundance_noLegend.svg",width=4,height=5)
-p1+theme(legend.position="none")
- dev.off()
-###================================
-##absaolut meaned treatment of dominant species
-
-
-dominant <- c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant")
-
-levels(genomeAverage_allSpecies_summed_ribbon$group)
-
-genomeAverage_allSpecies_summed_ribbon_dominant <- genomeAverage_allSpecies_summed_ribbon[genomeAverage_allSpecies_summed_ribbon$group %in% dominant,]
-
-genomeAverage_allSpecies_summed_ribbon_dominant$group <- droplevels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-# table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-genomeAverage_allSpecies_summed_ribbon_dominant$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_dominant$time_f) )
-# levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-
-##--------colours
-
-Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-
-colours_dominant<- c(Ldel_colours,Sterm_colours)
-
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon_dominant, aes(x = time_f_02, y = meanAbs, fill = group)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    scale_fill_manual(values=colours_dominant)+
-   scale_color_manual(values=colours_dominant)+
-      scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-   labs("",
-         x="time",
-         y="absolute abundance [CFU/g]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/08_absCount_dominant.pdf",width=4.5,height=3.8,paper='special')
-p1
-dev.off()
-
-###================================
-##absaolut meaned treatment of dominant species ONLY K1
-
-genomeAverage_allSpecies_summed_ribbon_dominant_K1 <- genomeAverage_allSpecies_summed_ribbon_dominant[which(genomeAverage_allSpecies_summed_ribbon_dominant$kessel=="K1"),]
-
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon_dominant_K1, aes(x = time_f_02, y = meanAbs, fill = group)) + geom_area(position = 'stack')+
-#facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    scale_fill_manual(values=colours_dominant)+
-   scale_color_manual(values=colours_dominant)+
-      scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-   labs("",
-         x="time",
-         y="absolute abundance [CFU/g]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-
-   svg("~/Desktop/posters/2019_ISCB/figures/dominant_absAbundance.svg",width=4,height=5)
-p1
- dev.off()
-###================================
-##absaolut meaned treatment of subdominant species
-# levels(genomeAverage_allSpecies_summed_ribbon$group)
-
-subdominant <- c("Lactobacillus rhamnosus","Lactobacillus fermentum" ,"Lactobacillus casei","Lactobacillus helveticus","Lactococcus phages","Lactococcus lactis")
-
-genomeAverage_allSpecies_summed_ribbon_subdominant <- genomeAverage_allSpecies_summed_ribbon[genomeAverage_allSpecies_summed_ribbon$group %in% subdominant,]
-
-genomeAverage_allSpecies_summed_ribbon_subdominant$group <- droplevels(genomeAverage_allSpecies_summed_ribbon_subdominant$group)
-# table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-genomeAverage_allSpecies_summed_ribbon_subdominant$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_subdominant$time_f) )
-# levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-
-##--------colours
-
-
-mito_colours <- c("#AFBACC","#BE99AB") # sequential_hcl(5,palette="Grays")[c(4,3)]
-lactococcus_colours <- c("#5AAAFA","#4178BE")  #sequential_hcl(5,palette="Terrain 2")[c(3,2)]
-rest_colours <-  c("#C5F6FA","#99E9F2","#66D9E8","#3BC9DB") #brewer.pal(9,name="YlOrBr")[c(5,7,8,9)] #sequential_hcl(5,palette="BluGrn")[2:5]
-subdominant_colors <- c(rest_colours,lactococcus_colours,mito_colours)
-
-
-
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon_subdominant, aes(x = time_f_02, y = meanAbs, fill = group)) + geom_area(position = 'stack')+
-facet_grid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    scale_fill_manual(values=subdominant_colors)+
-   scale_color_manual(values=subdominant_colors)+
-      scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-   labs("",
-         x="time",
-         y="absolute abundance [CFU/g]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/09_absCount_subdominant.pdf",width=4.5,height=3.8,paper='special')
-p1
-dev.off()
-
-
-##==========================================
-##-----------Lde and Sterm phages and
-
-
-
-
- # levels(genomeAverage_allSpecies_summed_ribbon$group)
-
-# phagePlot <- c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant")
-
-dominant <- c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant")
-
-# levels(genomeAverage_allSpecies_summed_ribbon$group)
-
-naming_spcies <-data.frame(group=c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant"),species_02=c(rep("L. delbrueckii",4),rep("S. thermophilus",4)))
-
-genomeAverage_allSpecies_summed_ribbon_dominant <- genomeAverage_allSpecies_summed_ribbon[genomeAverage_allSpecies_summed_ribbon$group %in% dominant,]
-
-genomeAverage_allSpecies_summed_ribbon_dominant$group <- droplevels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-# table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-genomeAverage_allSpecies_summed_ribbon_dominant$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_dominant$time_f) )
-# levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-
-genomeAverage_allSpecies_summed_ribbon_dominant$species_02 <- naming_spcies[match(genomeAverage_allSpecies_summed_ribbon_dominant$group,naming_spcies$group),"species_02"]
-
-##--------colours
-
-Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-
-colours_dominant<- c(Ldel_colours,Sterm_colours)
-
-
-# 
- genomeAverage_allSpecies_summed_meaned <-aggregate(. ~trement_03+grouping_03, data=total_samples[,c("trement_03","grouping_03","PTR")], mean, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_min <-aggregate(. ~trement_03+grouping_03, data=total_samples[,c("trement_03","grouping_03","PTR")], min, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~trement_03+grouping_03, data=total_samples[,c("trement_03","grouping_03","PTR")], max, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~trement_03+grouping_03, data=total_samples[,c("trement_03","grouping_03","PTR")], max, na.rm=TRUE)
-
-      genomeAverage_allSpecies_summed_meaned$time <- str_split_fixed(genomeAverage_allSpecies_summed_meaned$trement_03, "_", 2)[,2]
-  genomeAverage_allSpecies_summed_meaned$kessel <- str_split_fixed(genomeAverage_allSpecies_summed_meaned$trement_03, "_", 2)[,1]
-
-#   
-   genomeAverage_allSpecies_summed_ribbon_PTR <- data.frame(time=genomeAverage_allSpecies_summed_meaned$time,kessel=genomeAverage_allSpecies_summed_meaned$kessel,group=genomeAverage_allSpecies_summed_meaned$grouping_03,meanAbs=genomeAverage_allSpecies_summed_meaned$PTR,minAbs=genomeAverage_allSpecies_summed_min$PTR,maxAbs=genomeAverage_allSpecies_summed_max$PTR)
-#   
-# 
-  genomeAverage_allSpecies_summed_ribbon_PTR$time_f = factor(genomeAverage_allSpecies_summed_ribbon_PTR$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  # genomeAverage_allSpecies_summed_ribbon$genus <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,1]
-  # genomeAverage_allSpecies_summed_ribbon$species_01 <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,2]
-  # genomeAverage_allSpecies_summed_ribbon$species <- paste(genomeAverage_allSpecies_summed_ribbon$genus, genomeAverage_allSpecies_summed_ribbon$species_01,sep="_")
-
-  genomeAverage_allSpecies_summed_ribbon_PTR$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_PTR$time_f) )
-  
- p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon_dominant,aes(y = meanAbs, x = time_f_02, group=group,colour=group))+
-geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=group),linetype=0, alpha=0.3)+
-    geom_line()+
-    facet_grid(species_02~kessel)+
-    scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-   scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-   scale_fill_manual(values=colours_dominant)+
-   scale_color_manual(values=colours_dominant)+
-    #annotation_logticks()+
-    labs("",
-         x="time [h]",
-         y="abs. abundance [CFU/g]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  p1
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/14_ribbon_phages_and_dominant.pdf",width=4.5,height=3,paper='special')
-p1
-
-dev.off()
-
-
-###--------------------------Mean replicates
-
-
- genomeAverage_allSpecies_summed_meaned <-aggregate(. ~trement_03+grouping_03, data=genomeAverage_allSpecies_summed_genomes_ptr[,c("trement_03","grouping_03","PTR")], mean, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_min <-aggregate(. ~trement_03+grouping_03, data=genomeAverage_allSpecies_summed_genomes_ptr[,c("trement_03","grouping_03","PTR")], min, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~trement_03+grouping_03, data=genomeAverage_allSpecies_summed_genomes_ptr[,c("trement_03","grouping_03","PTR")], max, na.rm=TRUE)
-  genomeAverage_allSpecies_summed_max <-aggregate(. ~trement_03+grouping_03, data=genomeAverage_allSpecies_summed_genomes_ptr[,c("trement_03","grouping_03","PTR")], max, na.rm=TRUE)
-
-      genomeAverage_allSpecies_summed_meaned$time <- str_split_fixed(genomeAverage_allSpecies_summed_meaned$trement_03, "_", 2)[,2]
-  genomeAverage_allSpecies_summed_meaned$kessel <- str_split_fixed(genomeAverage_allSpecies_summed_meaned$trement_03, "_", 2)[,1]
-  
-  
-  genomeAverage_allSpecies_summed_ribbon_PTR <- data.frame(time=genomeAverage_allSpecies_summed_meaned$time,kessel=genomeAverage_allSpecies_summed_meaned$kessel,group=genomeAverage_allSpecies_summed_meaned$grouping_03,meanAbs=genomeAverage_allSpecies_summed_meaned$PTR,minAbs=genomeAverage_allSpecies_summed_min$PTR,maxAbs=genomeAverage_allSpecies_summed_max$PTR)
-  
-  
-
-  
-  genomeAverage_allSpecies_summed_ribbon_PTR$time_f = factor(genomeAverage_allSpecies_summed_ribbon_PTR$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-  # genomeAverage_allSpecies_summed_ribbon$genus <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,1]
-  # genomeAverage_allSpecies_summed_ribbon$species_01 <- str_split_fixed(genomeAverage_allSpecies_summed_ribbon$group, "_", 6)[,2]
-  # genomeAverage_allSpecies_summed_ribbon$species <- paste(genomeAverage_allSpecies_summed_ribbon$genus, genomeAverage_allSpecies_summed_ribbon$species_01,sep="_")
-
-  
-  
- p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon_PTR,aes(y = meanAbs, x = time_f, group=group,colour=group))+
-geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=group),linetype=0, alpha=0.3)+
-    geom_line()+
-    facet_grid(~kessel)+
-    scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-   scale_fill_manual(values=colours_phages_02)+
-   scale_color_manual(values=colours_phages_02)+
-    #annotation_logticks()+
-    labs("",
-         x="",
-         y="normalized coverage [TPKM]")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  p1
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/12_PTR_means.pdf",width=9.8,height=8,paper='special')
-p1
-
-dev.off()
-###--------------------------boxplots dominant
-
-##absaolut meaned treatment of dominant species
-
-# dominant <- c("Lactobacillus phages subgroup 9","Lactobacillus phages subdominant","Lactobacillus delbrueckii subgroup 2","Lactobacillus delbreuckii subdominant","Streptococcus phages subgroup 1","Streptococcus phages subdominant","Streptococcus thermophilus subgroup 4","Streptococcus thermophilus subdominant")
-
-dominant <- c("Lactobacillus delbrueckii subgroup 2","Streptococcus thermophilus subgroup 4")
-
-
-genomeAverage_allSpecies_summed_genomes_ptr$group <- as.factor(genomeAverage_allSpecies_summed_genomes_ptr$group)
-genomeAverage_allSpecies_summed_ribbon_dominant <- genomeAverage_allSpecies_summed_genomes_ptr[genomeAverage_allSpecies_summed_genomes_ptr$grouping_03 %in% dominant,]
-
-genomeAverage_allSpecies_summed_ribbon_dominant$grouping_03 <- droplevels(genomeAverage_allSpecies_summed_ribbon_dominant$grouping_03)
-# table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-genomeAverage_allSpecies_summed_ribbon_dominant$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_dominant$time_f) )
-# levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-
-##--------colours
-
-# Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# # Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-# 
-# colours_dominant<- c(Ldel_colours,Sterm_colours)
-# 
-
-bacteria_dominant <-  c("#10B552","#EB4D4D") 
-
-genomeAverage_allSpecies_summed_ribbon_dominant$time_f_02
-
-p1 <- ggplot(genomeAverage_allSpecies_summed_ribbon_dominant, aes(x = time_f, y = PTR, fill = grouping_03)) + geom_boxplot()+
-rid(~kessel)+
-    #scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-    #annotation_logticks()+
-    scale_fill_manual(values=bacteria_dominant)+
-   scale_color_manual(values=bacteria_dominant)+
-      # scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-   labs("",
-         x="time",
-         y="copy number")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
- pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/13_ptr_dominant_boxplot",width=8,height=8,paper='special')
-p1
-dev.off()
-
-
-###--------------------------ribon bacteria and phages dominant
-
-bacteria_dominant <-  c("#6CF5A3","#10B552","#FAA0A0","#EB4D4D") 
-
-# Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-
-# 
-# dominant <- c("Lactobacillus delbrueckii subgroup 2","Streptococcus thermophilus subgroup 4","Lactobacillus phages subgroup 9","Streptococcus phages subgroup 1")
-# 
-# 
-# genomeAverage_allSpecies_summed_ribbon_PTR$group <- as.factor(genomeAverage_allSpecies_summed_ribbon_PTR$group)
-# genomeAverage_allSpecies_summed_ribbon_PTR_dominanat <- genomeAverage_allSpecies_summed_ribbon_PTR[which(genomeAverage_allSpecies_summed_ribbon_PTR$group %in% dominant),]
-# 
-# genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$group <- droplevels(genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$group)
-# # table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-#   genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f = factor(genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-# 
-# genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f) )
-# # levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-# 
-# 
-# table(genomeAverage_allSpecies_summed_ribbon_PTR$group)
-#   table(genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$group)
-#   
-#   
-#  p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon_PTR_dominanat,aes(y = meanAbs, x = time_f_02, group=group,colour=group))+
-# geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=group),linetype=0, alpha=0.3)+
-#     geom_line()+
-#     rid(~kessel)+
-#    # scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-#    scale_fill_manual(values=bacteria_dominant)+
-#    scale_color_manual(values=bacteria_dominant)+
-#     #annotation_logticks()+
-#     labs("",
-#          x="",
-#          y="Peak-to-trough-ratio")+
-#     theme_classic()+
-#     theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-#       #axis.text.x = element_blank(),
-#           legend.position="right"
-#           #legend.justification=c(1,1), legend.position=c(1,1),
-#           #legend.title = element_blank()
-#           )
-#   p1
-# pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/14_PTR_ribbon.pdf",width=8,height=8,paper='special')
-# p1
-# 
-# dev.off()
-
-
-###--------------------------ribon dominant
-bacteria_dominant <-  c("#10B552","#EB4D4D") 
-
-
-dominant <- c("Lactobacillus delbrueckii subgroup 2","Streptococcus thermophilus subgroup 4")
-
-
-genomeAverage_allSpecies_summed_ribbon_PTR$group <- as.factor(genomeAverage_allSpecies_summed_ribbon_PTR$group)
-genomeAverage_allSpecies_summed_ribbon_PTR_dominanat <- genomeAverage_allSpecies_summed_ribbon_PTR[genomeAverage_allSpecies_summed_ribbon_PTR$group %in% dominant,]
-
-genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$group <- droplevels(genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$group)
-# table(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-  genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f = factor(genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f_02 <- as.numeric(gsub("h","",genomeAverage_allSpecies_summed_ribbon_PTR_dominanat$time_f) )
-# levels(genomeAverage_allSpecies_summed_ribbon_dominant$group)
-
-
-
- p1 <-  ggplot( data = genomeAverage_allSpecies_summed_ribbon_PTR_dominanat,aes(y = meanAbs, x = time_f_02, group=group,colour=group))+
-geom_ribbon(aes(ymin = minAbs, ymax = maxAbs,fill=group),linetype=0, alpha=0.3)+
-    geom_line()+
-    facet_grid(~kessel)+
-   # scale_y_log10(breaks =c(100,1000,10000,100000,1000000,10000000,100000000,400000000),labels=c(100,1000,10000,100000,1000000,10000000,100000000,400000000))+
-   scale_fill_manual(values=bacteria_dominant)+
-   scale_color_manual(values=bacteria_dominant)+
-    scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #annotation_logticks()+
-    labs("",
-         x="time [h]",
-         y="Peak-to-trough-ratio")+
-    theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  p1
-pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/14_PTR_ribbon.pdf",width=4.5,height=3,paper='special')
-p1
-
-dev.off()
-
-
-```
-
-
-Here I have to sum the coverage of all OG per group. 
-
-For the clusters without OG we have to average the coverage per genome and the sum the averages of all genomes in the cluster. 
-
-look at the variation over a single genomes for the subgroups that have maps.
-
-
-### MetaSNV of Reference DB
-[MetaSNV](http://metasnv.embl.de/tutorial.html) tutorial. 
-
-```{bash}
-date=20190513
-
-#rm -r /home/vincent/Projects/2019_pilotplant/06_MetaSNV/
-mkdir -p /home/vincent/Projects/2019_pilotplant/06_MetaSNV/{99_logs,01_analysis_01}
-
-  threads=30
-
-###------------make a file file
-  num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-    do
-    echo ${num}"/37  :" ${names}
-    num=$((num+1))
-
-echo "/home/vincent/Projects/2019_pilotplant/05_mapping2DB/"${names}"/bwa2DB/"${names}"_rawIllumina_bwamem_sorted.bam" >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/files_MetaSNV.txt
-  
-  done
-
-###------------prep metaSNV
-
-cat /archiv/Phage_DB/BLAST/20190519/Databasefinal/20190519_phageDB_02.txt \
-  /archiv/Dialact/ReferenceDatabase/${date}/Databasefinal/${date}_BacteriaDB.txt | cut -f 1,4,5 > \
-  /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/Phage_Bacteria_Genes_DB.bed
-
-
-##----------shorten reference DB
-sed 's/\s.*$//' /archiv/Dialact/ReferenceDatabase/20190513/Final_Phage_Bacteria_DB/seq/Final_Phage_Bacteria_DB_02.fna > /archiv/Dialact/ReferenceDatabase/20190513/Final_Phage_Bacteria_DB/seq/Final_Phage_Bacteria_DB_02_short.fna
-
-##----------creating dest file file
-
-head -9 /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/files_MetaSNV.txt > /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/files_MetaSNV.test
-
-##playing up
-#di_K1_0h (head 3)
-#di_K2_10h (head 10)
-
-###------------run metaSNV
-rm -r /home/vincent/Projects/2019_pilotplant/06_MetaSNV/01_analysis_01
-
-metaSNV.py /home/vincent/Projects/2019_pilotplant/06_MetaSNV/01_analysis_03 /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/files_MetaSNV.txt \
-  /archiv/Dialact/ReferenceDatabase/20190513/Final_Phage_Bacteria_DB/seq/Final_Phage_Bacteria_DB_02_short.fna \
-  --threads ${threads} --db_ann /home/vincent/Projects/2019_pilotplant/06_MetaSNV/99_logs/Phage_Bacteria_Genes_DB.bed  --print-commands
-
-###------------run post metaSNV
-
-metaSNV_post.py /home/vincent/Projects/2019_pilotplant/06_MetaSNV/01_analysis_03 -b 2.0 -d 1.0 -m2 -c 20 -p 0.01 
-
-###Move local---------------------
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV/01_analysis_03/filtered/pop/L_del-la_FAM12107.filtered.freq /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV/01_analysis_03/filtered/pop/S_sal-th_FAM23977.filtered.freq /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling
-
-
-sed 's/_rawIllumina_bwamem_sorted.bam//g' /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/S_sal-th_FAM23977.filtered.freq > \
-  /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/Sterm_snpcalling.txt
-  
-
-sed 's/_rawIllumina_bwamem_sorted.bam//g' /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/L_del-la_FAM12107.filtered.freq> \
-  /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/Ldel_snpcalling.txt
-```
-
-I should a [muller diagramm](https://cran.r-project.org/web/packages/ggmuller/vignettes/ggmuller.html)
-
-```{r}
-
-library(readr)
-
-
-Ldel_snpcalling <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/Ldel_snpcalling.txt","\t", escape_double = FALSE, trim_ws = TRUE)
-Sterm_snpcalling <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/Sterm_snpcalling.txt","\t", escape_double = FALSE, trim_ws = TRUE)
-
-dim(Sterm_snpcalling)
-dim(Ldel_snpcalling)
-
-Ldel_snpcalling_long <- gather(Ldel_snpcalling, name, snp_ratio, di_K1_10h:th_K2_8h, factor_key=TRUE)
-Sterm_snpcalling_long <- gather(Sterm_snpcalling, name, snp_ratio, di_K1_10h:th_K1_8h, factor_key=TRUE)
-
-Ldel_snpcalling_long$species <- "L. delbrueckii"
-Sterm_snpcalling_long$species <- "S. thermophilus"
-
-##=========================
-##----------------Ldel
-##=========================
-
-##===================Histogramm
-   Ldel_snpcalling_long$day <- str_split_fixed(Ldel_snpcalling_long$name, "_", 3)[,1]
-  Ldel_snpcalling_long$kessel <- str_split_fixed(Ldel_snpcalling_long$name, "_", 3)[,2]
-  Ldel_snpcalling_long$time <- str_split_fixed(Ldel_snpcalling_long$name, "_", 3)[,3]
-  Ldel_snpcalling_long$treatment <- paste0(Ldel_snpcalling_long$day,"_",Ldel_snpcalling_long$kessel)
- 
-  Ldel_snpcalling_long$treatment_f = factor(Ldel_snpcalling_long$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  Ldel_snpcalling_long$time_f = factor(Ldel_snpcalling_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-
-  ggplot(Ldel_snpcalling_long,aes(x=snp_ratio, group=interaction(time),fill = time))+ geom_histogram()+ 
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percent copy number")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   # scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  
-  ##===================Line
-
-#   Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-  
-  Ldel_colour <- "#10B552"
-  Ldel_snpcalling_long$time_f_02 <- as.character(gsub("h","",Ldel_snpcalling_long$time_f) )
-  Ldel_snpcalling_long$time_f_02 = factor(Ldel_snpcalling_long$time_f_02, levels=c("0","2","4","6","8","10","12","24"))
-
-  Ldel_snpcalling_long$abs_snp_ratio <- abs(Ldel_snpcalling_long$snp_ratio)
-  
-  Ldel_snpcalling_long_cleanded <- Ldel_snpcalling_long[Ldel_snpcalling_long$snp_ratio>-1,]
-  
-  p1 <- ggplot(Ldel_snpcalling_long_cleanded,aes(x=time_f_02,y=abs_snp_ratio,group=X1,color=species))+ geom_line(size=0.2, alpha=.3)+ 
-     facet_grid(kessel~day)+
-    labs("",
-         x="time [h]",
-         y="SNP ratio")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-       scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_Ldel_line_SNP.pdf",width=4.5,height=3,paper='special')
-p1
-
-dev.off()
-  
-##=========================
-##----------------Sterm
-##=========================
-
-##===================Histogramm
-   Sterm_snpcalling_long$day <- str_split_fixed(Sterm_snpcalling_long$name, "_", 3)[,1]
-  Sterm_snpcalling_long$kessel <- str_split_fixed(Sterm_snpcalling_long$name, "_", 3)[,2]
-  Sterm_snpcalling_long$time <- str_split_fixed(Sterm_snpcalling_long$name, "_", 3)[,3]
-  Sterm_snpcalling_long$treatment <- paste0(Sterm_snpcalling_long$day,"_",Sterm_snpcalling_long$kessel)
- 
-  Sterm_snpcalling_long$treatment_f = factor(Sterm_snpcalling_long$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  Sterm_snpcalling_long$time_f = factor(Sterm_snpcalling_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-
-  ggplot(Sterm_snpcalling_long,aes(x=snp_ratio, group=interaction(time),fill = time))+ geom_histogram()+ 
-     facet_grid(kessel~day)+
-    labs("",
-         x="time",
-         y="percent copy number")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   # scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  
-  ##===================Line
-
-#   Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-  
-  Sterm_colour <- "#EB4D4D"
-  Sterm_snpcalling_long$time_f_02 <- as.character(gsub("h","",Sterm_snpcalling_long$time_f) )
-  Sterm_snpcalling_long$time_f_02 = factor(Sterm_snpcalling_long$time_f_02, levels=c("0","2","4","6","8","10","12","24"))
-
-  Sterm_snpcalling_long$abs_snp_ratio <- abs(Sterm_snpcalling_long$snp_ratio)
-  
-  p1 <- ggplot(Sterm_snpcalling_long,aes(x=time_f_02,y=abs_snp_ratio,group=X1,color=species))+ geom_line(size=0.2, alpha=.3)+ 
-     facet_grid(kessel~day)+
-    labs("",
-         x="time [h]",
-         y="alternative allel frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-       scale_color_manual(values=Sterm_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_Sterm_line_SNP.pdf",width=4.5,height=3,paper='special')
-p1
-
-dev.off()
-
-```
-Currently the problem of the SNVcalling is that the reads are recruted by different genomes therefor we have only very little coverage per genome and therefore only very few SNP calling. 
-I should do the SNP calling on the assembled genome or reduce to the reference library for SNP calling. 
 
 
 ##Mapping colony picking strains to ONT-Ref
