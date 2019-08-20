@@ -11,17 +11,437 @@ knitr::opts_chunk$set(message=FALSE, echo=FALSE, eval=FALSE)
 
 ```
 
-# Some ideas
+#isolates
 
-####COPRO-SEQ
+### renaming
 
-[COPRO-SEQ](https://github.com/nmcnulty/COPRO-Seq) by Jeff Gordon could be an interesting approach to track different strain in a time course.
+```{bash}
 
-####Musicc
+#old labels
+cat /archiv/Projects/2018_Culturomics/02_script/names_changed.txt
+#new labels
+181213_3	L70	mst3
+181213_4	L44	mst10
+181213_5	S50	mst1
+181213_6	L108	mst7
+181213_7	S72	mst2
+181213_8	L99	mst8
+181213_10	L104	mst6
+181213_11	L80	mst5
+181213_12	L35	mst9
+181213_13	L71	mst4
 
-[Musicc](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-015-0610-8) by [Elhanan Boirenstein](http://borensteinlab.com/software.html) could be an other interesting aproach to look at species/strain diversity. 
-####PopCoGen
-(PopCoGen)[https://github.com/philarevalo/PopCOGenT] approach for strain identification.
+```
+
+
+
+###FastQC
+In a first step we creat [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) reports for all the libraries. 
+These are then visualized with [MultiQC](https://multiqc.info/)
+
+```{bash fastqc}
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+threads=8
+
+mkdir -p $mainPath/01_rawData/IlluminaFastQC/
+
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed.txt)
+  do
+  echo ${id}
+
+    
+    fastqc $mainPath/01_rawData/fastq/gz/${id}_R1.fastq.gz -t ${threads} -o $mainPath/01_rawData/IlluminaFastQC/
+    fastqc $mainPath/01_rawData/fastq/gz/${id}_R2.fastq.gz -t ${threads} -o $mainPath/01_rawData/IlluminaFastQC/
+    
+  done
+  mkdir -p $mainPath/01_rawData/IlluminaFastQC/Multiqc,output_file='test.html')
+
+  
+  multiqc $mainPath/01_rawData/IlluminaFastQC/ -o $mainPath/01_rawData/IlluminaFastQC/Multiqc
+
+##Merging both RMK202
+
+zcat $mainPath/01_rawData/fastq/gz/Konserve_202_R1.fastq.gz $mainPath/01_rawData/fastq/gz/Versand_202_R1.fastq.gz | gzip > $mainPath/01_rawData/fastq/gz/RMK202_R1.fastq.gz
+
+zcat $mainPath/01_rawData/fastq/gz/Konserve_202_R2.fastq.gz $mainPath/01_rawData/fastq/gz/Versand_202_R2.fastq.gz | gzip > $mainPath/01_rawData/fastq/gz/RMK202_R2.fastq.gz
+
+##Merging all isolates
+
+zcat $mainPath/01_rawData/fastq/gz/L104_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L108_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L35_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L39_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L44_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L70_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L71_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L80_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L99_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/S50_R1.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/S72_R1.fastq.gz \
+  | gzip > $mainPath/01_rawData/fastq/gz/isolates_R1.fastq.gz
+
+zcat $mainPath/01_rawData/fastq/gz/L104_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L108_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L35_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L39_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L44_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L70_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L71_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L80_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/L99_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/S50_R2.fastq.gz \
+  $mainPath/01_rawData/fastq/gz/S72_R2.fastq.gz \
+  | gzip > $mainPath/01_rawData/fastq/gz/isolates_R2.fastq.gz
+
+##Merging both RMK202
+
+base=$mainPath/01_rawData/fastq/gz/
+
+zcat $base/Konserve_202_R1.fastq.gz $base/Versand_202_R1.fastq.gz $base/RMK202_old_R1.fastq.gz  | gzip > $base/RMK202_withOld_R1.fastq.gz
+
+zcat $base/Konserve_202_R2.fastq.gz $base/Versand_202_R2.fastq.gz $base/RMK202_old_R2.fastq.gz $ | gzip > $base/RMK202_withOld_R2.fastq.gz
+
+
+```
+
+### Trim-galore
+In the following we clip adaptors with [trim-galore]()
+
+```{bash trimGalore}
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+threads=30
+id=RMK202_withOld
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed_new.txt)
+  do
+  echo "##=============="
+  echo ${id}
+  echo "##=============="
+      rm -r $mainPath/01_rawData/trimmed_Galore/gz/${id}
+      mkdir -p $mainPath/01_rawData/trimmed_Galore/gz/${id}
+      trim_galore -paired -o $mainPath/01_rawData/trimmed_Galore/gz/${id} \
+        $mainPath/01_rawData/fastq/gz/${id}_R1.fastq.gz  \
+        $mainPath/01_rawData/fastq/gz/${id}_R2.fastq.gz 
+        
+  echo "##=============="
+  echo ${id} "fastQC of trimmed"
+  echo "##=============="
+      
+    mkdir -p $mainPath/01_rawData/trimmed_Galore/fastQC/
+      
+    fastqc $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz -t ${threads} -o $mainPath/01_rawData/trimmed_Galore/fastQC/
+    
+    fastqc $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz -t ${threads} -o $mainPath/01_rawData/trimmed_Galore/fastQC/
+    
+        
+  done 
+  
+
+  mkdir -p $mainPath/01_rawData/trimmed_Galore/fastQC/Multiqc,output_file='test.html')
+
+  multiqc $mainPath/01_rawData/trimmed_Galore/fastQC/ -o $mainPath/01_rawData/trimmed_Galore/fastQC//Multiqc
+
+
+
+
+```
+
+###spades
+
+In this step we assemble the raw reads of the isolate with [spades](http://bioinf.spbau.ru/en/spades3.7).
+
+```{bash spades}
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+
+threads=35
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+ 
+       mkdir -p $mainPath/06_Spades/${id}/assembly/
+ 
+ 
+     /home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py --pe1-1 $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz \
+       --pe1-2 $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz \
+       -o $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta -t ${threads} -m 100
+
+   
+    done
+
+#---------------
+##short info
+##---------------
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+   grep ">" -c $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/contigs.fasta 
+    done
+##---------------
+##PostAssemblyAnalysis
+##---------------
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+    
+    #tail -3 $mainPath/03_metaphlan2/${id}_trimmed/metaphlan_profile/profiled_metagenome_${id}_trimmed.txt
+    PostAssemblyAnalysis.R -a $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/scaffolds.fasta \
+      -F $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz \
+      -R $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz \
+      -o $mainPath/06_Spades/${id}/assembly/PostaAssembly \
+      -t 35
+    
+    done
+
+
+```
+
+
+
+### megabat2
+
+here, we try to remove the Lactobacillus delbrueckii contamination from the Streptococcus thermophilus isolates with [metabat2](https://bitbucket.org/berkeleylab/metabat)
+
+```{bash metabat}
+threads=10
+id=S50
+date=20190203
+##-------
+##S50
+##-------
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/
+
+metabat2 -t ${threads} \
+  -i /archiv/Projects/2018_Culturomics/06_Spades//${id}/assembly/assemblyMetaSpades_20190121.fasta/scaffolds.fasta \
+  /archiv/Projects/2018_Culturomics/06_Spades/S50/assembly/PostaAssembly/Allillumina2assembly/rawIllumina_bwamem_Scaffolds_sorted.bam \
+  -o /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/binning_contigs
+
+
+id=S72
+##-------
+##S72
+##-------
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/
+
+metabat2 -t ${threads} \
+  -i /archiv/Projects/2018_Culturomics/06_Spades//${id}/assembly/assemblyMetaSpades_20190121.fasta/scaffolds.fasta \
+  /archiv/Projects/2018_Culturomics/06_Spades/S50/assembly/PostaAssembly/Allillumina2assembly/rawIllumina_bwamem_Scaffolds_sorted.bam \
+  -o /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/binning_contigs
+  
+  
+##-------
+##BLAST QC
+##-------
+
+for genome in $(ls /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/)
+  do
+  
+  genome_renamed=$(echo $genome |sed 's/.fa//g'  )
+  
+  #mkdir -p /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/${genome_renamed}_metaphlan
+  
+  
+   infoseq /archiv/Projects/2018_Culturomics/06_Spades//${id}/metabat2/${date}/$genome 
+   
+  
+ 
+  done
+
+```
+
+
+###PilerCR crispr 
+
+In these section I aim to identify and extract all CRISPR spacers in all genomes (Dialact+NCBI) of the species present on Dialact.
+I do this with [PilerCR](https://www.drive5.com/pilercr/).
+
+```{bash pilercr_dialact extraction}
+  
+  date=20190312
+
+
+##=============
+##pilerCR
+##=============
+
+##---------------
+species=Streptococcus_thermophilus
+##Streptococcus thermophilus
+##---------------
+
+##prep
+/archiv/Projects/2018_Culturomics/06_Spades//S50/metabat2/20190203/binning_contigs
+
+/archiv/Projects/2018_Culturomics/06_Spades//S72/metabat2/20190203/binning_contigs
+
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades//{S72,S50}/metabat2/20190203/binning_contigs/blast
+id=S72
+threads=30
+blastn -num_threads ${threads} -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis \
+  -query /archiv/Projects/2018_Culturomics/06_Spades/${id}/metabat2/20190203//binning_contigs.1.fa \
+  -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen" \
+  -db /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes \
+  -out /archiv/Projects/2018_Culturomics/06_Spades/${id}/metabat2/20190203/binning_contigs/blast/blast_binning_contig_1.txt \
+  -evalue 0.01 -word_size 64
+
+blastn -num_threads ${threads} -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis \
+  -query /archiv/Projects/2018_Culturomics/06_Spades/${id}/metabat2/20190203/binning_contigs.2.fa \
+  -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen" \
+  -db /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes \
+  -out /archiv/Projects/2018_Culturomics/06_Spades/${id}/metabat2/20190203/binning_contigs/blast/blast_binning_contig_2.txt \
+  -evalue 0.01 -word_size 64
+
+  
+  for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed_isolates.txt |grep "^S")
+    do
+      echo ==========================
+     echo ${id}
+     echo ==========================
+      cd /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/
+      
+      mkdir -p /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}
+  cd /archiv/Projects/2018_Culturomics/06_Spades/${id}/metabat2/20190203/
+  
+  ~/apps/PilerCR/pilercr1.06/pilercr -in binning_contigs.2.fa \
+    -out /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out -noinfo\
+    -seq /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out.fasta
+  
+  #id=S50
+  #date=20190214
+  
+  perl ~/apps/PilerCR/PilerCR_parser_new /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out > \
+    /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out_final
+  
+  
+    done > /archiv/Projects/2018_Culturomics/06_Spades/Pilar_${date}_log.out 2> /archiv/Projects/2018_Culturomics/06_Spades/Pilar_${date}_log_error.out
+  
+
+
+##---------------
+species=Lactobacillus_delbrueckii
+##Lactobacillus delbrueckii
+##---------------
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed_isolates.txt |grep "^L")
+  do
+    echo ==========================
+   echo ${id}
+   echo ==========================
+    cd /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/
+    
+    mkdir -p /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}
+
+~/apps/PilerCR/pilercr1.06/pilercr -in scaffolds.fasta \
+  -out /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out -noinfo\
+  -seq /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out.fasta
+
+perl ~/apps/PilerCR/PilerCR_parser_new /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out > \
+  /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/${date}/${id}.pilarCR_out_final
+
+
+  done > /archiv/Projects/2018_Culturomics/06_Spades/Pilar_${date}_log.out 2> /archiv/Projects/2018_Culturomics/06_Spades/Pilar_${date}_log_error.out
+
+
+```
+
+now we try to see if there are differences in spacers between the 
+
+```{bash}
+date=20190312
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+
+
+##==================
+##cd-hit
+##==================
+  
+  #--------------
+  ##Streptococcus thermophilus
+  #--------------
+  rm -r $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/
+  mkdir -p $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/
+  
+ # rm $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/GenomePath.txt
+  
+  cat /archiv/Projects/2018_Culturomics/06_Spades/S72/PilerCR/${date}/S72.pilarCR_out_final /archiv/Projects/2018_Culturomics/06_Spades/S50/PilerCR/${date}/S50.pilarCR_out_final >> \
+  $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/GenomePath.txt
+  
+   cd-hit -i $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/GenomePath.txt \
+    -o $mainPath/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/results.txt -c 0.8 -M 30000 -T ${threads}
+  
+  
+  grep -c ">" -c /archiv/Projects/2018_Culturomics/06_Spades/S72/PilerCR/${date}/S72.pilarCR_out_final
+  grep -c ">" -c /archiv/Projects/2018_Culturomics/06_Spades/S50/PilerCR/${date}/S50.pilarCR_out_final
+  
+  
+  ##count clusters and how many genomes per cluster
+  i=0
+  start=0
+  end=10
+  rm /archiv/Projects/2018_Culturomics/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/clustering_results.txt
+  
+  for ((i=start; i<=end; i++))
+  do
+     echo "number: $i"
+     
+      grep "^${i}" -c /archiv/Projects/2018_Culturomics/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/results.txt.clstr >> \
+      /archiv/Projects/2018_Culturomics/12_CRISPR_isolates/cdhit/${date}/Streptococcus_thermophilus/clustering_results.txt
+      
+  done
+
+#--------------
+#Lactobacillus delbrueckii
+#--------------
+rm -r $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/
+mkdir -p $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/
+
+rm $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/GenomePath.txt
+
+for id in $(ls /archiv/Projects/2018_Culturomics/06_Spades/ |grep "^L")
+do
+
+cat /archiv/Projects/2018_Culturomics/06_Spades/${id}/PilerCR/20190203/${id}.pilarCR_out_final | sed -e "s/>/>${id}_/g"  >> \
+$mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/GenomePath.txt
+
+done
+
+grep "^>" -c $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/GenomePath.txt
+
+
+
+ cd-hit -i $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/GenomePath.txt \
+  -o $mainPath/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/results.txt -c 0.7 -M 30000 -T ${threads}
+
+
+grep -c ">" -c /archiv/Projects/2018_Culturomics/06_Spades/S72/PilerCR/${date}/S72.pilarCR_out_final
+grep -c ">" -c /archiv/Projects/2018_Culturomics/06_Spades/S50/PilerCR/${date}/S50.pilarCR_out_final
+
+
+##count clusters and how many genomes per cluster
+
+start=0
+end=10
+for ((i=start; i<=end; i++))
+do
+   echo "number: $i"
+   
+    grep "^${i}" -c /archiv/Projects/2018_Culturomics/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/results.txt.clstr >> \
+    /archiv/Projects/2018_Culturomics/12_CRISPR_isolates/cdhit/${date}/Lactobacillus_delbrueckii/clustering_results.txt
+    
+done
+
+```
 
 
 # Illumina analysis
@@ -165,141 +585,6 @@ for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/
 
 ```
 
-## Nanopore analysis
-
-The data was basecalled with ont-guppy-for-minknow/now 2.0.5-1~xenial amd64. 
-
-#### get DATA
-
-download data
-
-```{bash}
-
-wget https://campuscloud.unibe.ch/ssf/a/do?p_name=ss_forum&p_action=1&binderId=2753552&action=view_permalink&entityType=folder&novl_url=1&euet=null#1557129336614/fast5_pass.tar.gz.md5
-
-```
-
-
-#### Read demultiplexing
-
-We do the read demultiplexing with [deepbinner](https://github.com/rrwick/Deepbinner) on the basecalled data.
-
-```{bash}
-
-###----------------
-###multi to single fast5
-###----------------
-
-##1AB
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_1A1B/fast5_pass_single
-
-multi_to_single_fast5 --input_path /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_1A1B/fast5_pass/ --save_path /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_1A1B/fast5_pass_single/ -t 37 --recursive
-
-##2AB
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_2A2B/fast5_pass_single
-
-multi_to_single_fast5 --input_path /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_2A2B/fast5_pass/ --save_path /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville_2/20190426_NB_2A2B/fast5_pass_single/ -t 37 --recursive
-
-
-###----------------
-###preperation step
-###----------------
-
-##1AB
-rm -r /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_1A1B/demultiplexed/
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_1A1B/demultiplexed/
-
-deepbinner classify --native /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_1A1B/fast5_pass_single/ > /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_1A1B/demultiplexed/classification
-
-##2AB
-rm -r /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_2A2B/demultiplexed/
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_2A2B/demultiplexed/
-
-deepbinner classify --native /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_2A2B/fast5_pass_single/ > /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_2A2B/demultiplexed/classification
-
-###----------------
-###classification step
-###----------------
-
-##1AB
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/demultiplexed/
-
-deepbinner bin --classes /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_1A1B/demultiplexed/classification \
-  --reads /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq.gz \
-  --out_dir /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/demultiplexed/
-
-##2AB
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/demultiplexed/
-
-deepbinner bin --classes /archiv/Projects/2019_Nano_Meta/01_rawData/20190430_somerville/20190426_NB_2A2B/demultiplexed/classification \
-  --reads /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq.gz \
-  --out_dir /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/demultiplexed/
-
-
-
-###----------------
-###rename samples
-###----------------
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed
-
-cp /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/demultiplexed/barcode01.fastq.gz \
-  /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/di_K1_10h_nanopore_raw.fastq.gz
-
-cp /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/demultiplexed/barcode02.fastq.gz  /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/th_K1_8h_nanopore_raw.fastq.gz
-
-
-cp /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/demultiplexed/barcode03.fastq.gz  \
- /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/di_K2_6h_nanopore_raw.fastq.gz
-
-cp /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/demultiplexed/barcode04.fastq.gz  \
-   /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/th_K2_8h_nanopore_raw.fastq.gz
-
-```
-
-
-#### Read filtering
-In a first step I filter the fastq Nanopore reads for the pooled replicates with [filtlong](https://github.com/rrwick/Filtlong). 
-I use a filter for min read length of 8kb and the best quality reads. 
-
-```{bash}
-
-##2AB
-/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
-
-mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
-
-##1AB
-/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
-
-mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
-
-
-##===============
-##Demultiplexed data
-##===============
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered
-
-for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
-  do
-
-  echo "=============="
-  echo ${sample}
-  echo "=============="
-
-    /home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/${sample}_nanopore_raw.fastq.gz | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz
-
-
-  done
-
-
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/01_rawData/Multiqc /home/vincent/Desktop/Projects/2019_Nano_Meta/Illumina_analysis
-
-
-```
 
 ####KneadData
 
@@ -375,6 +660,64 @@ done
 ```
 
 
+
+
+## Nanopore analysis
+
+The data was basecalled with ont-guppy-for-minknow/now 2.0.5-1~xenial amd64. 
+
+#### get DATA
+
+download data
+
+```{bash}
+
+wget https://campuscloud.unibe.ch/ssf/a/do?p_name=ss_forum&p_action=1&binderId=2753552&action=view_permalink&entityType=folder&novl_url=1&euet=null#1557129336614/fast5_pass.tar.gz.md5
+
+```
+
+
+
+#### Read filtering
+In a first step I filter the fastq Nanopore reads for the pooled replicates with [filtlong](https://github.com/rrwick/Filtlong). 
+I use a filter for min read length of 8kb and the best quality reads. 
+
+```{bash}
+
+##2AB
+/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
+
+mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
+
+##1AB
+/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
+
+mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
+
+
+##===============
+##Demultiplexed data
+##===============
+
+mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered
+
+for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+  do
+
+  echo "=============="
+  echo ${sample}
+  echo "=============="
+
+    /home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/${sample}_nanopore_raw.fastq.gz | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz
+
+
+  done
+
+
+scp -r vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/01_rawData/Multiqc /home/vincent/Desktop/Projects/2019_Nano_Meta/Illumina_analysis
+
+
+```
 
 
 ## Genome Assembly
@@ -797,108 +1140,6 @@ scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2
 
 ```
 
-
-
-#### Circlator
-
-In the following we want to use circlator to close and start align the genome
-I want to do this before I start polishing the genome in order to track the polishing challenges thereafter. 
-
-```{bash}
-
-
-##===========
-##Assembly k1_ONT
-##===========
-
-
-#rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/03_circlator/
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input
-
-cp /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/assembly_and_plasmidSpades/K1_ONT_assembly.fasta /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input/
-
-cp /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq.gz /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input/
-
-
-
-export CIRCLATOR_SPADES=/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py
-export CIRCLATOR_CANU=/home/vincent/apps/canu/Linux-amd64/bin/canu
-
-rm -r  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/output
-
-/home/vincent/.local/bin/circlator all --threads 37 --assembler canu --data_type nanopore-raw --bwa_opts 'pacbio' \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input/K1_ONT_assembly.fasta \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input/all_1AB_raw.fq.gz \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/output --verbose
-
-/home/vincent/apps/canu/Linux-amd64/bin/canu -assemble genomeSize=1m -d /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/output/03.assemble -p canu -nanopore-raw /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/output/02.bam2reads.fasta
-
-
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/input/
-
-##===========
-##Assembly plasmid
-##===========
-
-##2AB
-
-export CIRCLATOR_SPADES=/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py
-export CIRCLATOR_CANU=/home/vincent/apps/canu/Linux-amd64/bin/canu
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/03_circlator/
-
-/home/vincent/.local/bin/circlator all --threads 37 --data_type nanopore-raw --bwa_opts 'pacbio' \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/assembly/assembly.fasta \
-  /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq.gz \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/03_circlator/
-
-
-
-##1AB
-export CIRCLATOR_SPADES=/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py
-#mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/
-
-/home/vincent/.local/bin/circlator all --threads 37 \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/assembly/assembly.fasta \
-  /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq.gz \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/03_circlator/
-
-
-
-
-##=======
-##demultiplexed
-##=======
-export CIRCLATOR_SPADES=/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py
-#mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/03_circlator/
-
-
-
-
-for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
-  do
-  
-    #sample=di_K1_10h
-
-  echo "=============="
-  echo ${sample}
-  echo "=============="
-
-
-
-/home/vincent/.local/bin/circlator all --threads 37 \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/assembly.fasta \
-  /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz \
-  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/03_circlator/
-
-
-
-  done
-  
-
-```
 
 as circlator did not work. I will do a prokka annotation and annotate manually at the DnaA
 
@@ -2216,6 +2457,9 @@ write.table(Lactobacillus_delbrueckii_RMK202_subset4Brite, "~/Desktop/Projects/2
 
 ```
 
+####Rast annotation of phages
+
+
 ####KEGG
 When mapping to KEGG homepage I have to manually take the information into and editor and change the columns
 
@@ -2402,7 +2646,7 @@ separate_rows(df,abilities,sep=";\\s+")
 
 ```
 
-cog analysis
+####COG analysis
 
 ```{r}
 library(tidyverse)
@@ -2520,52 +2764,7 @@ CogPlotSterm
 
 ```
 
-##go annotation
 
-```{r}
-library(topGO)
-
-library(ALL)
-data(ALL)
-data(geneList)
-
-affyLib <- paste(annotation(ALL), "db", sep = ".")
-library(package = affyLib, character.only = TRUE)
-topDiffGenes(geneList)
-source("https://bioconductor.org/biocLite.R")
-
-
-library(GOSim)
-getGOInfo("GO:0001869")
-
-getGOInfo(2)
-
- if(require(annotate)){
- 	setOntology("BP")
- 	getGOInfo(c("207","7494"))
- }
-
-library(clusterProfiler)
-
-
-library(keggorthology)
-library(graph)
-data(KOgraph)
-KOgraph
-nodes(KOgraph)[1:5]
-
-adj(KOgraph, nodes(KOgraph)[1])
-
-library(RBGL)
-sp.between(KOgraph, nodes(KOgraph)[1], "PPAR signaling pathway")
-
-nodeData(KOgraph,,"tag")[1:5]
-
-
-getKOtags("insulin")
-getKOtags("04910")
-
-```
 
 
 #### ANI between the strains
@@ -3134,6 +3333,10 @@ mappingcoverage_reduced$genome <- as.factor(mappingcoverage_reduced$genome)
 
 Sterm_colours <- rev(c("#EB4D4D","#FAA0A0","indianred1","#10B552","#36E37B","#6CF5A3","cyan3","cyan"))
 
+levels(mappingcoverage_reduced_final$sample)
+
+mappingcoverage_reduced_final <- mappingcoverage_reduced_final[mappingcoverage_reduced_final$sample %in% c("Konserve_202","Lyo_202_2012","Lyo_202_2014","RMK202","Versand_202"),]
+
 
 p2 <-  ggplot( data = mappingcoverage_reduced_final,aes(y = percent_coverage, x = sample_f, group=genome_f,fill = genome_f))+ geom_bar( stat="identity")+
     labs("",
@@ -3151,13 +3354,87 @@ p2 <-  ggplot( data = mappingcoverage_reduced_final,aes(y = percent_coverage, x 
           )
 
   p2
-  svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/relativeAbundance.svg",width=7,height=4)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.svg",width=7,height=4)
+   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 p2
  dev.off()
  
  
 
 ```
+
+mappping stats
+
+```{r}
+library(readr)
+library(stringr)
+library(ggplot2)
+mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mappingStat_forR.csv", "\t", escape_double = FALSE, col_names = c("name","empty1","empty2","empty3","percent","Mio.reads"),trim_ws = TRUE)
+
+
+mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mapping_after_kneaddata_cleaned.csv", "\t", escape_double = FALSE, col_names = c("name","percent","Mio.reads"),trim_ws = TRUE)
+
+
+
+
+  mappingStat$day <- str_split_fixed(mappingStat$name, "_", 3)[,1]
+  mappingStat$kessel <- str_split_fixed(mappingStat$name, "_", 3)[,2]
+  mappingStat$time <- str_split_fixed(mappingStat$name, "_", 3)[,3]
+  mappingStat$treatment <- paste0(mappingStat$day,"_",mappingStat$kessel)
+ 
+  mappingStat$treatment_f = factor(mappingStat$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
+  mappingStat$time_f = factor(mappingStat$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
+
+mappingStat$name <- as.factor(mappingStat$name)
+  mappingStat$name_f = factor(mappingStat$name, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","th_K1_0h","di_K1_2h","th_K1_2h","di_K1_4h","th_K1_4h","di_K1_6h","th_K1_6h","di_K1_8h","th_K1_8h","di_K1_10h","th_K1_10h","di_K1_12h","th_K1_12h","di_K1_24h","th_K1_24h","S72","S50","L104","L108","L35","L39","L44","L70","L71","L80","L99"))
+
+  
+  mappingStat <- mappingStat[mappingStat$name %in% c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"),]
+  
+  levels(mappingStat$name)
+  min(mappingStat$percent)
+  coloursplotting <-  c(rep("cadetblue3",5),rep("azure4",16),rep("#EB4D4D",2),rep("#10B552",9))
+  
+ rawREad <-  ggplot(mappingStat,aes(x=name_f,y=percent,fill=name_f))+geom_bar( stat="identity", position="dodge")+
+    labs(y="Percent\nraw reads mapping",
+        x="")+
+         coord_cartesian(ylim=c(90,100))+
+   scale_fill_manual(values=coloursplotting)+
+       theme_classic()+
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+          # # axis.text.y.left = element_text(color = "blue"),
+          # axis.text.y.right = element_text(color="red"),
+          # axis.title.y.left = element_text(color="blue"),
+          # axis.title.y.right = element_text(color="red"),
+          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none"
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          #legend.title = element_blank()
+          )
+ rawREad
+ 
+   # svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/04_rawReadMapping.svg",width=5,height=3)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.svg",width=5,height=3)
+    png("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.png", width = 1000, height = 800,res=300)
+
+
+rawREad
+ dev.off()
+ 
+ 
+ mappingStat$newReads <- (mappingStat$percent/100)*mappingStat$Mio.reads
+  
+ Mio_reads <- ggplot(mappingStat,aes(x=time_f,y=newReads,group=treatment,color=kessel,fill=kessel))+geom_bar( stat="identity", position="dodge")+
+    labs(y="Mio. reads mapping",
+        y="")
+ 
+    svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/rawReadMapping_mio.svg",width=5,height=3)
+Mio_reads
+ dev.off()
+ 
+ 
+```
+
 
 ###CIGAR parsing
 
@@ -3247,10 +3524,10 @@ rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolishe
 mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput
 
 
-    freebayes -F 0.5 --min-coverage 10 -p 1 \
+    freebayes -F 0.05 -C 2 --min-coverage 20 -p 1 \
       --bam-list /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/log/multiqc_logfile_bams.txt -f \
       /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged.fasta > \
-      /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput/variantCallsfreebayes_all.vcf
+      /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput/variantCallsfreebayes_all_f_005_min_20x.vcf
   
 ##-------------zipping
 
@@ -3262,113 +3539,106 @@ tabix -p  vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_agains
 
 mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput/variantCallsfreebayes_all.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
+scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput/variantCallsfreebayes_all_f_005_min_20x.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
 
-grep "^##" -v /home/vincent/Desktop/Projects/2019_Pilotplan/06_snpCalling2ONT/variantCallsfreebayes_all.vcf >  /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped.vcf
+grep "^##" -v /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x.vcf >  /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped.vcf
 
 ```
 
+######analysis snps
 ```{r}
 library(tidyverse)
 library(vcfR)
 library(readr)
-snps_freebayes <- read_delim("~/Desktop/Projects/2019_Pilotplan/06_snpCalling2ONT/variantCallsfreebayes_all_preped.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
-freebayes_snp <- read.vcfR("~/Desktop/Projects/2019_Pilotplan/06_snpCalling2ONT/variantCallsfreebayes_all.vcf")
+snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
+#freebayes_snp <- read.vcfR("~/Desktop/Projects/2019_Pilotplan/06_snpCalling2ONT/variantCallsfreebayes_all.vcf")
 
-##create a alternative allele abudnacne
 
-num_snps_freebayes <- ncol(snps_freebayes)
-
-sample_relative <- data.frame(snps_freebayes[,1:8])
-
-dim(sample_relative)
-
-for (samps in 10:num_snps_freebayes) {
-  
-  sample_relative_temp <-snps_freebayes[, samps] %>% as.data.frame() %>% separate(1, into=c("A","B","C","D","E","F","G","H"), sep = ":") %>% transform(.,new=as.numeric(F)/as.numeric(B))
-  
-  sample_relative_temp_02 <- sample_relative_temp[,"new"]
-  # length(sample_relative_temp_02)
-  # get(colnames(snps_freebayes)[samps])
-  
-  sample_relative <- cbind(sample_relative,sample_relative_temp_02)
-  colnames(sample_relative)[(samps-1)] <- colnames(snps_freebayes)[samps]
-
-}
-
-sample_relative_temp <- sample_relative[,grep("^L\\d",colnames(sample_relative),invert = TRUE)] 
-sample_relative_meta <-  sample_relative_temp[,grep("^S",colnames(sample_relative_temp),invert = TRUE)] 
-
-  sample_long <- gather(sample_relative_meta, sample, allele_frequency, "Versand_202":"di_K1_8h", factor_key=TRUE)
-
-  sample_long$site <- paste(sample_long$X.CHROM,sample_long$POS,sample_long$REF,sample_long$ALT,sep="_")
-
-  
-  sample_long$sample_02 = factor(sample_long$sample, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","di_K1_2h","di_K1_4h","di_K1_6h","di_K1_8h","di_K1_10h","di_K1_12h","di_K1_24h","th_K1_0h","th_K1_2h","th_K1_4h","th_K1_6h","th_K1_8h","th_K1_10h","th_K1_12h","th_K1_24h"))
-levels(sample_long$sample_02)
-  
-  
-  p1 <- ggplot(sample_long,aes(x=sample_02,y=allele_frequency,group=site))+ geom_line(size=0.2, alpha=.1)+ 
-    # facet_grid(day~kessel~species)+
-    facet_grid(X.CHROM~.)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="alternative allel frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-      # scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes.pdf",width=9.8,height=20,paper='special')
-p1
-
-dev.off()
-  
 
 ##---make first a long list and then calculate the alternative allel frequency
 
+table(snps_freebayes$`#CHROM`)
 ##wide2long
-snps_freebayes_long <- gather(snps_freebayes, sample, Snps, "Versand_202":"L71", factor_key=TRUE) 
+snps_freebayes_long <- gather(snps_freebayes, sample, Snps, "RMK202":"L44", factor_key=TRUE) 
+nrow(snps_freebayes_long)
+
+snps_freebayes_long <- gather(snps_freebayes, sample, Snps, "RMK202":"L44", factor_key=TRUE,na.rm = TRUE) 
+nrow(snps_freebayes_long)
+
+### remove non-called snps
+snps_freebayes_long_cleaned <- snps_freebayes_long[snps_freebayes_long$Snps!=".",]
+nrow(snps_freebayes_long_cleaned)
+# snps_freebayes_long[c(7438,7437,7439, 7440, 7441, 7442, 7443, 7444, 7445),]
 
 ##calculate allel frequency   
-sample_relative_temp <-snps_freebayes_long %>% separate("Snps", into=c("GT","DP","AD","RO","QR","AO","QA","GL"), sep = ":") %>% transform(.,allel_frequency=as.numeric(AO)/as.numeric(DP))
+sample_relative_temp <-snps_freebayes_long_cleaned %>% separate("Snps", into=c("GT","DP","AD","RO","QR","AO","QA","GL"), sep = ":") %>% transform(.,allel_frequency=as.numeric(AO)/as.numeric(DP))
+
+##remove SNPs that have more than two allel frequencies
+nrow(sample_relative_temp)
+nas <- sample_relative_temp[which(is.na(sample_relative_temp$allel_frequency)),]
+nrow(nas)
+sample_relative_temp_cleaned <- sample_relative_temp[which(!is.na(sample_relative_temp$allel_frequency)),]
 
 ##remove low coverage (>40x)
-cutoff <- 30
-sample_relative_temp$DP <- as.numeric(sample_relative_temp$DP)
-nrow(sample_relative_temp)
-sample_relative_safe <- sample_relative_temp[which(sample_relative_temp$DP>cutoff),]
+cutoff <- 20
+sample_relative_temp_cleaned$DP <- as.numeric(sample_relative_temp_cleaned$DP)
+nrow(sample_relative_temp_cleaned)
+sample_relative_safe <- sample_relative_temp_cleaned[which(sample_relative_temp_cleaned$DP>cutoff),]
 nrow(sample_relative_safe)
 
+#ggplot(sample_relative_temp_cleaned, aes(y=DP))+geom_boxplot()+ylim(c(0,1000))
+
+##make site name
+sample_relative_temp_cleaned$site <- paste(sample_relative_temp_cleaned$X.CHROM,sample_relative_temp_cleaned$POS,sample_relative_temp_cleaned$REF,sample_relative_temp_cleaned$ALT,sep="_")
+
+
+###spread the dataframe again
+
+nrow(sample_relative_temp_cleaned)
+
+sample_relative_safe_final_prep <- sample_relative_temp_cleaned[,c("X.CHROM","POS","site","allel_frequency","sample")]
+#nrow(sample_relative_safe_final_prep[grep("S_thermophilus_RMK202",sample_relative_safe_final_prep$site),])
+sample_relative_safe_final_tsne <- spread(sample_relative_safe_final_prep, sample, allel_frequency)
+nrow(sample_relative_safe_final_tsne)
+
+
+## ===========all samples in wide format and cleaned
+sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne
+
+##=============================================
+# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne[rowSums(is.na(sample_relative_safe_final_tsne[,-1])) != ncol(sample_relative_safe_final_tsne[,-1]), ]
+# nrow(sample_relative_safe_final_tsne_safe)
+
+
+# sample_relative_safe_final_tsne_safe[is.na(sample_relative_safe_final_tsne_safe)] <- 0
+# nrow(sample_relative_safe_final_tsne_safe)
+
+# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne_safe[rowSums(sample_relative_safe_final_tsne_safe[,-1]) != 0, ]
+# nrow(sample_relative_safe_final_tsne_safe)
+
+```
+
+######remove isolates
+
+```{r}
 
 ##remove isolates
-sample_relative_safe_woldel <- sample_relative_safe[grep("^L\\d",sample_relative_safe$sample,invert = TRUE),] 
+sample_relative_safe_woldel <- sample_relative_temp_cleaned[grep("^L\\d",sample_relative_temp_cleaned$sample,invert = TRUE),] 
 nrow(sample_relative_safe_woldel)
 sample_relative_safe_final <- sample_relative_safe_woldel[grep("^S\\d",sample_relative_safe_woldel$sample,invert = TRUE),] 
 nrow(sample_relative_safe_final)
+
+## ===========all metagenomes in wide format 
 sample_relative_safe_final$sample <- droplevels(sample_relative_safe_final$sample)
 
-##make site name
-sample_relative_safe_final$site <- paste(sample_relative_safe_final$X.CHROM,sample_relative_safe_final$POS,sample_relative_safe_final$REF,sample_relative_safe_final$ALT,sep="_")
 
 ##reorder samples
-sample_relative_safe_final$sample_02 = factor(sample_relative_safe_final$sample, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","di_K1_2h","di_K1_4h","di_K1_6h","di_K1_8h","di_K1_10h","di_K1_12h","di_K1_24h","th_K1_0h","th_K1_2h","th_K1_4h","th_K1_6h","th_K1_8h","th_K1_10h","th_K1_12h","th_K1_24h"))
+sample_relative_safe_final$sample_02 = factor(sample_relative_safe_final$sample, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"))
 levels(sample_relative_safe_final$sample_02)
 
 ##rename contigs
 
-unique(sample_relative_safe_final$X.CHROM)
+table(sample_relative_safe_final$X.CHROM)
 
 sample_relative_safe_final$species <- sample_relative_safe_final$X.CHROM
 # sample_relative_safe_final$species <- ifelse(sample_relative_safe_final$X.CHROM=="contig_1","S.thermophilus",
@@ -3412,7 +3682,82 @@ dev.off()
 
 ```
 
-t-sne
+#####Venn-Diagramm
+
+```{r}
+library(gplots)
+library(gridExtra)
+library(grid)
+library(VennDiagram)
+
+colnames(sample_relative_safe_final_tsne)
+
+ sample_relative_safe_final_no_snps <- sample_relative_safe_final_tsne[,c("RMK202","Lyo_202_2014","S72","Lyo_202_2012","L99","L80","Versand_202","L71","L70","Konserve_202","L108","L35","S50","L39","L104","L44")]
+
+ ##meta
+sample_relative_safe_final_snps_meta <- sample_relative_safe_final_tsne[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]
+sum(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)==0)
+sample_relative_safe_final_meta_cleaned <- sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)>0),]
+# sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)==0),]
+
+ ##isolates
+sample_relative_safe_final_snps_iso <- sample_relative_safe_final_tsne[,c("S72","L99","L80","L71","L70","L108","L35","S50","L39","L104","L44")]
+sum(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)==0)
+sample_relative_safe_final_iso_cleaned <- sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)>0),]
+# sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)==0),]
+
+###---venn diagramm
+table(sample_relative_safe_final_iso_cleaned$X.CHROM)
+##------Sterm
+
+onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned[sample_relative_safe_final_iso_cleaned$X.CHROM=="S_thermophilus_RMK202","site"]
+onlysecond_sterm <- sample_relative_safe_final_meta_cleaned[sample_relative_safe_final_meta_cleaned$X.CHROM=="S_thermophilus_RMK202","site"]
+
+both_n <- sum(onlysecond_sterm %in% onlyfirst_sterm)
+first_n <- length(onlyfirst_sterm)
+second_n <- length(onlysecond_sterm)
+13186+1849+386
+1849/15421
+13186/15421
+386/15421
+nrow(sample_relative_safe_final_meta_cleaned)
+venn.plot <- draw.pairwise.venn(first_n,second_n, both_n, c("in Metagenome", "in Isolates"))
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_sterm.svg",width=6,height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+
+#venn(list(isolates = onlyfirst_sterm, meta = onlysecond_sterm))
+
+##------Ldel
+
+onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned[sample_relative_safe_final_iso_cleaned$X.CHROM=="L_delbrueckii_RMK202","site"]
+onlysecond_sterm <- sample_relative_safe_final_meta_cleaned[sample_relative_safe_final_meta_cleaned$X.CHROM=="L_delbrueckii_RMK202","site"]
+
+
+both_n <- sum(onlysecond_sterm %in% onlyfirst_sterm)
+first_n <- length(onlyfirst_sterm)
+second_n <- length(onlysecond_sterm)
+
+venn.plot <- draw.pairwise.venn(first_n,second_n, both_n, c("in Metagenome", "in Isolates"))
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_ldel.svg",width=6,height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+2439+1140+1042
+2439/4621
+1140/4621
+1042/4621
+
+
+
+```
+
+
+
+#####t-sne
 
 Here, I try to cluster the previous snp profiles with t-sne. explained [here](https://www.analyticsvidhya.com/blog/2017/01/t-sne-implementation-r-python/)
 
@@ -3421,39 +3766,22 @@ Here, I try to cluster the previous snp profiles with t-sne. explained [here](ht
 library(Rtsne)
 library(ggrepel)
 
-sample_relative_safe_final_prep <- sample_relative_safe_final[,c("site","allel_frequency","sample")]
 
-sample_relative_safe_final_tsne <- spread(sample_relative_safe_final_prep, sample, allel_frequency)
-nrow(sample_relative_safe_final_tsne)
-sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne[rowSums(is.na(sample_relative_safe_final_tsne[,-1])) != ncol(sample_relative_safe_final_tsne[,-1]), ]
-nrow(sample_relative_safe_final_tsne_safe)
-sample_relative_safe_final_tsne_safe[is.na(sample_relative_safe_final_tsne_safe)] <- 0
-nrow(sample_relative_safe_final_tsne_safe)
-sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne_safe[rowSums(sample_relative_safe_final_tsne_safe[,-1]) != 0, ]
-nrow(sample_relative_safe_final_tsne_safe)
-
-# dim(sample_relative_safe_final_tsne)
-# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne[complete.cases(sample_relative_safe_final_tsne), ]
-# nrow(sample_relative_safe_final_tsne_safe)
-
-
-# sample_relative_safe_final_tsne_safe_new <- sample_relative_safe_final_tsne_safe %>% mutate_at(c(2:22), ~replace(., is.na(.), 0))
-
-sample_relative_safe_final_tsne[grep("contig_5",sample_relative_safe_final_tsne$site),]
-
+table(sample_relative_safe_final_tsne_safe$X.CHROM)
 dim(sample_relative_safe_final_tsne_safe)
 length(unique(sample_relative_safe_final_tsne_safe$site))
 
-##duplicate rows
-sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne_safe[!duplicated(sample_relative_safe_final_tsne_safe[,-1]), ]
-nrow(sample_relative_safe_final_tsne_safe)
-# sample_relative_safe_final_tsne_safe[duplicated(sample_relative_safe_final_tsne_safe[,-1]), ]
+
+tsne_prep <- sample_relative_safe_final_tsne_safe[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")]
+
+(rowSums(tsne_prep,na.rm = TRUE)==0)
+
 
 ##-------------------sterm
 
 sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final_tsne_safe[grep("S_thermophilus_RMK202",sample_relative_safe_final_tsne_safe$site),]
   
-tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm[,-1], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
 tsne_plot <- as.data.frame(tsne$Y)
 tsne_plot$site <- sample_relative_safe_final_tsne_safe_sterm[,1]
 tsne_plot$contig <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split_fixed(tsne_plot$site, "_", 5)[,2],sep = "_")
@@ -3597,6 +3925,7 @@ unique(sample_relative_safe_final$sample_02)
 sample_relative_safe_final_tsne_safe_ldel<- sample_relative_safe_final[grep("L_delbrueckii_RMK202_",sample_relative_safe_final$site),]
 sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final[grep("S_thermophilus_RMK202",sample_relative_safe_final$site),]
 
+nrow(sample_relative_safe_final_tsne_safe_sterm)
 sample_relative_safe_final_reduce <- rbind(sample_relative_safe_final_tsne_safe_ldel,sample_relative_safe_final_tsne_safe_sterm)
 
 
@@ -3636,7 +3965,8 @@ dev.off()
 
 ```{r}
 
-
+nrow(sample_relative_safe_final_tsne_safe_ldel)
+nrow(sample_relative_safe_final_tsne_safe_sterm)
 sample_relative_safe_final_reduce <- rbind(sample_relative_safe_final_tsne_safe_ldel,sample_relative_safe_final_tsne_safe_sterm)
 
 ##sterm
@@ -3665,9 +3995,12 @@ ggplot(sample_relative_safe_final_tsne_safe_ldel,aes(x=POS,group=grouping,color=
 sterm_genome=1861615
 ldel_genome=2167371
 
-sample_relative_safe_final_tsne_safe_ldel<- sample_relative_safe_final[grep("L_delbrueckii_RMK202_",sample_relative_safe_final$site),]
-sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final[grep("S_thermophilus_RMK202",sample_relative_safe_final$site),]
+sample_relative_safe_final_tsne_safe
 
+# sample_relative_safe_final_tsne_safe_ldel<- sample_relative_safe_final[grep("L_delbrueckii_RMK202_",sample_relative_safe_final$site),]
+# sample_relative_safe_final_tsne_safe_sterm <- sample_relative_safe_final[grep("S_thermophilus_RMK202",sample_relative_safe_final$site),]
+nrow(sample_relative_safe_final_tsne_safe_sterm )
+nrow(sample_relative_safe_final_tsne_safe_ldel_plasmid)
 
 ##reduce to necessary
 dim(sample_relative)
@@ -3683,13 +4016,16 @@ dim(sample_relative_Ldel)
 
 ##calculations sterm
 
-samples <- sample_relative_Sterm[,9:ncol(sample_relative_Sterm)]
+#samples <- sample_relative_Sterm[,9:ncol(sample_relative_Sterm)]
+samples <- sample_relative_Sterm[,c("RMK202","Lyo_202_2014","Lyo_202_2012","Versand_202","Konserve_202")]
+nrow(samples)
 samples_count <- colSums(samples>0,na.rm=TRUE)
+
 nucleotid_div <- data.frame(samples=factor(names(samples_count)),div=100*(samples_count/sterm_genome))
 
 nucleotid_div$group <- "sterm"
 
-nucleotid_div$samples_02 = factor(nucleotid_div$samples, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","di_K1_2h","di_K1_4h","di_K1_6h","di_K1_8h","di_K1_10h","di_K1_12h","di_K1_24h","th_K1_0h","th_K1_2h","th_K1_4h","th_K1_6h","th_K1_8h","th_K1_10h","th_K1_12h","th_K1_24h","S50","S72"))
+nucleotid_div$samples_02 = factor(nucleotid_div$samples, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"))
 levels(nucleotid_div$samples_02)
 levels(nucleotid_div$samples)
 
@@ -3706,20 +4042,22 @@ levels(nucleotid_div$samples)
           legend.position="none"
        )
   p1
-  svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_sterm_nucleotideDiv.svg",width=5,height=3)
+  svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_sterm_nucleotideDiv.svg",width=3,height=4)
 p1
 
 dev.off()
 
 ##calculations sterm
 
-samples <- sample_relative_Ldel[,9:ncol(sample_relative_Ldel)]
+# samples <- sample_relative_Ldel[,9:ncol(sample_relative_Ldel)]
+samples <- sample_relative_Ldel[,c("RMK202","Lyo_202_2014","Lyo_202_2012","Versand_202","Konserve_202")]
 samples_count <- colSums(samples>0,na.rm=TRUE)
+samples_count
 nucleotid_div <- data.frame(samples=factor(names(samples_count)),div=100*(samples_count/sterm_genome))
 
 nucleotid_div$group <- "ldel"
 
-nucleotid_div$samples_02 = factor(nucleotid_div$samples, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","di_K1_2h","di_K1_4h","di_K1_6h","di_K1_8h","di_K1_10h","di_K1_12h","di_K1_24h","th_K1_0h","th_K1_2h","th_K1_4h","th_K1_6h","th_K1_8h","th_K1_10h","th_K1_12h","th_K1_24h","L104","L108","L35","L39","L44","L70","L71","L80","L99"))
+nucleotid_div$samples_02 = factor(nucleotid_div$samples, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"))
 levels(nucleotid_div$samples_02)
 levels(nucleotid_div$samples)
 
@@ -3737,7 +4075,7 @@ levels(nucleotid_div$samples)
        )
   p2
   
-svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_ldel_nucleotideDiv.svg",width=5,height=3)
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_ldel_nucleotideDiv.svg",width=3,height=4)
 p2
 
 dev.off()
@@ -3992,6 +4330,8 @@ dim(sample_relative_safe_final_tsne_safe_ldel)
 dim(not_explained_ldel_plot_final)
 dim(explained_ldel_plot_final)
 
+100*(nrow(not_explained_ldel_plot_final)/nrow(sample_relative_safe_final_tsne_safe_ldel))
+
 ##plot
 
   p0 <- ggplot(sample_relative_safe_final_tsne_safe_ldel,aes(x=sample_02,y=allel_frequency,group=site,color=grouping))+ geom_line(size=0.2, alpha=.1)+ 
@@ -4008,13 +4348,13 @@ dim(explained_ldel_plot_final)
        )
   
   # p0
-
+dim(not_explained_ldel_plot_final)
   p1 <- ggplot(not_explained_ldel_plot_final,aes(x=sample_02,y=allel_frequency,group=site,color=grouping))+ geom_line(size=0.2, alpha=.1)+ 
       # facet_grid(species~.)+
    labs("",
          x="",
          y="alternative allel frequency",
-          title="NOT-explained by isolates  42%")+
+          title=paste0("NOT-explained by isolates ",round(100*(nrow(not_explained_ldel_plot_final)/nrow(sample_relative_safe_final_tsne_safe_ldel)),digits = 2)))+
   theme_classic()+
  theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=9),
        axis.text.x=element_blank(),
@@ -5925,164 +6265,122 @@ p1
 
 
 
-####mapping against reference DB
+
+
+#####extracting phage mapping
 
 ```{bash}
+##get RAST annotation to bigmachine
+mkdir -p /archiv/Projects/2019_pilotplant/02_annotation 
+scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/rastServer vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation 
+
+sed -i 's/S_phage_RMK202_08/L_phage_RMK202_b/g' /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_delbrueckii_ViSo-RMK202_b.gbk
+
+##convert RAST annotation to gff
+cd /archiv/Projects/2019_pilotplant/02_annotation/rastServer/
+/home/vincent/miniconda2/bin/bp_genbank2gff3.pl /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.fasta.gbk
+/home/vincent/miniconda2/bin/bp_genbank2gff3.pl /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk
+/home/vincent/miniconda2/bin/bp_genbank2gff3.pl /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.fasta.gbk
+
+convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.bed
+convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.bed
+convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.bed
+
+cat \
+/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.bed \
+/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.bed \
+/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.bed > \
+/archiv/Projects/2019_pilotplant/02_annotation/rastServer/all_phages.bed
   
-   
   
   
-  threads=30
-  rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
-  num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-    do
-    echo ${num}"/37  :" ${names}
-    num=$((num+1))
-    rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB
-  
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB
-    
-    gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq.gz
-    gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq.gz
-    
-    
-    bwa mem -t ${threads} /archiv/Dialact/ReferenceDatabase/20190513/Final_Phage_Bacteria_DB/seq/Final_Phage_Bacteria_DB_02.fna  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq | samtools sort -@${threads} -O BAM -o /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam - 
-  
-  samtools view -b -f 4 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
-  
-  
-  ##Qualimap
-  
-  mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB//bamqc
-  
-  qualimap bamqc -bam /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/bamqc --java-mem-size=80G
-  
-  samtools index /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam
-  
-    #gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq
-    #gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq
-          
 
- mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/log
-echo "/home/vincent/Projects/2019_pilotplant/05_mapping2DB/"${names}"/bwa2DB/bamqc" >> /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
-    done 
-  
-  rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/Mulitqc/
-    
-  mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/Mulitqc/
-  
-  multiqc --config /archiv/logs/multiQC_config.txt --file-list  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt \
-    -o /home/vincent/Projects/2019_pilotplant/05_mapping2DB/Mulitqc/
+rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping/
 
-
-##=====on lokal machine
-
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/Mulitqc/ ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow
-
-```
-
-####Percent mapping
-
-This table was manually extracted from the multiQC html file
-
-```{r}
-# ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow/Mulitqc/mapping_percent.txt
-
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(tidyverse)
-
-##===================================
-#-------------file import
-mapping <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/04_againstAllWithCow/Mulitqc/mapping_percent.txt","\t", escape_double = FALSE, col_names = c("name","x1","x2","x3","percent","numReads"),trim_ws = TRUE)
-
-mapping$names_02 <- "all"
-
-p1 <- ggplot(data=mapping,aes(x=names_02, y=percent))+geom_boxplot()+
-  labs(x="",
-         y="Mapping [%]")+
-    theme_classic()+
-  theme(axis.text.x=element_blank())
-
-p1
-png("~/Desktop/Projects/2019_Pilotplan/Figures/boxplot_Mapping2DBpercent.png",width=450,height=900,res=300)
-
-p1
-dev.off()
-    
-
-```
-
-
-#####extracting phage reference genome
-
-```{bash}
-
-
-  threads=30
  # rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
   num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
+  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
     do
-echo ${num}"/37  :" ${names}
+echo ${num}"/16  :" ${names}
     num=$((num+1))
-    #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/phageDBmapping
+    rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping/${names}
   
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/phageDBmapping
+    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping/${names}
     
 
-bedtools coverage -bed -a /archiv/Phage_DB/BLAST/20190519/Databasefinal/20190519_phageDB_02.txt -b /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
-  /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/phageDBmapping/${names}2phageDB.bed 
+bedtools coverage -bed -a /archiv/Projects/2019_pilotplant/02_annotation/rastServer/all_phages.bed -b /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
+  /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping/${names}/${names}2phageDB.bed 
   
-  bedtools coverage -bed -a /archiv/Phage_DB/BLAST/20190519/Databasefinal/20190519_phageDB_02.txt -b /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam -mean  > \
-  /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/phageDBmapping/${names}2phageDB_mean.bed 
 done
 
 
 
 ###----------------change name of bed file
- #mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping,BacteriaDBmapping}
- rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping
- mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping
-for name in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
+names=Konserve_202
+ #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping
+ mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/finalmapping/
+for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
     do
     
-
-Day=$(echo $name |cut -d '_' -f 1)
-Kessel=$(echo $name |cut -d '_' -f 2)
-time=$(echo $name |cut -d '_' -f 3|sed 's/h//g')
-
 echo $name 
-   
-    cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${name}/phageDBmapping/${name}2phageDB.bed| sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t;]" -v namess="$name" -v days="$Day" -v Kessels="$Kessel" -v times="$time" 'BEGIN{OFS="\t"}{print $1,$4,$5,$7,$9,$10,$11,$12,$13,$14,$15,$16,$17,namess,days,Kessels,times}' |sed 's/OG=//g' |sed 's/grouping=//g'|sed 's/gene=//g' |sed 's/genome=//g' > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.bed
-    
-cut -d '_' -f 1 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.species
-
-paste /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.species /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/${name}2phageDB_final.bed
-
-rm /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.bed
-rm /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/tmp.species
-
+  
+    cat /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping/${names}/${names}2phageDB.bed | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/finalmapping/${names}_finalPhages_forR.bed
     
 
     done
-
+cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/finalmapping/*.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/finalmapping/all_Phages_allSamples.txt
 
 ###-------------on local machine
 
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
+scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping/finalmapping/all_Phages_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Phages_allSamples.txt
 
 
-##only one
-names=di_K2_6h
+#cat /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/finalmapping/*.bed > /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/finalmapping/all_Phages_allSamples.txt
 
-scp  vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/phageDBmapping/${names}2phageDB.bed /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
-scp  vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping/${names}2BacteriaDB_hist.bed /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
+```
+
+```{r}
+
+
+source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(cowplot) ## for arranging plots
+library(stringr) ##for split string
+library(rlist) ##rbind all dataframe of list
+library(viridis) ##colour palette
+##===================================
+#-------------file import
+
+
+  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Phages_allSamples.txt","\t", escape_double = FALSE, col_names = c("chr","start","end","name","unknown2","orientation","origin","sort","unknown","description","count","length_mapped","geneLength","sample2","sample"),trim_ws = TRUE)
+
+table(read_count$chr)
+
+read_count$species <- ifelse(read_count$chr=="L_phage_RMK202_01","L_phage_RMK202_01",ifelse(
+    read_count$chr=="L_phage_RMK202_02","L_phage_RMK202_02","S_phage_RMK202"
+))
+
+table(read_count$species)
+
+read_count$geneCoverage  <- (read_count$count*600)/read_count$geneLength
+
+ggplot(read_count,aes(y=geneCoverage,group=sort,color=sort,fill=sort))+geom_boxplot()+facet_grid(sample~species, scales="free")
+
+library(dplyr)
+
+
+phage_final <- read_count %>% 
+  group_by(sample,species) %>% 
+  summarize(median = median(geneCoverage))
 
 
 ```
+
 
 
 #####extracting bacteria reference genome
@@ -6122,108 +6420,179 @@ scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2
 
 
 ```{bash}
+###----------------prep gffs
 
-date=20190513
-  threads=30
-  #rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
+mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance
+
+grep -v "^#" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff | awk -F "\t" 'BEGIN{OFS="\t"} {if($3=="CDS") print $0}' > /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Streptococcus_thermophilus_RMK202_pgap_forAbundance.gff
+
+grep -v "^#" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Lactobacillus_delbrueckii_RMK202_pgap.gff | awk -F "\t" 'BEGIN{OFS="\t"} {if($3=="CDS") print $0}' > /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Lactobacillus_delbrueckii_RMK202_pgap_forAbundance.gff
+
+cat /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Streptococcus_thermophilus_RMK202_pgap_forAbundance.gff \
+/archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Lactobacillus_delbrueckii_RMK202_pgap_forAbundance.gff > \
+/archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff
+
+cut -f 1 /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff|sort|uniq -c
+
+
+###----------------extract coverage
+
+rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping/
+
+ # rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
   num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
+  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
     do
-echo ${num}"/37  :" ${names}
+echo ${num}"/16  :" ${names}
     num=$((num+1))
+  
+    rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping/${names}
+    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping/${names}
     
-    #names=th_K1_12h
-    #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping
-  
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping
- 
 
-bedtools coverage -bed -a /archiv/Dialact/ReferenceDatabase/${date}/Databasefinal/${date}_BacteriaDB_new.txt -b /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
-  /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping/${names}2BacteriaDB.bed 
+bedtools coverage -bed -a /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff -b /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
+  /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping/${names}/${names}2bacteriaDB.bed 
   
-  
-      ##subgroup_2 did not work (__ is in contig name--> works if you change __ after bedtools)
-    sed 's/__/L_hel_/g' /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping/${names}2BacteriaDB.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/BacteriaDBmapping/${names}2BacteriaDB_02.bed
 done
 
 
 
 ###----------------change name of bed file
- #mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping,BacteriaDBmapping}
- rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping
- mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping
-for name in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
+names=Konserve_202
+ #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping
+ mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/
+for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
     do
     
-       # name=th_K2_4h
-
-
-Day=$(echo $name |cut -d '_' -f 1)
-Kessel=$(echo $name |cut -d '_' -f 2)
-time=$(echo $name |cut -d '_' -f 3|sed 's/h//g')
-
 echo $name 
-
-#home/vincent/Projects/2019_pilotplant/05_mapping2DB/${name}/BacteriaDBmapping/${name}2BacteriaDB.bed
-   
-    cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${name}/BacteriaDBmapping/${name}2BacteriaDB_02.bed| sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t;]" -v namess="$name" -v days="$Day" -v Kessels="$Kessel" -v times="$time" 'BEGIN{OFS="\t"}{print $1,$4,$5,$7,$9,$10,$11,$12,$13,$14,$15,$16,$17,namess,days,Kessels,times}' |sed 's/OG=//g' |sed 's/grouping=//g'|sed 's/gene=//g' |sed 's/genome=//g' > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.bed
   
-#cut -d '_' -f 1,2 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.species
-
-awk -F "[-_]" 'BEGIN{OFS="_"}{print $1,$2}' /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.species
-
-
-paste /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.species /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/${name}2BacteriaDB_final.bed
-
-rm /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.bed
-rm /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/tmp.species
-
-#cut -f 1 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/${name}2BacteriaDB_final.bed|sort|uniq -c
-#awk '{if($1=="_")print $0}' /home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/${name}2BacteriaDB_final.bed
+    cat /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping/${names}/${names}2bacteriaDB.bed | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/${names}_finalBacteria_forR.bed
+    
 
     done
+cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/*.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/all_Bacteria_allSamples.txt
 
-
+ cut -f 1 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/all_Bacteria_allSamples.txt | sort|uniq -c
+ 
 ###-------------on local machine
 
-#scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/th_K2_4h* /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
-
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/BacteriaDBmapping/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
-```
-
-#####extracting Cow and Mito 
-
-```{bash}
-
-date=20190513
-  threads=30
-  #rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
-  num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-    do
-echo ${num}"/37  :" ${names}
-    num=$((num+1))
-    
-    #names=th_K2_4h
-    #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping
-    
-    rm /home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping/${names}_CowGenomeMapping.txt
-    
-    
-    cowSize=$(cut -d ' ' -f 2 /archiv/cowDB/genome/20190520/cow_genome_genomeSize.txt)
-    mitoSize=$(cut -d ' ' -f 2 /archiv/cowDB/mito/20190520/cow_mito_genomeSize.txt)
-
-samtools view /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam | grep "cow_genome" -c | awk -v namess="$names" -v sizes="$cowSize" '{print namess,$0,sizes,"cow_genome"}' >> /home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping/${names}_CowGenomeMapping.txt
-
-samtools view /home/vincent/Projects/2019_pilotplant/05_mapping2DB/${names}/bwa2DB/${names}_rawIllumina_bwamem_sorted.bam | grep "cow_mito" -c | awk -v namess="$names" -v sizes="$mitoSize" '{print namess,$0,sizes,"cow_mito"}' >> /home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping/${names}_CowGenomeMapping.txt
-
-done
-
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/CowGenomemapping/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/
+scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping/finalmapping/all_Bacteria_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Bacteria_allSamples.txt
 
 
 ```
+
+
+
+```{r}
+
+
+source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(cowplot) ## for arranging plots
+library(stringr) ##for split string
+library(rlist) ##rbind all dataframe of list
+library(viridis) ##colour palette
+##===================================
+#-------------file import
+
+
+  read_count_bac <- read_delim("/home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Bacteria_allSamples.txt","\t", escape_double = FALSE, col_names = c("chr","type","sort","start","end","unknown2","orientation","unknown","description","count","length_mapped","geneLength","covered","sample"),trim_ws = TRUE)
+
+table(read_count_bac$chr)
+
+read_count_bac$species <- ifelse(read_count_bac$chr=="L_delbrueckii_plasmid_RMK202_01","L_delbrueckii_plasmid_RMK202_01",ifelse(
+    read_count_bac$chr=="L_delbrueckii_RMK202","L_delbrueckii_RMK202",ifelse(
+      read_count_bac$chr=="S_thermophilus_RMK202","S_thermophilus_RMK202","L_plasmid_RMK202"
+    )
+))
+
+table(read_count_bac$species)
+
+read_count_bac$geneCoverage  <- (read_count_bac$count*600)/read_count_bac$geneLength
+
+ggplot(read_count_bac,aes(y=geneCoverage))+geom_boxplot()+facet_grid(sample~species, scales="free")
+
+library(dplyr)
+
+
+bac_final <- read_count_bac %>% 
+  group_by(sample,species) %>% 
+  summarize(median = median(geneCoverage))
+
+
+```
+
+#####bring together
+can only run with previous two chapters.
+
+```{r}
+all_final <- rbind(phage_final,bac_final)
+
+
+  total_samples_sumTreatment <- aggregate(. ~sample, data=all_final[,c("sample","median")], sum, na.rm=TRUE)
+
+all_final$total_coverage <- total_samples_sumTreatment[match(all_final$sample,total_samples_sumTreatment$sample),"median"]
+all_final$percent_coverage <- 100*(all_final$median/all_final$total_coverage)
+
+all_final$species <- as.factor(all_final$species)
+
+levels(all_final$species)
+
+all_final$species <- factor(all_final$species, levels=rev(c("S_thermophilus_RMK202","S_phage_RMK202","L_delbrueckii_RMK202","L_delbrueckii_plasmid_RMK202_01","L_plasmid_RMK202","L_phage_RMK202_01","L_phage_RMK202_02")))
+
+all_final$sample <- as.factor(all_final$sample)
+
+levels(all_final$sample)
+
+all_final$sample <- factor(all_final$sample, levels=(c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")))
+
+
+# table(total_samples$phage) %>% length()
+
+
+
+#Sterm_colours <- c("#FAA0A0","#FAA0A0")
+all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA","#99E9F2") ) 
+# 
+# mito_colours <- c("#AFBACC","#BE99AB") # sequential_hcl(5,palette="Grays")[c(4,3)]
+# Sterm_colours <- c("#FCC2C2","#EB4D4D")# c("#FAA0A0","#EB4D4D") #c("#FF7D87","#E71D32")    
+# Ldel_colours <- c("#6CF5A3","#10B552")  # c("#8CD211","#4C8400")   # c("#5AA700","#2D660A") #brewer.pal(9,name="YlGnBu")[c(4,6)] #sequential_hcl(5,palette="Purples 3")[c(3,2)]
+# lactococcus_colours <- c("#5AAAFA","#4178BE")  #sequential_hcl(5,palette="Terrain 2")[c(3,2)]
+# rest_colours <-  c("#C5F6FA","#99E9F2","#66D9E8","#3BC9DB") #brewer.pal(9,name="YlOrBr")[c(5,7,8,9)] #sequential_hcl(5,palette="BluGrn")[2:5]
+# colours_phages_02 <- c(rest_colours,lactococcus_colours,Ldel_colours,Sterm_colours,mito_colours)
+
+
+
+
+
+p2 <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
+    labs("",
+         x="",
+         y="relative abundance")+
+    theme_classic()+
+   # scale_color_viridis(discrete=TRUE)+
+   scale_fill_manual(values=all_colours)+
+  # scale_fill_viridis(discrete=TRUE)+
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+      #axis.text.x = element_blank(),
+          legend.position="right"
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          #legend.title = element_blank()
+          )
+
+  p2
+  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/all_together/02_percent_stacked_bar_allReplicates.pdf",width=8,height=8,paper='special')
+p2
+
+dev.off()
+
+```
+
 
 
 ####analyse Data
@@ -9418,24 +9787,8 @@ dev.off()
 
 plottly for multiple plots [subplots](https://plotly-r.com/arranging-views.html)
 
-##Biolog
-
-```{r}
-
-library(readr)
-Platte_1 <- read_csv("~/Desktop/Projects/2019_Biolog/02_Biologtrial/Platte_1_190716.csv", skip = 9)
-
-View(Platte_1)
-
-# Platte_1$
-
-ggplot(Platte_1,aes(x=Hour,y=A01))+geom_point()
-
-```
-
 
 ## Pandora for Strains
-
 
 
 
@@ -10009,14 +10362,7 @@ scp vincent@130.223.51.151:/home/vincent/apps/make_prg/pytest.error /
 
 ```
 
-## Anvio
 
-I have install anvio on the bigmachine.
-In order to get going you have to activate the right envrionment on the bigmachine.
-
-```{bash}
-conda activate anvio5
-```
 ##Circos plot
 
 ```{bash}
@@ -10899,1628 +11245,6 @@ svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/l
 grid.arrange(genesPlot+theme(legend.position="none"),rRNAPlot,tRNAsPlot,legend,pseudoPlot,transposasePlot,CRISPRPlot , ncol=4)
 
 dev.off()
-```
-
- 
-#Appendix
-
-
-####mapping cow mito DB
-
-```{bash}
-
-date=20190520
-mkdir -p /archiv/cowDB/mito/${date}
-
-
-##===========local===========
-date=20190520
-
-scp /home/vincent/Downloads/sequence.fasta vincent@130.223.51.151:/archiv/cowDB/mito/${date}/cowDB.fasta
-
-
-##===========BIGMACHINE===========
-date=20190520
-
-bwa index /archiv/cowDB/mito/${date}/cowDB.fasta
-
-
-##-----------
-##mapping to cow mito
-##-----------
-
-date=20190520
-
-rm /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt
-threads=35
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-  rm -r /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/
-
-  mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/
-  mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log
-
-bedtools bamtofastq -i /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/01_againstUnpolished/${names}/bwaMapping2DB/${names}/bwaMapping2DB/rawIllumina_bwamem_sorted_unmapped.bam -fq /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/01_againstUnpolished/${names}/bwaMapping2DB/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fastq
-  
-  bwa mem -t ${threads} /archiv/cowDB/mito/${date}/cowDB.fasta \
-    /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/01_againstUnpolished/${names}/bwaMapping2DB/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fastq | samtools sort -@${threads} -O BAM -o /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.bam - 
-
-samtools view -b -f 4 /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.bam > /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted_unmapped.bam
-
-bedtools bamtofastq -i /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.bam -fq /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.fastq
-  
-
-##Qualimap
-
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB//bamqc
-
-qualimap bamqc -bam /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.bam -outdir /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
-
-cp /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/bamqc/genome_results.txt /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/bamqc/raw_data_qualimapReport/
-
-samtools index /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.bam
-   
-echo "/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/"${names}"/bwaMapping2DB/bamqc/raw_data_qualimapReport/" >> /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt
-   
-  done 
-
-rm -r /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-
-multiqc --cl_config "qualimap_config: { total_reads: TRUE }" /archiv/logs/multiQC_config.txt --file-list /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt \
-  -o /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-
-##============================
-rm /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-
-cp /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/bamqc/genome_results.txt /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/bamqc/raw_data_qualimapReport/
-
-
-echo "/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/"${names}"/bwaMapping2DB/bamqc/raw_data_qualimapReport/" >> /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt
-   
-  done 
-rm -r /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-
-multiqc --config /archiv/logs/multiQC_config.txt --file-list /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/log/multiqc_logfile.txt \
-  -o /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/
-
-
-##=========local==============
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/02_againstAllCowMito/Mulitqc/
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/MultiQC/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/02_againstAllCowMito/Mulitqc/
-
-
-```
-
-####mapping Cow genome
-
-```{bash}
-
-
-date=20190520
-mkdir -p /archiv/cowDB/genome/${date}
-
-cd /archiv/cowDB/genome/${date}
-
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Bos_taurus/latest_assembly_versions/GCF_002263795.1_ARS-UCD1.2/GCF_002263795.1_ARS-UCD1.2_genomic.fna.gz
-
-gunzip GCF_002263795.1_ARS-UCD1.2_genomic.fna.gz
-
-##===========BIGMACHINE===========
-date=20190520
-
-bwa index /archiv/cowDB/genome/${date}/GCF_002263795.1_ARS-UCD1.2_genomic.fna
-
-
-##-----------
-##mapping to cow genome
-##-----------
-
-date=20190520
-
-rm /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/log/multiqc_logfile.txt
-threads=35
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-  rm -r /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/
-  mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/log/
-  mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/
-
-  bwa mem -t ${threads} /archiv/cowDB/genome/${date}/GCF_002263795.1_ARS-UCD1.2_genomic.fna \
-    /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/02_againstAllCowMito/${names}/bwaMapping2DB/${names}_cowDB_rawIllumina_bwamem_sorted.fastq | samtools sort -@${threads} -O BAM -o /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam - 
-
-samtools view -b -f 4 /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam > /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted_unmapped.bam
-
-bedtools bamtofastq -i /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam -fq /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.fastq
-  
-
-##Qualimap
-
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB//bamqc
-
-qualimap bamqc -bam /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam -outdir /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
-
-samtools index /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam
-
-cp /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/bamqc/genome_results.txt /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/bamqc/raw_data_qualimapReport/
-
-echo "/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/"${names}"/bwaMapping2DB/bamqc/raw_data_qualimapReport/" >> /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/log/multiqc_logfile.txt
- 
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/flagstat    
-
-samtools flagstat /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/${names}/bwaMapping2DB/${names}_cowDBGenome_rawIllumina_bwamem_sorted.bam > \
-  /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/flagstat/${names}_flagstat.txt
-
-
-  done 
-echo "/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/flagstat/" >> \
-  /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/log/multiqc_logfile.txt
-  
-mkdir -p /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/Mulitqc/
-
-multiqc --config /archiv/logs/multiQC_config.txt --file-list /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/log/multiqc_logfile.txt \
-  -o /home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/Mulitqc/
-
-
-
-##=========local==============
-
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/03_againstAllCowGenom/03_againstAllCowGenome/Mulitqc/
-
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/02_mapping2referenceDB/03_againstAllCowGenome/Mulitqc/ /home/vincent/Desktop/Projects/2019_Pilotplan/03_againstAllCowGenom/03_againstAllCowGenome/Mulitqc/
-
-
-```
-
-
-
-
-##### assemble unassembled
-
-```{bash}
-
-##===========
-##Assembly plasmid of unassembled reads
-##===========
-mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/{1AB,2AB}/assembly/
-
-##2AB
-flye --threads 37  --iterations 4 --genome-size 500000 --plasmids --nano-raw /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/postAssemblyAnalysis/rawReads2assembly_minimap2/rawReads_minimap2Mapped_Scaffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/2AB/assembly/
-
-
-##1AB
-flye --threads 37 --iterations 4 --genome-size 500000 --plasmids --nano-raw /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/postAssemblyAnalysis/rawReads2assembly_minimap2/rawReads_minimap2Mapped_Scaffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/1AB/assembly/
-
-###---Bandage
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/2AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/2AB/assembly/assembly_Graph_plasmid_unmapped.gfa
-
-scp vincent@130.223.51.151:ffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/1AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/assembly/assembly_Graph_plasmid_unmapped.gfa
-
-##===========
-##Assembly meta unassembled
-##===========
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/02_unassembled_undeplexed_meta/{1AB,2AB}/assembly/
-
-##2AB
-flye --threads 37  --iterations 4 --genome-size 500000 --meta --nano-raw /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/2AB/postAssemblyAnalysis/rawReads2assembly_minimap2/rawReads_minimap2Mapped_Scaffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/02_unassembled_undeplexed_meta/2AB/assembly/
-
-
-##1AB
-flye --threads 37 --iterations 4 --genome-size 500000 --meta --nano-raw /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/1AB/postAssemblyAnalysis/rawReads2assembly_minimap2/rawReads_minimap2Mapped_Scaffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/02_unassembled_undeplexed_meta/1AB/assembly/
-
-###---Bandage
-
-scp vincent@130.223.51.151:ffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/2AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/2AB/assembly/assembly_Graph_plasmid_unmapped.gfa
-
-scp vincent@130.223.51.151:ffolds_sorted_unmapped.fastq --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/02_unassembled_undeplexed_plasmids/1AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/assembly/assembly_Graph_plasmid_unmapped.gfa
-
-
-
-```
-
-
-###mapping2polished
-
-```{bash}
-
-#rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2Nanopre/01_againstUnpolished
-
-threads=37
-
-num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  echo ${num}"/37  :" ${names}
-  num=$((num+1))
-  rm -r /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}
-
-  mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/
-  
-  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq.gz
-  #gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq.gz
-  
-  sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${NanoSample}/assembly/assembly.fasta
-  
-  bwa mem -t ${threads} /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq | samtools sort -@${threads} -O BAM -o /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
-
-samtools view -b -f 4 /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
-
-bedtools bamtofastq -i /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
-
-rm /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
-
-##-----Qualimap
-
-mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB//bamqc
-
-qualimap bamqc -bam /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
-
-
- mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log
-echo "/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/"${names}"/bwaMapping2DB//bamqc" >> /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log/multiqc_logfile.txt
-   
-
-samtools index /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
-
- # gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq
-#  gzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq
-  
-  
-  done 
-
-rm -r /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/MultiQC/
-mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/MultiQC/
-
-
-  
-  multiqc --config /archiv/logs/multiQC_config.txt --file-list /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/log/multiqc_logfile.txt \
-  -o /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/MultiQC/
-
-
-##------------------------------move local
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/MultiQC/multiqc_report.html /home/vincent/Desktop/Projects/2019_Pilotplan/
-
-
-
-###--------------on local
-name=di_K1_10h
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${name}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta  Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_metagenome.fasta
-
-name=th_K1_8h
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${name}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta  Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_metagenome.fasta
-name=di_K2_6h
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${name}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta  Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_metagenome.fasta
-name=th_K2_8h
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${name}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta  Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_metagenome.fasta
-
-
-
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt )
-  do
-  chromium-browser /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/${names}/bwaMapping2DB//bamqc/qu*.html &
-  
-  done
-
-```
-mappping stats
-
-```{r}
-library(readr)
-library(stringr)
-library(ggplot2)
-mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mappingStat_forR.csv", "\t", escape_double = FALSE, col_names = c("name","empty1","empty2","empty3","percent","Mio.reads"),trim_ws = TRUE)
-
-
-mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mapping_after_kneaddata_cleaned.csv", "\t", escape_double = FALSE, col_names = c("name","percent","Mio.reads"),trim_ws = TRUE)
-
-
-
-
-  mappingStat$day <- str_split_fixed(mappingStat$name, "_", 3)[,1]
-  mappingStat$kessel <- str_split_fixed(mappingStat$name, "_", 3)[,2]
-  mappingStat$time <- str_split_fixed(mappingStat$name, "_", 3)[,3]
-  mappingStat$treatment <- paste0(mappingStat$day,"_",mappingStat$kessel)
- 
-  mappingStat$treatment_f = factor(mappingStat$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  mappingStat$time_f = factor(mappingStat$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-mappingStat$name <- as.factor(mappingStat$name)
-  mappingStat$name_f = factor(mappingStat$name, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","th_K1_0h","di_K1_2h","th_K1_2h","di_K1_4h","th_K1_4h","di_K1_6h","th_K1_6h","di_K1_8h","th_K1_8h","di_K1_10h","th_K1_10h","di_K1_12h","th_K1_12h","di_K1_24h","th_K1_24h","S72","S50","L104","L108","L35","L39","L44","L70","L71","L80","L99"))
-
-  levels(mappingStat$name)
-  
-  coloursplotting <-  c(rep("cadetblue3",5),rep("azure4",16),rep("#EB4D4D",2),rep("#10B552",9))
-  
- rawREad <-  ggplot(mappingStat,aes(x=name_f,y=percent,fill=name_f))+geom_bar( stat="identity", position="dodge")+
-    labs(y="Percent\nraw reads mapping",
-        x="")+
-         coord_cartesian(ylim=c(90,100))+
-   scale_fill_manual(values=coloursplotting)+
-       theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          # # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
- rawREad
- 
-   svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/rawReadMapping.svg",width=5,height=3)
-rawREad
- dev.off()
- 
- 
- mappingStat$newReads <- (mappingStat$percent/100)*mappingStat$Mio.reads
-  
- Mio_reads <- ggplot(mappingStat,aes(x=time_f,y=newReads,group=treatment,color=kessel,fill=kessel))+geom_bar( stat="identity", position="dodge")+
-    labs(y="Mio. reads mapping",
-        y="")
- 
-    svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/rawReadMapping_mio.svg",width=5,height=3)
-Mio_reads
- dev.off()
- 
- 
-```
-
-
-
-##### blast db
-
-```{bash}
-
-
-##------------bac_phage DB 
-
-
- cat /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes.fna /archiv/BLAST/blast_db/20190204/viral_nucleotide/viral.fna > /archiv/BLAST/blast_db/20190204/Bacteria_and_Phages/Bac_Phage.fna
-
-
-makeblastdb -max_file_sz 10GB -in /archiv/BLAST/blast_db/20190204/Bacteria_and_Phages/Bac_Phage.fna \
- -out /archiv/BLAST/blast_db/20190204/Bacteria_and_Phages/Bac_Phage -parse_seqids -dbtype nucl
-
-
-cd /archiv/BLAST/blast_db/20190204/Bacteria_and_Phages
-
-#pigz -d /archiv/TREMBL_database/20190710/uniprot_trembl.fasta.gz
-
-diamond makedb --in Bac_Phage.fna  -d Bac_Phage
-
-
-
-##------------alternative approaches
-
-blastdbcmd -db nr -dbtype nucl -entry all -outfmt "%f" -out - | pigz -c > /archiv/BLAST/nr_20190710_nucleotid/nr.fa.gz
-
-
-
-
-mkdir -p /archiv/BLAST/blast_db/20190204/phage_nucleotide_cow/
-
-cat /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes.fna \
-/archiv/cowDB/mito/20190520/cowDB.fasta \
-/archiv/cowDB/genome/20190520/GCF_002263795.1_ARS-UCD1.2_genomic.fna \
-/archiv/BLAST/blast_db/20190204/viral_nucleotide/viral.fna > \
-/archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow.fna
-
-sed -e '/^>/s/$/@/' -e 's/^>/#/' /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow.fna | tr -d '\n' | tr "#" "\n" | tr "@" "\t" | sort -u -k1,1 | sed -e 's/^/>/' -e 's/\t/\n/' > /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_01.fna
-
-
-sed '1d' /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_01.fna > /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_02.fna
-
-sed -i 's/,/_/g' /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_02.fna
-
-awk -v RS=">" -v FS="\n" -v ORS="" ' { if ($2) print ">"$0 } ' /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_02.fna > /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_03.fna
-
-rm /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow_01.fna
-
-makeblastdb -max_file_sz 10GB -in /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow.fna \
- -out /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow -parse_seqids -dbtype nucl
-
-
-cat /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes.fna \
-/archiv/cowDB/genome/20190520/GCF_002263795.1_ARS-UCD1.2_genomic.fna \
-/archiv/BLAST/blast_db/20190204/viral_nucleotide/viral.fna > \
-/archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow.fna
-
-rm /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow
-
-makeblastdb -max_file_sz 10GB -in /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow.fna \
- -out /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide_cow -parse_seqids -dbtype nucl
-
-
-
-```
-
-
-
-### MetaSNV on ONTassembly
-[MetaSNV](http://metasnv.embl.de/tutorial.html) tutorial. 
-
-```{bash}
-date=20190513
-
-#rm -r /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/
-mkdir -p /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/{99_logs,01_analysis_01}
-
-  threads=37
-
-###------------make a file file
-  num=1
-  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name_pilotplant.txt )
-    do
-    
-    sampleShort=$(echo ${names}| awk -F "_" 'BEGIN{OFS="_"}{print $1,$2}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-    
-    echo ${num}"/37  :" ${names} " in group :" ${sampleShort} 
-    num=$((num+1))
-echo "/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished/"${names}"/bwaMapping2DB/"${names}"_rawIllumina_bwamem_sorted.bam" >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs/${sampleShort}-files_MetaSNV.txt
-  
-  done
-
-##----------shorten reference DB
-rm /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/_eightFreebayes_short_genmomeSize.txt
-for treatment in $(ls /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs |grep "iles_MetaSNV.txt")
-do
-
-echo ${treatment} >> /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/_eightFreebayes_short_genmomeSize.txt
-
-  sampleShort=$(echo ${treatment}| awk -F "-" 'BEGIN{OFS="-"}{print $1}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-
-#sed 's/\s.*$//' /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes.fasta > /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta
-
-#bwa index /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta
-
-seq_length.py /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta >> \
-  /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/_eightFreebayes_short_genmomeSize.txt
-#grep "^>" /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta 
-done
-
-
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/_eightFreebayes_short_genmomeSize.txt /home/vincent/Desktop/Projects/2019_Pilotplan/
-
-
-##----------creating dest file file
-
-#head -9 /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs/files_MetaSNV.txt > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs/files_MetaSNV.test
-
-##playing up
-#di_K1_0h (head 3)
-#di_K2_10h (head 10)
-
-###------------run metaSNV
-treatment=di_K1-files_MetaSNV.txt
-for treatment in $(ls /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs |grep "iles_MetaSNV.txt")
-do
-threads=2
-echo ${treatment}
-
-  sampleShort=$(echo ${treatment}| awk -F "-" 'BEGIN{OFS="-"}{print $1}')
-  
-   NanoSample=$(grep "$sampleShort" /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt) 
-  
-  #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${NanoSample}/assembly/assembly.fasta
-  
-
-rm -r /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}
-
-bwa index /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta
-
-metaSNV.py /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort} /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/99_logs/${sampleShort}-files_MetaSNV.txt \
-  /archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${NanoSample}/08_eightFreebayes/freebayesOuput/_eightFreebayes_short.fasta \
-  --threads ${threads}  #--print-commands
-
-###------------run post metaSNV
-
-metaSNV_post.py /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort} -b 2.0 -d 1.0 -m2 -c 20 -p 0.1
-
-
-done ##treatment
-###Move local---------------------
-name=di_K1
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${name}/filtered/pop/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-
-name=di_K2
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${name}/filtered/pop/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-
-name=th_K1
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${name}/filtered/pop/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-
-name=th_K2
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${name}/filtered/pop/ /home/vincent/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}
-
-
-#-----------di_K1
-
-name=di_K1
-sed -i 's/_rawIllumina_bwamem_sorted.bam//g' ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}/pop/contig_*
-
-name=di_K2
-sed -i 's/_rawIllumina_bwamem_sorted.bam//g' ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}/pop/contig_*
-
-name=th_K1
-sed -i 's/_rawIllumina_bwamem_sorted.bam//g' ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}/pop/contig_*
-
-name=th_K2
-sed -i 's/_rawIllumina_bwamem_sorted.bam//g' ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/${name}/pop/contig_*
-
-
-```
-
-```{r}
-
-library(readr)
-library(tidyverse)
-library(dplyr)
-library(tidyr)
-
-##=========================
-##----------------di_K1
-##=========================
-Sterm_size <-1861525 
-Ldel_size <- 2164766
-
-Sterm_snpcalling_di_K1 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/di_k1/pop/contig_3.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-Ldel_snpcalling_di_K1 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/di_k1/pop/contig_1.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-
-#colnames(Ldel_snpcalling_di_K1)
-#colnames(Sterm_snpcalling_di_K1)
-
-Ldel_snpcalling_long <- gather(Ldel_snpcalling_di_K1, name, snp_ratio, di_K1_0h:di_K1_8h, factor_key=TRUE)
-Sterm_snpcalling_long <- gather(Sterm_snpcalling_di_K1, name, snp_ratio, di_K1_0h:di_K1_8h, factor_key=TRUE)
-Ldel_snpcalling_long$species  <- "L. delbrueckii"
-Sterm_snpcalling_long$species  <- "S. thermophilus"
-
-(length(unique(Ldel_snpcalling_long$X1))/Ldel_size)*100
-(length(unique(Sterm_snpcalling_long$X1))/Sterm_size)*100
-
-di_K1_long <- rbind(Ldel_snpcalling_long,Sterm_snpcalling_long)
-
-  di_K1_long$day <- str_split_fixed(di_K1_long$name, "_", 3)[,1]
-  di_K1_long$kessel <- str_split_fixed(di_K1_long$name, "_", 3)[,2]
-  di_K1_long$time <- str_split_fixed(di_K1_long$name, "_", 3)[,3]
-  di_K1_long$treatment <- paste0(di_K1_long$day,"_",di_K1_long$kessel)
- 
-#  di_K1_long$treatment_f = factor(di_K1_long$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  di_K1_long$time_f = factor(di_K1_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-##=========================
-##----------------di_K2
-##=========================
-
-Sterm_snpcalling_di_K2 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/di_K2/pop/contig_1.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-Ldel_snpcalling_di_K2 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/di_K2/pop/contig_3.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-# 
-# colnames(Ldel_snpcalling_di_K2)
-# colnames(Sterm_snpcalling_di_K2)
-
-Ldel_snpcalling_long <- gather(Ldel_snpcalling_di_K2, name, snp_ratio, di_K2_0h:di_K2_8h, factor_key=TRUE)
-Sterm_snpcalling_long <- gather(Sterm_snpcalling_di_K2, name, snp_ratio, di_K2_0h:di_K2_8h, factor_key=TRUE)
-Ldel_snpcalling_long$species  <- "L. delbrueckii"
-Sterm_snpcalling_long$species  <- "S. thermophilus"
-
-
-(length(unique(Ldel_snpcalling_long$X1))/Ldel_size)*100
-(length(unique(Sterm_snpcalling_long$X1))/Sterm_size)*100
-
-
-
-di_K2_long <- rbind(Ldel_snpcalling_long,Sterm_snpcalling_long)
-
-  di_K2_long$day <- str_split_fixed(di_K2_long$name, "_", 3)[,1]
-  di_K2_long$kessel <- str_split_fixed(di_K2_long$name, "_", 3)[,2]
-  di_K2_long$time <- str_split_fixed(di_K2_long$name, "_", 3)[,3]
-  di_K2_long$treatment <- paste0(di_K2_long$day,"_",di_K2_long$kessel)
- 
-  #di_K2_long$treatment_f = factor(di_K2_long$treatment, levels=c('di_K2','th_K1','di_K2','th_K2'))
-  di_K2_long$time_f = factor(di_K2_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-
-##=========================
-##----------------th_K1
-##=========================
-
-Sterm_snpcalling_th_K1_01 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K1/pop/contig_5.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-  Sterm_snpcalling_th_K1_02 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K1/pop/contig_2.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-  Sterm_snpcalling_th_K1_03 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K1/pop/contig_3.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-Ldel_snpcalling_th_K1 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K1/pop/contig_1.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-
-
-all(colnames(Sterm_snpcalling_th_K1_01) %in% colnames(Sterm_snpcalling_th_K1_02))
-all(colnames(Sterm_snpcalling_th_K1_01) %in% colnames(Sterm_snpcalling_th_K1_03))
-Sterm_snpcalling_th_K1 <- rbind(Sterm_snpcalling_th_K1_01,Sterm_snpcalling_th_K1_02,Sterm_snpcalling_th_K1_03)
-
- 
-colnames(Ldel_snpcalling_th_K1)
-colnames(Sterm_snpcalling_th_K1)
-
-Ldel_snpcalling_long <- gather(Ldel_snpcalling_th_K1, name, snp_ratio, th_K1_0h:th_K1_8h, factor_key=TRUE)
-Sterm_snpcalling_long <- gather(Sterm_snpcalling_th_K1, name, snp_ratio, th_K1_0h:th_K1_8h, factor_key=TRUE)
-Ldel_snpcalling_long$species  <- "L. delbrueckii"
-Sterm_snpcalling_long$species  <- "S. thermophilus"
-
-
-(length(unique(Ldel_snpcalling_long$X1))/Ldel_size)*100
-(length(unique(Sterm_snpcalling_long$X1))/Sterm_size)*100
-
-th_K1_long <- rbind(Ldel_snpcalling_long,Sterm_snpcalling_long)
-
-  th_K1_long$day <- str_split_fixed(th_K1_long$name, "_", 3)[,1]
-  th_K1_long$kessel <- str_split_fixed(th_K1_long$name, "_", 3)[,2]
-  th_K1_long$time <- str_split_fixed(th_K1_long$name, "_", 3)[,3]
-  th_K1_long$treatment <- paste0(th_K1_long$day,"_",th_K1_long$kessel)
- 
-  #th_K1_long$treatment_f = factor(th_K1_long$treatment, levels=c('th_K1','th_K1','th_K1','th_K2'))
-  th_K1_long$time_f = factor(th_K1_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-
-  ##=========================
-##----------------th_K2
-##=========================
-
-Sterm_snpcalling_th_K2 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K2/pop/contig_1.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-Ldel_snpcalling_th_K2 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/th_K2/pop/contig_2.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-# 
-# colnames(Ldel_snpcalling_th_K2)
-# colnames(Sterm_snpcalling_th_K2)
-
-Ldel_snpcalling_long <- gather(Ldel_snpcalling_th_K2, name, snp_ratio, th_K2_0h:th_K2_8h, factor_key=TRUE)
-Sterm_snpcalling_long <- gather(Sterm_snpcalling_th_K2, name, snp_ratio, th_K2_0h:th_K2_8h, factor_key=TRUE)
-Ldel_snpcalling_long$species  <- "L. delbrueckii"
-Sterm_snpcalling_long$species  <- "S. thermophilus"
-
-
-(length(unique(Ldel_snpcalling_long$X1))/Ldel_size)*100
-(length(unique(Sterm_snpcalling_long$X1))/Sterm_size)*100
-
-
-th_K2_long <- rbind(Ldel_snpcalling_long,Sterm_snpcalling_long)
-
-  th_K2_long$day <- str_split_fixed(th_K2_long$name, "_", 3)[,1]
-  th_K2_long$kessel <- str_split_fixed(th_K2_long$name, "_", 3)[,2]
-  th_K2_long$time <- str_split_fixed(th_K2_long$name, "_", 3)[,3]
-  th_K2_long$treatment <- paste0(th_K2_long$day,"_",th_K2_long$kessel)
- 
-  #th_K2_long$treatment_f = factor(th_K2_long$treatment, levels=c('th_K2','th_K1','th_K2','th_K2'))
-  th_K2_long$time_f = factor(th_K2_long$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-
-  
-##=========================
-##----------------di_K2
-##=========================
-
-##===================Histogramm
-
-    di_K2_long_cleaned <- di_K2_long[di_K2_long$snp_ratio>=0,]
-dim(di_K2_long_cleaned)
-dim(di_K2_long)
-
-(table(di_K2_long_cleaned$species)/c(1800000,2100000))*100
-  
-  ggplot(di_K2_long_cleaned,aes(x=snp_ratio))+ geom_histogram()+ 
-    facet_grid(~species)+
-    labs("",
-         x="rel. abundance",
-         y="count")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   # scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  
-  ##===================Line
-
-#   Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-  
-  Ldel_colour <- c("#10B552","#EB4D4D")
-  di_K2_long_cleaned$time_f_02 <- as.character(gsub("h","",di_K2_long_cleaned$time_f) )
-  di_K2_long_cleaned$time_f_02 = factor(di_K2_long_cleaned$time_f_02, levels=c("0","2","4","6","8","10","12","24"))
-
-
-  p1 <- ggplot(di_K2_long_cleaned,aes(x=time_f_02,y=snp_ratio,group=X1,color=species))+ geom_line(size=0.2, alpha=.2)+ 
-     facet_grid(~species)+
-    labs("",
-         x="time [h]",
-         y="SNP ratio")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-       scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_Ldel_line_SNP.pdf",width=3.4,height=3,paper='special')
-p1
-
-dev.off()
-  
-
-
-##=========================
-##----------------all merged
-##=========================
-
-##===================Histogramm
-
-# dim(di_K1_long)
-# dim(di_K2_long)
-# dim(th_K2_long)
-
-all_long <- rbind(di_K1_long,th_K1_long,di_K2_long,th_K2_long)
-
-   all_long_cleaned <- all_long[all_long$snp_ratio>=0,]
-
-  Ldel_colour <- c("#10B552","#EB4D4D")
-  all_long_cleaned$time_f_02 <- as.character(gsub("h","",all_long_cleaned$time_f) )
-  all_long_cleaned$time_f_02 = factor(all_long_cleaned$time_f_02, levels=c("0","2","4","6","8","10","12","24"))
-
-(table(all_long_cleaned$species)/c(1800000,2100000))*100
-  
-  ggplot(all_long_cleaned,aes(x=snp_ratio))+ geom_density()+ 
-    facet_grid(name~species~time_f_02)+
-    coord_flip()+
-    labs("",
-         x="rel. abundance",
-         y="count")+
-    theme_classic()+
-   # scale_color_viridis(discrete=TRUE)+
-   # scale_fill_manual(values=colours_phages_02)+
-  # scale_fill_viridis(discrete=TRUE)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-      #axis.text.x = element_blank(),
-          legend.position="right"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  
-  ##===================Line
-
-#   Sterm_colours <-  c("#FAA0A0","#FCC2C2","#EB4D4D","#D42828") #c("#FAA0A0","#FAA0A0","#FAA0A0","#FAA0A0")
-# Ldel_colours <- c("#6CF5A3","#B3FCD1","#10B552","#088A3C")   # c("#6CF5A3","#6CF5A3","#6CF5A3","#6CF5A3")BF3FCD1
-  
-
-  p1 <- ggplot(all_long_cleaned,aes(x=time_f_02,y=snp_ratio,group=X1,color=species))+ geom_line(size=0.2, alpha=.1)+ 
-    # facet_grid(day~kessel~species)+
-    facet_grid(species~kessel+day)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="alternative allel frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-       scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1
-  pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling.pdf",width=9.8,height=4,paper='special')
-p1
-
-dev.off()
-
-## SNV for poster ISCB
-
-all_long_cleaned_K1 <- all_long_cleaned[which(all_long_cleaned$kessel=="K1"),]
-
-all_long_cleaned_K1$replicate <- ifelse(all_long_cleaned_K1$treatment=="di_K1","replicate 1","replicate 2")
-
-
-
-
-  p1_poster <- ggplot(all_long_cleaned_K1,aes(x=time_f_02,y=snp_ratio,group=X1,color=species))+ geom_line(size=0.2, alpha=.2)+ 
-    # facet_grid(day~kessel~species)+
-    facet_grid(species~replicate)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="allel frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-       scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1_poster
-  svg("~/Desktop/posters/2019_ISCB/figures/01_snpCalling.svg",width=4.9,height=4)
-p1_poster
-
-dev.off()
-
-```
-Currently the problem of the SNVcalling is that the reads are recruted by different genomes therefor we have only very little coverage per genome and therefore only very few SNP calling. 
-I should do the SNP calling on the assembled genome or reduce to the reference library for SNP calling. 
-
-clustering of the S thermophilus SNPs
-
-
-```{r}
-library("Hmisc")
-library(ggplot2)
-library("igraph")
-
-
-
-
-Sterm_snpcalling_di_K2 <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/SNPcalling/di_K2/pop/contig_1.filtered.freq","\t", escape_double = FALSE, trim_ws = TRUE)
-
-
-
-##------------handle NAs
-
-metaSNV_3_samples_new_clustering <- Sterm_snpcalling_di_K2[,2:9]
-metaSNV_3_samples_new_clustering_new <- data.frame()
-for (col in 1:ncol(metaSNV_3_samples_new_clustering)) {
-  for (row in 1:nrow(metaSNV_3_samples_new_clustering)) {
-    
-    metaSNV_3_samples_new_clustering_new[row,col] <- ifelse(metaSNV_3_samples_new_clustering[row,col]<0,NA,metaSNV_3_samples_new_clustering[row,col])
-    
-  }
-  
-}
-sum(is.na(metaSNV_3_samples_new_clustering_new))
-
-
-#metaSNV_3_samples_new_clustering_test <- cbind(metaSNV_3_samples_new_clustering,metaSNV_3_samples_new_clustering)
-metaSNV_3_samples_new_clustering_test <- metaSNV_3_samples_new_clustering_new
-rownames(metaSNV_3_samples_new_clustering_test) <- Sterm_snpcalling_di_K2$X1
-##------------correlation
-
-##pairwise correlations!!!!ALL
-metaSNV_cor <- rcorr(t(as.matrix(metaSNV_3_samples_new_clustering_test)),type=c("pearson"))
-
-
-##--------plot_distriubtion
-
-length(metaSNV_cor$r)
-par(mar=c(2,2,2,2),mfrow=c(2,1))
-hist(metaSNV_cor$r,breaks = seq(-1,1,0.01),main="correlation rho")
-abline(v=spearman_correlation,col="red")
-
-hist(metaSNV_cor$P,breaks = seq(0,1,0.0005),main="significance",xlim = c(0,0.05))
-abline(v=p_wo_fdr_adjust,col="red")
-
-
-
-##function to flatten matrix
-flattenCorrMatrix <- function(cormat, pmat) {
-  ut <- upper.tri(cormat)
-  data.frame(
-    row = rownames(cormat)[row(cormat)[ut]],
-    column = rownames(cormat)[col(cormat)[ut]],
-    cor  =(cormat)[ut],
-    p = pmat[ut]
-    )
-}
-
-
-metaSNV_correlation_column <-  flattenCorrMatrix(metaSNV_cor$r,metaSNV_cor$P)
-
-
-##p-value multiple testing correction
-metaSNV_correlation_column$padj <- p.adjust(metaSNV_correlation_column$p, method = "fdr")
-
-
-##filtering with thresholds
-
-##set cutoffs
-spearman_correlation <- 0.99
-p_wo_fdr_adjust <- 0.001
-
-
- links_metaSNV <- metaSNV_correlation_column[which(metaSNV_correlation_column$cor>spearman_correlation & metaSNV_correlation_column$p < p_wo_fdr_adjust),]
-#links_metaSNV <- metaSNV_correlation_column[which(metaSNV_correlation_column$cor==1& metaSNV_correlation_column$p ==0),]
-
-dim(links_metaSNV)
-
-## Create nodes
-
-links_metaSNV_net <- graph_from_data_frame(links_metaSNV,direct=F)
-
-
-##-------------edges size all same
-
-vsize_metaSNV <- rep(3,length(V(links_metaSNV_net)$name))
-
-
-## set seed
-set.seed(8033)
-
-# create vertices
-links_metaSNV_net_layout <- layout_with_fr(links_metaSNV_net,dim=3,niter=99)
-
-# plot
-#plot1 <- plot(links_metaSNV_net,vertex.label=NA,layout=links_metaSNV_net_layout,main="SNV network",vertex.size=vsize_metaSNV
-#     )
-#legend("topright", legend=c("bacteria", "fungi"), pch=c(16:15),col="orange",bty="n",cex=1.5)
-  #png("/archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_01/filtered/pop/clustering_metaSNVs.png",width=600,height=600)
- #png("~/Desktop/Projects/2018_culturomics/MetaSNV/clustering_metaSNVs_ldel.png",width=500,height=500)
- plot(links_metaSNV_net,vertex.label=NA,layout=links_metaSNV_net_layout,main="Sterm di_K2",vertex.size=vsize_metaSNV)
-
- 
- 
- 
-ceb_ara <- cluster_edge_betweenness(links_metaSNV_net)
-#dendPlot(ceb_ara,mode="hclust")
-plot(ceb_ara,links_metaSNV_net,vertex.label=NA,vertex.size=vsize_metaSNV,vertex.frame.color="red",
-     main="Ldel SNV network")
-
-
-##assign membership to a community
-mem_cab_ara <- membership(ceb_ara)
-mem_cab_Ldel_matrix_plot <- as.data.frame(table(mem_cab_ara))
-
-
-##----reorder
-mem_cab_Ldel_matrix_plot_renamed <- mem_cab_Ldel_matrix_plot
-mem_cab_Ldel_matrix_plot_renamed$mem_cab_ara <- paste0("module_",mem_cab_Ldel_matrix_plot_renamed$mem_cab_ara)
-mem_cab_Ldel_matrix_plot_renamed$mem_cab_ara <- reorder(mem_cab_Ldel_matrix_plot_renamed$mem_cab_ara, -mem_cab_Ldel_matrix_plot_renamed$Freq)
-
-##---------only module above 20 members
-mem_cab_Ldel_matrix_plot_renamed_larger <- mem_cab_Ldel_matrix_plot_renamed[which(mem_cab_Ldel_matrix_plot_renamed$Freq>20),]
-
-
- 
-```
-
-####snpEff
-
-Here we do [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html#buildAddConfig).
-
-
-```{bash}
-##get annotations
-
-/
-
-##----------------
-##Ldel
-##----------------
-
-
-##==================
-##Building Database
-##==================
-#/archiv/Projects/2018_Culturomics/genomes/Lactobacillus_delbrueckii_RMK202.fna
-
-#/archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna
-
-#NanoSample=th_K1_8h
-#sampleShort=th_K1
-#NanoSample=RMK202
-sampleShort=Sterm_RMK202
-sampleShort=Ldel_RMK202
-
-##01_add genome name to
-
-vim /home/vincent/miniconda2/share/snpeff-4.3.1t-2/snpEff.config
-#2019_pilotPlant_di_K1.genome : 2019_ONTassembly_di_K1
-#2019_pilotPlant_th_K1.genome : 2019_ONTassembly_th_K1
-#2019_pilotPlant_th_K1_02.genome : 2019_ONTassembly_th_K1_02
-Streptococcus_thermophilus_RMK202.genome : Streptococcus_thermophilus_RMK202
-Lactobacillus_delbrueckii_RMK202.genome : Lactobacillus_delbrueckii_RMK202
-
-
-#02_put genome fasta and gff into right directory:
-
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
-
-rm -r /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}
-mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}
-
-cat  /archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/sequences.fa
-cat  /archiv/Projects/2018_Culturomics/genomes/Lactobacillus_delbrueckii_RMK202.fna  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/sequences.fa
-
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Streptococcus_thermophilus_RMK202/*.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/genes.gff
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_RMK202/*.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/genes.gff
-
-
-##03_build database
-
-cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-java -jar snpEff.jar build -gff3 -v ${sampleShort}
-
-
-##==================
-##running snpEff
-##==================
-
-
-##make a clean file by remove headers and merging
-rm /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.txt
- for i in $(ls /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/ |grep .freq)
-do
-grep -v "${sampleShort}" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/${i} >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.txt
-done
-##---------make metaSNV bed file to vcf file format
-
-awk -F "[\t:>]" 'BEGIN{OFS="\t"}{print $1,$3,".",$4,$5,100*$7,"PASS",$1$2$3$4$5$6}' /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.txt > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.vcf
-
-##Sterm
-grep "^contig_3" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.vcf > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm.vcf
-
-grep "^contig_1" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand.vcf > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel.vcf
-
-
-##th_K1
-grep "^contig_10" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_sterm.vcf
-grep "^contig_2" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_sterm.vcf
-grep "^contig_7" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_sterm.vcf
-grep "^contig_5" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_sterm.vcf
-grep "^contig_4" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_sterm.vcf
-
-grep "^contig_1" /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand.vcf | grep -v "contig_11" |grep -v "contig_13" |grep -v "contig_12" > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_th_K1/filtered/pop/final_cleand_ldel.vcf
-
-
-##--------------
-##Ldel
-##--------------
-
-##-------------run command
-cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-
-java -Xmx64g -jar snpEff.jar 2019_pilotPlant_${sampleShort}_02  /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel.vcf > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff.vcf
-
-##-------------extract annotation
-
-grep "^#" -v /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff.vcf | cut -d '|' -f 2  |sort|uniq -c | sed -e 's/^[ \t]*//' |awk -F " " 'BEGIN{OFS="\t"}{print $1,$2}'  > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/snpEff_Ldel_rmk202-withOld_merged_forR_unmodified.csv
-
-
-cat /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/snpEff_Ldel_rmk202-withOld_merged_forR_unmodified.csv
-
-
-##!!Post process in Excel like ~/Desktop/Projects/2018_culturomics/MetaSNV/snpEff_Ldel_Sterm_rmk202-withOld_merged_forR.csv
-
-##-------------extract all high impact snps genes
-
-grep "^#" -v /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff.vcf  | awk -F "|" '{if ($3=="HIGH")print $4}' > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff_highImpactGeneIds.txt
-
-rm /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff_highImpactGeneIds_genesExtracted.txt
-
-for id in $(cat /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff_highImpactGeneIds.txt);do
-search=$(echo "ID="${id}";")
-echo "----------"
-echo ${search}
-echo "----------"
-
-grep "${search}" /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/2019_pilotPlant_${sampleShort}_02/genes.gff >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff_highImpactGeneIds_genesExtracted.txt
-
-done
-
-
-awk -F "product=" 'BEGIN{OFS="\t"} {print $2}' /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_ldel_snpEff_highImpactGeneIds_genesExtracted.txt  |sort |uniq -c
-
-
-
-##--------------
-##Sterm
-##--------------
-
-##-------------run command
-cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-
-java -Xmx64g -jar snpEff.jar 2019_pilotPlant_${sampleShort}_02  /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm.vcf > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff.vcf
-
-##-------------extract annotation
-
-grep "^#" -v /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff.vcf | cut -d '|' -f 2  |sort|uniq -c | sed -e 's/^[ \t]*//' |awk -F " " 'BEGIN{OFS="\t"}{print $1,$2}' > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/snpEff_sterm_Sterm_rmk202-withOld_merged_forR_unmodified.csv
-
-
-cat /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/snpEff_sterm_Sterm_rmk202-withOld_merged_forR_unmodified.csv
-
-##!!Post process in Excel like ~/Desktop/Projects/2018_culturomics/MetaSNV/snpEff_sterm_Sterm_rmk202-withOld_merged_forR.csv
-
-##-------------extract all high impact snps genes
-
-grep "^#" -v /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff.vcf  | awk -F "|" '{if ($3=="HIGH")print $4}' > /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff_highImpactGeneIds.txt
-
-rm /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff_highImpactGeneIds_genesExtracted.txt
-
-for id in $(cat /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff_highImpactGeneIds.txt);do
-search=$(echo "ID="${id}";")
-echo "----------"
-echo ${search}
-echo "----------"
-
-grep "${search}" /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/2019_pilotPlant_${sampleShort}_02/genes.gff >> /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff_highImpactGeneIds_genesExtracted.txt
-
-done
-
-
-awk -F "product=" 'BEGIN{OFS="\t"} {print $2}' /home/vincent/Projects/2019_pilotplant/06_MetaSNV_ONT/01_analysis_${sampleShort}/filtered/pop/final_cleand_sterm_snpEff_highImpactGeneIds_genesExtracted.txt  |sort |uniq -c
-
-
-
-
-
-
-
-
-#=====================================
-##============EggNog gene annotation
-#=====================================
-
-##--------di_K1
-cat /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/03_PROKKA_annotation_polishedGenome/${NanoSample}/PROKKA_*.faa  |sed 's/\s.*$//' > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/03_PROKKA_annotation_polishedGenome/${NanoSample}/ready_for_eggnog_${NanoSample}.faa
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/03_PROKKA_annotation_polishedGenome/th_K1_8h/ready_for_eggnog_th_K1_8h.faa ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/Eggnog
-
-scp Downloads/*emapper.annotations vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/03_PROKKA_annotation_polishedGenome/
-
-
-
-##============EggNog analysis
-##!!!!!!somehow not all genes are eggnog annotate 
-##--------Sterm
-
-rm /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Sterm_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt
-for id in $(cat /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Sterm_snpEff_highImpactGeneIds.txt);do
-search=$(echo "^"${id})
-echo "----------"
-echo ${search}
-echo "----------"
-
-grep --perl-regex "${search}\t" /archiv/Projects/2018_Culturomics/07_PlasmidSpades/RMK202_withOld/assembly/PostaAssembly_with_renamed_shortContigsFiltered/ProkkaAnnotation/Streptococcus_thermophilus/ready_for_eggnog_sterm.faa.emapper.annotations >> /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Sterm_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt
-
-done
-
-##--------COG categroies
-
-
-cut -f 12 /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Sterm_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt |sort|uniq -c | sed -e 's/^[ \t]*//' |awk -F " " 'BEGIN{OFS="\t"}{print $1,$2, $3}' |sed 's/,//g'
-
-##!!!!!!!do rest of prep in r like
-
-#--------Ldel
-
-##01_rename files because they were wrongly labelled during prokka annotation
-sed -i 's/_Sterm_/_Ldel_/g' /archiv/Projects/2018_Culturomics/07_PlasmidSpades/RMK202_withOld/assembly/PostaAssembly_with_renamed_shortContigsFiltered/ProkkaAnnotation/Streptococcus_thermophilus/ready_for_eggnog_ldel.faa.emapper.annotations
-
-sed -i 's/_Sterm_/_Ldel_/g'  /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Ldel_snpEff_highImpactGeneIds.txt
-
-##do stuff
-rm /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Ldel_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt
-for id in $(cat /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Ldel_snpEff_highImpactGeneIds.txt);do
-search=$(echo "^"${id})
-echo "----------"
-echo ${search}
-echo "----------"
-
-grep --perl-regex "${search}\t" /archiv/Projects/2018_Culturomics/07_PlasmidSpades/RMK202_withOld/assembly/PostaAssembly_with_renamed_shortContigsFiltered/ProkkaAnnotation/Streptococcus_thermophilus/ready_for_eggnog_ldel.faa.emapper.annotations >> /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Ldel_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt
-
-done
-
-##--------COG categroies
-
-
-cut -f 12 /archiv/Projects/2018_Culturomics/14_metaSNV/indiviualIsolates2metagenome/20190306/analysis_02/filtered/pop/final_cleand_Ldel_snpEff_highImpactGeneIds_genesExtracted_eggnogAnnoation.txt |sort|uniq -c | sed -e 's/^[ \t]*//' |awk -F " " 'BEGIN{OFS="\t"}{print $1,$2, $3}' |sed 's/,//g'
-
-
-
-```
-
-rAnalysis
-
-```{r}
-
-
-##==========snpEff !!!!do after snpEff chunk!!!
-
-snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/snps/all_K1_snpEff.csv", "\t", escape_double = FALSE, trim_ws = TRUE)
-
-# ##seperate
-# snpEff_Sterm <- snpEff[which(snpEff$species=="Sterm"),]
-# snpEff_Ldel <- snpEff[which(snpEff$species=="Ldel"),]
-
-##==========plot abundance 
-
-
-
-#--- genomic or intergenomic
-
-table(snpEff$sample)
-
-interPlot <- ggplot(data=snpEff, aes(x=location, y=count,fill=location,group=Day)) +
-  facet_grid(species~.)+
-  geom_bar(stat="identity", position = "dodge")+
-#  ggtitle(paste0("SNV counts in Sterm n= " ,(sum(snpEff_Sterm$count))," ( " , round(100*sum(snpEff_Sterm$count)/StermContigSize,digits=2), " % )")) +
-xlab("genomic location") + 
-ylab("count") + 
-scale_fill_manual(values=c("black","grey"))+     #wes_palette(n=3, name="Moonrise3")[1:3]))+ #,"green","green","green","green","green","green","green","green"))+
-  theme_classic()+
-theme(#axis.text.y=element_blank(),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        #strip.background = element_blank(),
-        #strip.text.x = element_blank(),
-        legend.position = "none")
-         # rect = element_rect(fill = "transparent"),
-        #axis.text.x=element_blank(),
-        #axis.title.x = element_blank(),
-        #axis.text.x=element_blank(),
-        # axis.line = element_line(colour = "black"),
-        # panel.background = element_blank(),
-        # panel.grid.major.x = element_blank() ,
-        # plot.margin=unit(c(0,0,0,0), "cm"),
-        # panel.border = element_rect(colour = "black", fill=NA, size=1))
-        #panel.background = element_rect(fill = "white", colour = "grey50"),
-        # panel.grid.major =element_line(colour = "grey90"),panel.grid.major.y = element_blank())
-
-interPlot
- svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/inter_genomic_snp.svg",width=3,height=5)
-interPlot
- dev.off()
- 
-
- 
- 
-
-source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R")
-
-##==========change order
-
-##-Sterm
-
-snpEff_new <- snpEff
-
-factor(snpEff_new$Effect_classic)
-snpEff_new$Effect_classic <- factor(snpEff_new$Effect_classic, levels=(c("SYNONYMOUS_CODING","NON_SYNONYMOUS_CODING","STOP_GAINED","STOP_LOST","START_LOST","NON_SYNONYMOUS_START","UPSTREAM","DOWNSTREAM")))
-factor(snpEff_new$Effect_classic)
-
-
-
-
-##==========plot insertion sequence per mutation type
-##---Sterm
-
-
-all_impact <- ggplot(data=snpEff_new, aes(x=Effect_classic, y=count,fill=Impact,group=Day)) +
-  facet_grid(species~.)+
-  geom_bar(stat="identity", position = "dodge")+
-# ggtitle(paste0("SNV sites in Sterm n= " ,(sum(snpEff_Sterm$count))," ( " , round(100*sum(snpEff_Sterm$count)/StermContigSize,digits=2), " % )")) +
-xlab("genomic location") + 
-ylab("variant sites") +
-scale_fill_manual(values=c("red","gold1","orange","grey"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
-  theme_classic()+
-  theme(legend.position = "none",
-        plot.margin=unit(c(0,0,0,2.5),"cm"),
-        axis.text.x=element_text(angle=45, hjust=1,size=10))
-# theme(#axis.text.y=element_blank(),
-#         strip.background = element_blank(),
-#         strip.text.x = element_blank(),
-#         #axis.text.x=element_blank(),
-#         axis.title.x = element_blank(),
-#         #axis.text.x=element_blank(),
-#         legend.position = "none",
-#         axis.line = element_line(colour = "black"),
-#         panel.background = element_blank(),
-#         panel.grid.major.x = element_blank() ,
-#         axis.text.x=element_text(angle=45, hjust=1,size=10),
-#         # plot.margin=unit(c(0,0,0,0), "cm"),
-#         plot.margin=unit(c(0,0,0,2.5),"cm"),
-#         panel.border = element_rect(colour = "black", fill=NA, size=1),
-#         #panel.background = element_rect(fill = "white", colour = "grey50"),
-#         panel.grid.major =element_line(colour = "grey90"),panel.grid.major.y = element_blank())
-
-all_impact
-
- svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/inter_genomic_snp_impact.svg",width=5,height=5.5)
-all_impact
- dev.off()
- 
-###---------------------------high impact
- 
-snpEff_new_high <- snpEff_new[which(snpEff_new$Impact=="HIGH"),]
- 
-
-
-high_impact <- ggplot(data=snpEff_new_high, aes(x=Effect_classic, y=count,fill=Impact,group=Day)) +
-  facet_grid(species~.)+
-  geom_bar(stat="identity", position = "dodge")+
-# ggtitle(paste0("SNV sites in Sterm n= " ,(sum(snpEff_Sterm$count))," ( " , round(100*sum(snpEff_Sterm$count)/StermContigSize,digits=2), " % )")) +
-xlab("genomic location") + 
-ylab("variant sites") +
-scale_fill_manual(values=c("red"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
-    theme_classic()+
-  theme(legend.position = "none",
-        plot.margin=unit(c(0,0,0,2.5),"cm"),
-        axis.text.x=element_text(angle=45, hjust=1,size=10))
-# theme(#axis.text.y=element_blank(),
-#         strip.background = element_blank(),
-#         strip.text.x = element_blank(),
-#         #axis.text.x=element_blank(),
-#         axis.title.x = element_blank(),
-#         #axis.text.x=element_blank(),
-#         legend.position = "none",
-#         axis.line = element_line(colour = "black"),
-#         panel.background = element_blank(),
-#         panel.grid.major.x = element_blank() ,
-#         axis.text.x=element_text(angle=45, hjust=1,size=10),
-#         # plot.margin=unit(c(0,0,0,0), "cm"),
-#         plot.margin=unit(c(0,0,0,2.5),"cm"),
-#         panel.border = element_rect(colour = "black", fill=NA, size=1),
-#         #panel.background = element_rect(fill = "white", colour = "grey50"),
-#         panel.grid.major =element_line(colour = "grey90"),panel.grid.major.y = element_blank())
-
-high_impact
-
- svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/inter_genomic_snp_impact_high.svg",width=5,height=5.5)
-high_impact
- dev.off()
-
-```
-
-
-
-eggnog analysis with (COG)[http://clovr.org/docs/clusters-of-orthologous-groups-cogs/]categories
-```{r}
-library(readr)
-
-##==========data import data prep
-COG_functional_categories <- read_delim("~/Desktop/ScriptRepository/COG_functional_categories.csv",  ",", escape_double = FALSE, col_names = c("short","long","divided"),trim_ws = TRUE)
-
-cogFunctionsHighImapactSNVs <- read_delim("~/Desktop/Projects/2018_culturomics/MetaSNV/cogFunctionsHighImapactSNVs.csv", "\t", escape_double = FALSE, trim_ws = TRUE)
-
-cogFunctionsHighImapactSNVs$long <- NA
-for (i in 1:nrow(cogFunctionsHighImapactSNVs)) {
-  cogFunctionsHighImapactSNVs[i,"long"] <- COG_functional_categories[which(COG_functional_categories$short==as.character(cogFunctionsHighImapactSNVs[i,"function"])),"long"]
-  
-}
-
-library(ggplot2)
-
-
-source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R")
-
-##==========change order
-
-cogFunctionsHighImapactSNVs_Sterm <- cogFunctionsHighImapactSNVs[which(cogFunctionsHighImapactSNVs$species=="Sterm"),]
-cogFunctionsHighImapactSNVs_Ldel <- cogFunctionsHighImapactSNVs[which(cogFunctionsHighImapactSNVs$species=="Ldel"),]
-
-colnames(cogFunctionsHighImapactSNVs_Sterm)[2] <- "functionss"
-colnames(cogFunctionsHighImapactSNVs_Ldel)[2] <- "functionss"
-
-
-##-Sterm
-
-cogFunctionsHighImapactSNVs_Sterm_new <- cogFunctionsHighImapactSNVs_Sterm
-
-factor(cogFunctionsHighImapactSNVs_Sterm_new$'functionss')
-cogFunctionsHighImapactSNVs_Sterm_new$'functionss' <- factor(cogFunctionsHighImapactSNVs_Sterm_new$'functionss', levels=(c("L","S","M","V","T","K","F","E","G","P","O","C","H","unknown")))
-factor(cogFunctionsHighImapactSNVs_Sterm_new$'functionss')
-
-cogFunctionsHighImapactSNVs_Sterm_new$'long' <- gsub(" and ","\n",cogFunctionsHighImapactSNVs_Sterm_new$'long') %>% gsub(", ","\n",.) %>% gsub("/e","\ne",.)
-
-factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')
-
-cogFunctionsHighImapactSNVs_Sterm_new$'long' <- factor(cogFunctionsHighImapactSNVs_Sterm_new$'long', levels=(c(as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[8]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[12]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[9]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[14]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[13]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[7]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[4]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[3]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[5]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[11]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[10]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[2]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[6]),as.character(factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')[1]))))
-
-factor(cogFunctionsHighImapactSNVs_Sterm_new$'long')
-
-##-Ldel
-
-cogFunctionsHighImapactSNVs_Ldel_new <- cogFunctionsHighImapactSNVs_Ldel
-
-factor(cogFunctionsHighImapactSNVs_Ldel_new$'functionss')
-cogFunctionsHighImapactSNVs_Ldel_new$'functionss' <- factor(cogFunctionsHighImapactSNVs_Ldel_new$'functionss', levels=(c("L","E","K","I")))
-factor(cogFunctionsHighImapactSNVs_Ldel_new$'functionss')
-
-cogFunctionsHighImapactSNVs_Ldel_new$'long' <- gsub(" and ","\n",cogFunctionsHighImapactSNVs_Ldel_new$'long')
-
-factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')
-
-cogFunctionsHighImapactSNVs_Ldel_new$'long' <- factor(cogFunctionsHighImapactSNVs_Ldel_new$'long', levels=(c(as.character(factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')[4]),as.character(factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')[1]),as.character(factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')[3]),as.character(factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')[2]))))
-
-factor(cogFunctionsHighImapactSNVs_Ldel_new$'long')
-
-
-
-##==========plot insertion sequence per mutation type
-##---Sterm
-
-Sterm_COG <- ggplot(data=cogFunctionsHighImapactSNVs_Sterm_new, aes(x=long, y=count,fill=long)) +
-  #facet_grid(~species)+
-  geom_bar(stat="identity")+
-ggtitle(paste0("COG categories of high impact SNV in Sterm n= " ,(sum(cogFunctionsHighImapactSNVs_Sterm_new$count)))) +
-xlab("genomic location") + 
-ylab("variant sites") +
-#scale_fill_manual(values=c("red","gold1","orange","grey"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
-theme(#axis.text.y=element_blank(),
-        strip.background = element_blank(),
-        strip.text.x = element_blank(),
-        #axis.text.x=element_blank(),
-        axis.title.x = element_blank(),
-        #axis.text.x=element_blank(),
-        legend.position = "none",
-        axis.line = element_line(colour = "black"),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_blank() ,
-        axis.text.x=element_text(angle=45, hjust=1),
-        plot.margin=unit(c(0,0,0,0), "cm"),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        #panel.background = element_rect(fill = "white", colour = "grey50"),
-        panel.grid.major =element_line(colour = "grey90"),panel.grid.major.y = element_blank())
-
-#---Ldel
-
-
-Ldel_COG <- ggplot(data=cogFunctionsHighImapactSNVs_Ldel_new, aes(x=long, y=count,fill=long)) +
-  #facet_grid(~species)+
-  geom_bar(stat="identity")+
-ggtitle(paste0("Ldel n= " ,(sum(cogFunctionsHighImapactSNVs_Ldel_new$count)))) +
-xlab("genomic location") + 
-ylab("variant sites") +
-scale_x_discrete(labels= as.character(cogFunctionsHighImapactSNVs_Ldel_new$long))+
-#scale_fill_manual(values=c("red","gold1","orange","grey"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
-theme(#axis.text.y=element_blank(),
-        strip.background = element_blank(),
-        strip.text.x = element_blank(),
-        #axis.text.x=element_blank(),
-        axis.title.x = element_blank(),
-        #axis.text.x=element_blank(),
-        legend.position = "none",
-        axis.line = element_line(colour = "black"),
-        panel.background = element_blank(),
-        panel.grid.major.x = element_blank() ,
-        axis.text.x=element_text(angle=45, hjust=1),
-        plot.margin=unit(c(0,0,0,0), "cm"),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        #panel.background = element_rect(fill = "white", colour = "grey50"),
-        panel.grid.major =element_line(colour = "grey90"),panel.grid.major.y = element_blank())
-
-Sterm_COG
-Ldel_COG 
-
- grid.arrange(Sterm_COG, Ldel_COG, 
-         ncol=2, nrow=1, widths=c(4,1.5))
-
-svg("~/Desktop/Projects/2018_culturomics/MetaSNV/genomicLocation_short_Highimpact_COG.svg",width=10,height=4.5)
-
- grid.arrange(Sterm_COG, Ldel_COG, 
-         ncol=2, nrow=1, widths=c(4,1.5))
- dev.off()
- 
-
-
-
-```
-
-
-
-
-##assembly backup
-
-```{bash}
-
-
-
-
-##===========
-##Assembly
-##===========
-
-##2AB
-flye --threads 37  --iterations 4 --genome-size 5000000 --nano-raw /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/2AB/assembly/
-
-
-##1AB
-flye --threads 37 --iterations 4 --genome-size 5000000 --nano-raw /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/assembly/
-
-
-
-###---Bandage
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/2AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/2AB/assembly/assembly_Graph_meta.gfa
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/assembly/assembly_Graph_meta.gfa
-
-
-
-##===========
-##Assembly meta
-##===========
-mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/{1AB,2AB}/assembly/
-
-##2AB
-flye --threads 37  --iterations 4 --genome-size 4300000 --meta --nano-raw /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/2AB/assembly/
-
-
-##1AB
-flye --threads 37 --iterations 4 --genome-size 4300000 --meta --nano-raw /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/1AB/assembly/
-
-
-###----------------------PostAssemblyAnalysis
-##===========
-##Assembly meta
-##===========
-
-##2AB
-
-PostAssemblyAnalysis.R \
-  -a /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/2AB/assembly/assembly.fasta \
-  \ #-l /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq.gz \
-  -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/2AB/postAssemblyAnalysis \
-  -t 37 \
-  --BlastDB /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide
-  
-
-##1AB
-
-PostAssemblyAnalysis.R \
-  -a /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/1AB/assembly/assembly.fasta \
-  \ #-l /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq.gz \
-  -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_meta/1AB/postAssemblyAnalysis \
-  -t 37 \
-  --BlastDB /archiv/BLAST/blast_db/20190204/phage_nucleotide/phage_nucleotide
-
-
-
 ```
 
 
