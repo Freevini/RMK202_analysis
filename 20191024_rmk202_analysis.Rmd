@@ -5004,17 +5004,23 @@ mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpoli
   
 ##-------------zipping
 
-bgzip -c /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
-tabix -p  vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
+#bgzip -c /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
+#tabix -p  vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
+
+##-------------zipping
+
+grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf >  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf
 
 
-##bring local
+##------------bring local
+
+
+
 
 mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_withONT.vcf
+scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/
 
-grep "^##" -v /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_withONT.vcf >  /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped_withONT.vcf
 
 ```
 
@@ -5237,6 +5243,28 @@ scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nano
 scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
 
 
+##=======================================================================================================================
+##-----------------------------------------------merge species----------------------------------------------
+##=======================================================================================================================
+
+##-------------
+###snpEff
+##-------------
+cat ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S*_snpEff_02.vcf  \
+  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L*_snpEff_02.vcf > \
+  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_both_snpEff.vcf
+
+
+##-------------
+###eggnog
+##-------------
+
+grep -v "^#" ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S*_eggnog.vcf | sed 's/gnl|extdb|//g'|awk -F " " 'BEGIN{OFS="_"}{print "S_thermophilus_RMK202",$0}' >  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf
+grep -v "^#" ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L*_eggnog.vcf | sed 's/gnl|extdb|//g'|awk -F " " 'BEGIN{OFS="_"}{print "L_delbrueckii_RMK202",$0}' >>  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf
+
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
+
 
 ```
 
@@ -5245,160 +5273,283 @@ here we merge all annotation knowledge we have of the SNPs:
 1. SNPeffect
 2. eggnog annotation
 3. repeat annotation
+4. core genes
 
 Thereafter we have a long list of information for every SNP. 
 
+#####repeat genes
 
-```{r}
-library(readr)
-library(stringr)
+We could potentially have a problem of alignement in genes highly similiar. Therefore I look if which genes are cluster together. 
 
-S_thermophilus_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Streptococcus_thermophilus_RMK202_snpEff.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
+```{bash}
 
-S_thermophilus_snpEff_02 <- subset(S_thermophilus_snpEff, select=-c(unknown,uknown2))
-S_thermophilus_snpEff_02$site <- paste(S_thermophilus_snpEff_02$X.CHROM,S_thermophilus_snpEff_02$POS,S_thermophilus_snpEff_02$REF,S_thermophilus_snpEff_02$ALT,sep="_")
+##=======================================================================================================================
+##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
+##=======================================================================================================================
+  
+awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff
 
-sterm_snpeff <-  data.frame(str_split_fixed(S_thermophilus_snpEff_02$snpeff, fixed("|"), 136)[,2:8])
-colnames(sterm_snpeff) <- c("effect","significance","geneName","PGAP_name","type","typeName","typeGene")
+#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
 
-S_thermophilus_snpEff_02 <- subset(S_thermophilus_snpEff_02, select=-snpeff)
-S_thermophilus_snpEff_03 <-  cbind(S_thermophilus_snpEff_02,sterm_snpeff)
-table(S_thermophilus_snpEff_03$typeGene)
+bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna
 
-S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="pseudogene"),]
-table(S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="protein_coding"),]$type)
-S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="rRNA"),]
-
-S_thermophilus_snpEff_03$finalName <- S_thermophilus_snpEff_03$typeName %>% gsub("rna-","",.) %>%  gsub("TRANSCRIPT_gene-","",.) #%>%  gsub("pgaptmp_","pgaptmp ",.) 
-length(grep("pgaptmp_",S_thermophilus_snpEff_03$finalName,invert = TRUE))
-
-##add eggnog
-S_thermophilus_eggnog <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Streptococcus_thermophilus_RMK202_eggnog.vcf",  "\t", escape_double = FALSE, trim_ws = TRUE,  skip = 4,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description")) %>% slice( 1:(n()-3))
-S_thermophilus_eggnog$name  <- str_split_fixed(S_thermophilus_eggnog$query_name, fixed("|"), 3)[,3]
-S_thermophilus_eggnog[S_thermophilus_eggnog$name %in% S_thermophilus_snpEff_03$finalName,]
-
-##==merged
-nrow(S_thermophilus_snpEff_03)
-nrow(S_thermophilus_eggnog)
-S_thermophilus_eggnog_snpeff <- merge(S_thermophilus_snpEff_03, S_thermophilus_eggnog, by.x = "finalName", by.y = "name",all.x = TRUE)
-nrow(S_thermophilus_eggnog_snpeff)
-sum(is.na(S_thermophilus_eggnog_snpeff$seed_eggNOG_ortholog))
+##==================
+##cd-hit
+##==================
+  
 
 
-repeats_stem <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("geneNAME","identity","cluster"))
-nrow(repeats_stem)
+   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna \
+    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
+  
+  
+  
+  
+  ###multifasta2fasta
+  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters
+  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt.clstr
 
-S_thermophilus_eggnog_snpeff_02 <- merge(S_thermophilus_eggnog_snpeff, repeats_stem, by.x = "finalName", by.y = "geneNAME",all.x = TRUE)
-nrow(S_thermophilus_eggnog_snpeff)
-nrow(S_thermophilus_eggnog_snpeff_02)
-# S_thermophilus_eggnog_snpeff$finalName
-S_thermophilus_eggnog_snpeff_02[!is.na(S_thermophilus_eggnog_snpeff_02$cluster),]
+  ##prepare log file
+  #cluster_2.txt till cluster_24.txt
+  
+  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -24 |tail -23 > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt
+     
+   ##get gene names
+   num=2
+   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
+   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/
+   i=Cluster_2.txt
+   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
+    do
+   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
+    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i}
+    
+   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
+    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
+      
+    num=$((num+1))
+    
+    
+    done
+ 
 
-write.csv(S_thermophilus_eggnog_snpeff_02,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Streptococcus_thermophilus_RMK202_alltogether.txt")
-
-
-##==========
-##Ldel
-##==========
-
-L_delbrueckii_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Lactobacillus_delbrueckii_RMK202_snpEff.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
-
-L_delbrueckii_snpEff_02 <- subset(L_delbrueckii_snpEff, select=-c(unknown,uknown2))
-L_delbrueckii_snpEff_02$site <- paste(L_delbrueckii_snpEff_02$X.CHROM,L_delbrueckii_snpEff_02$POS,L_delbrueckii_snpEff_02$REF,L_delbrueckii_snpEff_02$ALT,sep="_")
-
-ldel_snpeff <-  data.frame(str_split_fixed(L_delbrueckii_snpEff_02$snpeff, fixed("|"), 136)[,2:8])
-colnames(ldel_snpeff) <- c("effect","significance","geneName","PGAP_name","type","typeName","typeGene")
-
-L_delbrueckii_snpEff_02 <- subset(L_delbrueckii_snpEff_02, select=-snpeff)
-L_delbrueckii_snpEff_03 <-  cbind(L_delbrueckii_snpEff_02,ldel_snpeff)
-table(L_delbrueckii_snpEff_03$typeGene)
-
-L_delbrueckii_snpEff_03[which(L_delbrueckii_snpEff_03$typeGene=="pseudogene"),]
-table(L_delbrueckii_snpEff_03[which(L_delbrueckii_snpEff_03$typeGene=="protein_coding"),]$type)
-L_delbrueckii_snpEff_03[which(L_delbrueckii_snpEff_03$typeGene=="rRNA"),]
-
-L_delbrueckii_snpEff_03$finalName <- L_delbrueckii_snpEff_03$typeName %>% gsub("rna-","",.) %>%  gsub("TRANSCRIPT_gene-","",.) #%>%  gsub("pgaptmp_","pgaptmp ",.) 
-length(grep("pgaptmp_",L_delbrueckii_snpEff_03$finalName,invert = TRUE))
-
-##add eggnog
-L_delbrueckii_eggnog <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Lactobacillus_delbrueckii_RMK202_eggnog.vcf",  "\t", escape_double = FALSE, trim_ws = TRUE,  skip = 4,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description"))%>% slice( 1:(n()-3))
-
-L_delbrueckii_eggnog$name  <- str_split_fixed(L_delbrueckii_eggnog$query_name, fixed("|"), 3)[,3]
-L_delbrueckii_eggnog[L_delbrueckii_eggnog$name %in% L_delbrueckii_snpEff_03$finalName,]
-
-##==merged
-L_delbrueckii_eggnog_snpeff <- merge(L_delbrueckii_snpEff_03, L_delbrueckii_eggnog, by.x = "finalName", by.y = "name")
-sum(is.na(L_delbrueckii_eggnog_snpeff$seed_eggNOG_ortholog))
-
-
-
-repeats_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/ldel_all_repeatingGenes.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("geneNAME","identity","cluster"))
-nrow(repeats_ldel)
-
-L_delbrueckii_eggnog_snpeff_02 <- merge(L_delbrueckii_eggnog_snpeff, repeats_ldel, by.x = "finalName", by.y = "geneNAME",all.x = TRUE)
-nrow(L_delbrueckii_eggnog_snpeff)
-nrow(L_delbrueckii_eggnog_snpeff_02)
-# S_thermophilus_eggnog_snpeff$finalName
-L_delbrueckii_eggnog_snpeff_02[!is.na(L_delbrueckii_eggnog_snpeff_02$cluster),]
-
-write.csv(L_delbrueckii_eggnog_snpeff_02,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L_delbrueckii_RMK202_alltogether.txt")
+    ##get gff
+    
+    genes=pgaptmp_001292
+    mkdir -p  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/
+    for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
+    do
+    rm  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
+    for genes in $(cut -f 1 /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i})
+      do
+        
+        grep "cds-${genes};" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff >> \
+          /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
+       
+        
+      done # $genes   
+    done   # $i
+    
+    
+    
+  mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
 
 
+scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/
 
-##==========
-##Sterm Phage
-##==========
-
-Sterm_phage_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Streptococcus_phage_snpEff.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
-
-Sterm_phage_snpEff_02 <- subset(Sterm_phage_snpEff, select=-c(unknown,uknown2))
-Sterm_phage_snpEff_02$site <- paste(Sterm_phage_snpEff_02$X.CHROM,Sterm_phage_snpEff_02$POS,Sterm_phage_snpEff_02$REF,Sterm_phage_snpEff_02$ALT,sep="_")
-
-ldel_snpeff <-  data.frame(str_split_fixed(Sterm_phage_snpEff_02$snpeff, fixed("|"), 136)[,2:8])
-colnames(ldel_snpeff) <- c("effect","significance","geneName","PGAP_name","type","typeName","typeGene")
-
-Sterm_phage_snpEff_02 <- subset(Sterm_phage_snpEff_02, select=-snpeff)
-Sterm_phage_snpEff_03 <-  cbind(Sterm_phage_snpEff_02,ldel_snpeff)
-table(Sterm_phage_snpEff_03$typeGene)
-
-Sterm_phage_snpEff_03[which(Sterm_phage_snpEff_03$typeGene=="pseudogene"),]
-table(Sterm_phage_snpEff_03[which(Sterm_phage_snpEff_03$typeGene=="protein_coding"),]$type)
-Sterm_phage_snpEff_03[which(Sterm_phage_snpEff_03$typeGene=="rRNA"),]
-
-Sterm_phage_snpEff_03$finalName <- Sterm_phage_snpEff_03$typeName %>% gsub("rna-","",.) %>%  gsub("TRANSCRIPT_gene-","",.) #%>%  gsub("pgaptmp_","pgaptmp ",.) 
-length(grep("pgaptmp_",Sterm_phage_snpEff_03$finalName,invert = TRUE))
-
-##add eggnog
-Sterm_phage_eggnog <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/eggnog/Streptococcus_phage_query_seqs.fa.emapper.annotations",  "\t", escape_double = FALSE, trim_ws = TRUE,  skip = 4,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description"))%>% slice( 1:(n()-3))
-
-Sterm_phage_eggnog$name  <- gsub("_1$","",Sterm_phage_eggnog$query_name) %>% gsub("-",":",.) 
-tmp_1 <- str_split_fixed(Sterm_phage_eggnog$name,":",3)[,1]
-tmp_2 <- as.character(as.numeric(str_split_fixed(Sterm_phage_eggnog$name,":",3)[,2])+1)
-tmp_3 <- str_split_fixed(Sterm_phage_eggnog$name,":",3)[,3]
-Sterm_phage_eggnog$name <- paste(tmp_1,tmp_2,tmp_3,sep=":")
+##=======================================================================================================================
+##-----------------------------------------------Lactobacillus delbrueckii----------------------------------------------
+##=======================================================================================================================
 
 
-Sterm_phage_snpEff_03$finalName <- gsub("TRANSCRIPT_GenBank:CDS:","",Sterm_phage_snpEff_03$finalName)
-Sterm_phage_eggnog[Sterm_phage_eggnog$name %in% Sterm_phage_snpEff_03$finalName,]
+  
+awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff
 
-##==merged
-Sterm_phage_eggnog_snpeff <- merge(Sterm_phage_snpEff_03, L_delbrueckii_eggnog, by.x = "finalName", by.y = "name",all.x = TRUE)
+#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
 
-sum(is.na(Sterm_phage_eggnog_snpeff$seed_eggNOG_ortholog))
+bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna
 
-Sterm_phage_eggnog_snpeff$identity <- NA
-Sterm_phage_eggnog_snpeff$cluster <- NA
+##==================
+##cd-hit
+##==================
+  
 
-write.csv(Sterm_phage_eggnog_snpeff,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S_phage_RMK202_alltogether.txt")
+
+   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna \
+    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
+  
+  
+  
+  
+  ###multifasta2fasta
+  mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
+  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
+  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt.clstr
+
+  ##prepare log file
+  #cluster_2.txt till cluster_24.txt
+  
+  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -43  > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt
+     
+   ##get gene names
+   num=2
+   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
+   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/
+   i=Cluster_2.txt
+   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt)
+    do
+   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
+    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/names_${i}
+    
+   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
+    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
+      
+    num=$((num+1))
+    
+    
+    done
+ 
+ 
+##=======================================================================================================================
+##-----------------------------------------------merge and transfer----------------------------------------------
+##=======================================================================================================================
 
 
+awk -F " " 'BEGIN{OFS="_"}{print "S_thermophilus_RMK202",$0}' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt 
+    
+awk -F " " 'BEGIN{OFS="_"}{print "L_delbrueckii_RMK202",$0}' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt >> /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt 
+
+##-------------------
+##local
+##-------------------
+
+mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt  ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes_both.txt
 
 
 ```
 
 
+#####Core genes prep
 
-######analysis snps
+```{bash}
+
+rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
+
+##=======================================================================================================================
+##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
+##=======================================================================================================================
+species=Sterm
+
+##-------extract OG names
+#rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/orthofinder/Results_Jul18/Orthogroups/test.txt
+rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
+do
+
+grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups.txt | sed 's/gnl|extdb|//g'| awk -F " " 'BEGIN{OFS="\t"}{print $1,"S_thermophilus_RMK202_"$4}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+
+
+done #OG
+
+cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
+
+
+##=======================================================================================================================
+##-----------------------------------------------Lactobacillus delbrueckii----------------------------------------------
+##=======================================================================================================================
+species=Ldel
+
+##-------extract OG names
+#rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/orthofinder/Results_Jul18/Orthogroups/test.txt
+rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
+do
+
+grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups.txt| sed 's/gnl|extdb|//g' |awk -F " " 'BEGIN{OFS="\t"}{print $1,"	L_delbrueckii_RMK202_"$11}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+
+
+done #OG
+
+cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
+
+
+
+##=======================================================================================================================
+##-----------------------------------------------Lactobacillus delbrueckii----------------------------------------------
+##=======================================================================================================================
+
+mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt  ~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt
+
+
+```
+
+#####merge all infomration
+
+```{r}
+library(readr)
+library(stringr)
+
+##==================
+##01-SNPeff
+##==================
+RMK202_both_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_both_snpEff.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
+
+RMK202_both_snpEff_02 <- subset(RMK202_both_snpEff, select=-c(unknown,uknown2))
+RMK202_both_snpEff_02$site <- paste(RMK202_both_snpEff_02$X.CHROM,RMK202_both_snpEff_02$POS,RMK202_both_snpEff_02$REF,RMK202_both_snpEff_02$ALT,sep="_")
+
+tmp_snpeff <-  data.frame(str_split_fixed(RMK202_both_snpEff_02$snpeff, fixed("|"), 136)[,2:8])
+colnames(tmp_snpeff) <- c("effect","significance","geneName","PGAP_name","type","typeName","typeGene")
+
+RMK202_both_snpEff_02 <- subset(RMK202_both_snpEff_02, select=-snpeff)
+RMK202_both_SNPeff_final <-  cbind(RMK202_both_snpEff_02,tmp_snpeff)
+# table(S_thermophilus_snpEff_03$typeGene)
+# 
+# S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="pseudogene"),]
+# table(S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="protein_coding"),]$type)
+# S_thermophilus_snpEff_03[which(S_thermophilus_snpEff_03$typeGene=="rRNA"),]
+
+RMK202_both_SNPeff_final$finalName <- RMK202_both_SNPeff_final$typeName %>% gsub("rna-","",.) %>%  gsub("TRANSCRIPT_gene-","",.) #%>%  gsub("pgaptmp_","pgaptmp ",.) 
+RMK202_both_SNPeff_final$finalName <- paste(RMK202_both_SNPeff_final$X.CHROM,RMK202_both_SNPeff_final$finalName,sep = "_")
+# length(grep("pgaptmp_",S_thermophilus_snpEff_03$finalName,invert = TRUE))
+table(RMK202_both_SNPeff_final$X.CHROM)
+
+##==================
+##02 eggnog
+##==================
+RMK202_both_eggnog <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description"))
+# RMK202_both_eggnog[RMK202_both_eggnog$query_name %in% SNPeff_final$finalName,]
+
+##==================
+##03 repeats
+##==================
+
+RMK202_both_repeats <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes_both.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("geneNAME","Repeat_identity","Repeat_cluster")) #%>% slice( 1:(n()-3))
+# nrow(RMK202_both_repeats)
+
+##==================
+##04_core genes
+##==================
+
+RMK202_both_coreGenes <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("orthogroup","geneName")) %>% add_column(.,core="core")
+
+##==================
+##05_merge
+##==================
+nrow(RMK202_both_SNPeff_final)
+RMK202_snpeff_eggnog <- merge(RMK202_both_SNPeff_final, RMK202_both_eggnog, by.x = "finalName", by.y = "query_name",all.x = TRUE)
+RMK202_snpeff_eggnog_repeats <- merge(RMK202_snpeff_eggnog, RMK202_both_repeats, by.x = "finalName", by.y = "geneNAME",all.x = TRUE)
+RMK202_snpeff_eggnog_repeats_core <- merge(RMK202_snpeff_eggnog_repeats, RMK202_both_coreGenes, by.x = "finalName", by.y = "geneName",all.x = TRUE)
+nrow(RMK202_snpeff_eggnog_repeats_core)
+
+write.csv(RMK202_snpeff_eggnog_repeats_core,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/RMK202_snpeff_eggnog_repeats_core.txt")
+
+```
+
+## analysis snps
 
 The coverage of the alternative allel must be at least 3 or zero. 
 
@@ -5415,41 +5566,48 @@ Before starting we have to add the following to the SNP.vcf:
 library(tidyverse)
 library(vcfR)
 library(readr)
-snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
-snps_freebayes_new <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_preped_withONT.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
-#freebayes_snp <- read.vcfR("~/Desktop/Projects/2019_Pilotplan/06_snpCalling2ONT/variantCallsfreebayes_all.vcf")
+
+##==================
+##01_import data
+##==================
+
+snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # snps_freebayes[snps_freebayes$QUAL<=20,]
 # snps_freebayes <- snps_freebayes[snps_freebayes$QUAL>20,]
 # dim(snps_freebayes_new)
 # dim(snps_freebayes)
-snps_freebayes <- subset(snps_freebayes_new, select=-c(di_K1_10h,th_K1_8h))
+snps_freebayes <- subset(snps_freebayes, select=-c(di_K1_10h,th_K1_8h))
 
 
-##---make first a long list and then calculate the alternative allel frequency
+
+##==================
+##02_long list and frequency calc
+##==================
 
 table(snps_freebayes$`#CHROM`)
 ##wide2long
 
-# snps_freebayes[,10]
-snps_freebayes_long <- gather(snps_freebayes_new, sample, Snps, colnames(snps_freebayes_new)[10]:colnames(snps_freebayes_new)[ncol(snps_freebayes_new)], factor_key=TRUE,na.rm = TRUE) 
+ # snps_freebayes[,10]
+snps_freebayes_long <- gather(snps_freebayes, sample, Snps, colnames(snps_freebayes)[10]:colnames(snps_freebayes)[ncol(snps_freebayes)], factor_key=TRUE,na.rm = TRUE) 
 nrow(snps_freebayes_long)
-
-### remove non-called snps
+table(snps_freebayes_long$sample)
+###------------------------remove non-called snps
 snps_freebayes_long_cleaned <- snps_freebayes_long[snps_freebayes_long$Snps!=".",]
 nrow(snps_freebayes_long_cleaned)
 # snps_freebayes_long[c(7438,7437,7439, 7440, 7441, 7442, 7443, 7444, 7445),]
 
-##calculate allel frequency   
+###------------------------calculate allel frequency   
+
 sample_relative_temp <-snps_freebayes_long_cleaned %>% separate("Snps", into=c("GT","DP","AD","RO","QR","AO","QA","GL"), sep = ":") %>% transform(.,allel_frequency=as.numeric(AO)/as.numeric(DP))
-# sample_relative_temp_02 <-snps_freebayes_long_cleaned %>% separate("Snps", into=c("GT","DP","AD","RO","QR","AO","QA","GL"), sep = ":") %>% transform(.,allel_frequency=as.numeric(AO))
+
 sample_relative_temp_withONT <- sample_relative_temp
 sample_relative_temp_withONT$site <- paste(sample_relative_temp_withONT$X.CHROM,sample_relative_temp_withONT$POS,sample_relative_temp_withONT$REF,sample_relative_temp_withONT$ALT,sep="_")
 
-sample_relative_temp <- sample_relative_temp[!sample_relative_temp$sample %in% c("di_K1_10h","th_K1_8h"),]
 
-# sum(sample_relative_temp$sample %in% c("di_K1_10h","th_K1_8h"))
-# sum(!sample_relative_temp$sample %in% c("di_K1_10h","th_K1_8h"))
+##==================
+##03_filter
+##==================
 
 ##remove SNPs that have more than two allel frequencies
 nrow(sample_relative_temp)
@@ -5458,7 +5616,7 @@ nrow(nas)
 sample_relative_temp_cleaned <- sample_relative_temp[which(!is.na(sample_relative_temp$allel_frequency)),]
 
 ##remove low coverage (>40x)
-cutoff <- 20
+cutoff <- 30
 sample_relative_temp_cleaned$DP <- as.numeric(sample_relative_temp_cleaned$DP)
 nrow(sample_relative_temp_cleaned)
 sample_relative_safe <- sample_relative_temp_cleaned[which(sample_relative_temp_cleaned$DP>cutoff),]
@@ -5477,8 +5635,14 @@ nrow(sample_relative_safe[sample_relative_safe$AO>0 & sample_relative_safe$AO<=2
 sample_relative_safe <- (sample_relative_safe[sample_relative_safe$AO==0 | sample_relative_safe$AO>2,])
 nrow(sample_relative_safe)
 
+
+##==================
+##04_preperation and make wide
+##==================
+
 sample_relative_temp_cleaned <- sample_relative_safe
 #ggplot(sample_relative_temp_cleaned, aes(y=DP))+geom_boxplot()+ylim(c(0,1000))
+
 
 ##make site name
 sample_relative_temp_cleaned$site <- paste(sample_relative_temp_cleaned$X.CHROM,sample_relative_temp_cleaned$POS,sample_relative_temp_cleaned$REF,sample_relative_temp_cleaned$ALT,sep="_")
@@ -5493,6 +5657,10 @@ sample_relative_safe_final_prep <- sample_relative_temp_cleaned[,c("X.CHROM","PO
 sample_relative_safe_final_tsne <- spread(sample_relative_safe_final_prep, sample, allel_frequency)
 nrow(sample_relative_safe_final_tsne)
 
+##==================
+##05_filter rowsums!=0
+##==================
+
 ##remove row sums ==0
 nrow(sample_relative_safe_final_tsne)
 sum(rowSums(sample_relative_safe_final_tsne[,4:ncol(sample_relative_safe_final_tsne)],na.rm = TRUE)==0)
@@ -5500,26 +5668,62 @@ sum(rowSums(sample_relative_safe_final_tsne[,4:ncol(sample_relative_safe_final_t
 
 sample_relative_wide <- sample_relative_safe_final_tsne[rowSums(sample_relative_safe_final_tsne[,4:ncol(sample_relative_safe_final_tsne)],na.rm = TRUE)>0,]
 nrow(sample_relative_wide)
+sample_relative_wide <- subset(sample_relative_wide, select=-POS)
+sample_relative_wide$species <- sample_relative_wide$X.CHROM
+sample_relative_wide$species <- revalue(sample_relative_wide$species, c("L_delbrueckii_RMK202"="L. delbrueckii","S_thermophilus_RMK202"="S. thermophilus"))
+sample_relative_wide$culture <- "RMK202"
 
-sample_relative_long <- gather(sample_relative_wide, sample, Snps, "RMK202":"L44", factor_key=TRUE,na.rm = TRUE) 
+##==================
+##06_add gene information
+##==================
+
+RMK202_snpeff_eggnog_repeats_core <- read_csv("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/RMK202_snpeff_eggnog_repeats_core.txt")
+# nrow(RMK202_snpeff_eggnog_repeats_core)
+# nrow(sample_relative_wide)
+#RMK202_snpeff_eggnog_repeats_core_subset <- subset(RMK202_snpeff_eggnog_repeats_core, select=c(X.CHROM,site,finalName,effect,significance,geneName,GOs,EC,KEGG_ko,COG_Functional_Category,Repeat_identity,core))
+
+sample_relative_wide_description <- merge(sample_relative_wide,RMK202_snpeff_eggnog_repeats_core, by = "site",all.x = TRUE)
+# nrow(sample_relative_wide_description)
+
+##---------------------------------subset for interesting columns
+colnames(sample_relative_wide_description)
+sample_relative_wide_description_interest <- subset(sample_relative_wide_description, select=c(X.CHROM.x,site,species,culture,finalName,effect,significance,geneName,COG_Functional_Category,Repeat_identity,core,L104,L108,L35,L44,L70,L71,L80,L99,S50,S72,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202,lyo202_96))
+
+##==================
+##07 rename samples
+##==================
+
+colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_relative_wide_description_interest), c("S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+
+
+##==================
+##08_remove non-bacterial SNPs
+##==================
+table(sample_relative_wide_description_interest$X.CHROM.x)
+nrow(sample_relative_wide_description_interest)
+sample_relative_wide_description_interest_subset <- sample_relative_wide_description_interest[which(sample_relative_wide_description_interest$X.CHROM.x %in% c("L_delbrueckii_RMK202","S_thermophilus_RMK202")),]
+nrow(sample_relative_wide_description_interest_subset)
+table(sample_relative_wide_description_interest_subset$X.CHROM.x)
+sample_relative_wide <- sample_relative_wide_description_interest_subset
+
+
+
+
+##==================
+##09_order variables properly
+##==================
+
+
+sample_relative_wide$significance <- factor(sample_relative_wide$significance, levels=c("MODIFIER","LOW","MODERATE","HIGH"))
+
+##==================
+##10_make long
+##==================
+colnames(sample_relative_wide)
+sample_relative_long <- gather(sample_relative_wide, sample, Snps, "mst6":"Lyo\n1996", factor_key=TRUE,na.rm = TRUE) 
 nrow(sample_relative_long)
-
 table(sample_relative_long$X.CHROM)
 
-## ===========all samples in wide format and cleaned
-# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne
-# dim(sample_relative_safe_final_tsne)
-
-##=============================================
-# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne[rowSums(is.na(sample_relative_safe_final_tsne[,-1])) != ncol(sample_relative_safe_final_tsne[,-1]), ]
-# nrow(sample_relative_safe_final_tsne_safe)
-
-
-# sample_relative_safe_final_tsne_safe[is.na(sample_relative_safe_final_tsne_safe)] <- 0
-# nrow(sample_relative_safe_final_tsne_safe)
-
-# sample_relative_safe_final_tsne_safe <- sample_relative_safe_final_tsne_safe[rowSums(sample_relative_safe_final_tsne_safe[,-1]) != 0, ]
-# nrow(sample_relative_safe_final_tsne_safe)
 
 ```
 
@@ -5529,40 +5733,12 @@ table(sample_relative_long$X.CHROM)
 for this I have to first run the snpEff chunk. 
 
 ```{r}
-annotation_sterm <- read_csv("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_Streptococcus_thermophilus_RMK202_alltogether.txt")
-annotation_ldel <- read_csv("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L_delbrueckii_RMK202_alltogether.txt")
-annotation_s_phage <- read_csv("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S_phage_RMK202_alltogether.txt")
-coreGeneNames_rmk202 <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_FINAL.txt", "\t", escape_double = FALSE, col_names = c("site","core"), trim_ws = TRUE)
 
-annotation_all <- rbind(annotation_sterm,annotation_ldel,annotation_s_phage)
-
-nrow(sample_relative_wide)
-table(sample_relative_wide$X.CHROM)
-annotation_sterm_snps_wide <- merge(sample_relative_wide,annotation_all,by="site",all.x = TRUE)
-nrow(annotation_sterm_snps_wide)
-
-annotation_sterm_snps_01 <- annotation_sterm_snps_wide[(!is.na(annotation_sterm_snps_wide$effect)),]
-
-annotation_sterm_snps_01$significance <- as.factor(annotation_sterm_snps_01$significance)
-annotation_sterm_snps_01$significance <- factor(annotation_sterm_snps_01$significance, levels=c("MODIFIER","LOW","MODERATE","HIGH"))
-
-annotation_sterm_snps_01$genome <- ifelse((annotation_sterm_snps_01$X.CHROM.x=="L_delbrueckii_RMK202"),"L_delbrueckii_RMK202",ifelse(
-  (annotation_sterm_snps_01$X.CHROM.x=="S_thermophilus_RMK202"),"S_thermophilus_RMK202",ifelse(
-    grep("S_phage_RMK202_",annotation_sterm_snps_01$X.CHROM.x),"S_phage_RMK202",NA
-  )
-))
-dim(annotation_sterm_snps_01)
-annotation_sterm_snps_01 <- merge(annotation_sterm_snps_01,coreGeneNames_rmk202,by="site",all.x = TRUE,all.y = FALSE)
-dim(annotation_sterm_snps_01)
-# table(annotation_sterm_snps_01$core)
-# unique(annotation_sterm_snps_01$core)
-
-write.csv(annotation_sterm_snps_01,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/SNPdata_all_extended_wide.csv")
-
-
-
+##----------------
 ##significance
-ggplot(annotation_sterm_snps_01,aes(x=significance,fill=significance))+geom_bar()+
+##----------------
+ggplot(sample_relative_wide,aes(x=significance,fill=significance))+geom_bar()+
+  facet_grid(species~.,scales = "free")+
   theme_classic()+
   xlab("") + 
   ylab("variant sites") +
@@ -5571,624 +5747,67 @@ ggplot(annotation_sterm_snps_01,aes(x=significance,fill=significance))+geom_bar(
         plot.margin=unit(c(0,0,0,2.5),"cm"),
         axis.text.x=element_text(angle=45, hjust=1,size=9))
 
+##----------------
 ##effect of high significant mutations
-
-annotation_sterm_snps_high <- annotation_sterm_snps_01[annotation_sterm_snps_01$significance=="HIGH",]
-table(annotation_sterm_snps_high$typeGene)
-ggplot(annotation_sterm_snps_high,aes(x=effect,group=typeGene))+geom_bar()+
+##----------------
+annotation_snps_high <- sample_relative_wide[sample_relative_wide$significance=="HIGH",]
+table(annotation_snps_high$typeGene)
+ggplot(annotation_snps_high,aes(x=effect))+geom_bar()+
+  facet_grid(species~.,scales = "free")+
   theme_classic()+
 theme(legend.position = "none",
         plot.margin=unit(c(0,0,0,2.5),"cm"),
         axis.text.x=element_text(angle=45, hjust=1,size=9))
-
+##----------------
 ##--------non-modifier mutations
-COG_functional_categories <- read_delim("~/Documents/cog_categories.csv",  "\t", escape_double = FALSE, col_names =TRUE,trim_ws = TRUE)
-
-
-table(annotation_sterm_snps_01$significance)
-annotation_sterm_snps_nonModifier <- annotation_sterm_snps_01[annotation_sterm_snps_01$significance!="MODIFIER",]
+##----------------
+annotation_snps_nonModifier <- sample_relative_wide[sample_relative_wide$significance!="MODIFIER",]
 # table(annotation_sterm_snps_nonModifier$significance)
-annotation_sterm_snps_nonModifier$COG_Functional_Category
-
-table(annotation_sterm_snps_high$typeGene)
-ggplot(annotation_sterm_snps_high,aes(x=effect,group=typeGene))+geom_bar()+
-  theme_classic()+
-theme(legend.position = "none",
-        plot.margin=unit(c(0,0,0,2.5),"cm"),
-        axis.text.x=element_text(angle=45, hjust=1,size=9))
-
-ggplot(annotation_sterm_snps_high,aes(x=effect,group=typeGene))+geom_bar()+
-  theme_classic()+
-theme(legend.position = "none",
-        plot.margin=unit(c(0,0,0,2.5),"cm"),
-        axis.text.x=element_text(angle=45, hjust=1,size=9))
-
-
-
-annotation_sterm_snps_nonModifier_COG <- annotation_sterm_snps_nonModifier
+##----------------
 ##--------COG effect of non-modifier mutations
-annotation_sterm_snps_nonModifier_COG$COG_Functional_Category <-  as.character(gsub("([a-zA-Z])([a-zA-Z])","\\1 \\2",annotation_sterm_snps_nonModifier_COG$COG_Functional_Category)) %>% gsub("([A-Z])([A-Z])","\\1 \\2",.) %>% gsub("([A-Z])([A-Z])","\\1 \\2",.) %>% gsub("([A-Z])([A-Z])","\\1 \\2",.) 
-annotation_sterm_snps_nonModifier_COG_02 <- separate_rows(annotation_sterm_snps_nonModifier_COG,COG_Functional_Category,sep = " ",)
-annotation_sterm_snps_nonModifier_COG_02$COG_category <- unlist(COG_functional_categories[match(annotation_sterm_snps_nonModifier_COG_02$COG_Functional_Category,COG_functional_categories$cog),2])
-
-
-ggplot(annotation_sterm_snps_nonModifier_COG_02,aes(x=COG_category,group=typeGene))+geom_bar()+
+##----------------
+# annotation_snps_nonModifier$COG_Functional_Category
+ggplot(annotation_snps_nonModifier,aes(x=COG_Functional_Category))+geom_bar()+
+  facet_grid(species~.,scales = "free")+
   theme_classic()+
 theme(legend.position = "none",
         plot.margin=unit(c(0,0,0,2.5),"cm"),
         axis.text.x=element_text(angle=45, hjust=1,size=9))
 
 
-table(annotation_sterm_snps_nonModifier_COG_02$X.CHROM.x)
-
 
 ```
-
-###### core SNP isolates
-
-add hierachial clustering and order accordingly. This is trivial in the heatmap2 function but non-trivial for ggplot heatmpa. [here](https://jcoliver.github.io/learn-r/008-ggplot-dendrograms-and-heatmaps.html) is a blog post how to do it. 
-
-```{r}
-###=================
-##Sterm
-###=================
-
-##--------------
-##snps
-##-------------
-
-colnames(annotation_sterm_snps_01)
-sterm_snps_core <- annotation_sterm_snps_01
-table(sterm_snps_core$X.CHROM.x)
-sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="S_thermophilus_RMK202",]
-table(sterm_snps_core$X.CHROM.x)
-
-sterm_snps_core$Sterm_rmk202 <- TRUE
-sterm_snps_core$mst1 <- sterm_snps_core$S50<0.9
-sterm_snps_core$mst2 <- sterm_snps_core$S72<0.9
-
-sterm_snps_core <- sterm_snps_core %>% select(site,core,Sterm_rmk202,mst1,mst2)
-sterm_snps_core[c("mst1", "mst2")][is.na(sterm_snps_core[c("mst1", "mst2")])] <- TRUE
-
-##--------------
-##get length
-##-------------
-coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_bothLdelSterm.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
-# table(coreGeneNames_sterm_ldel$contig)
-coreGeneNames_sterm <- coreGeneNames_sterm_ldel[coreGeneNames_sterm_ldel$contig=="S_thermophilus_RMK202",]
-# table(coreGeneNames_sterm$contig)
-CoreGeneSize_sterm <- sum(coreGeneNames_sterm$end-coreGeneNames_sterm$start)
-# 
-##--------------
-##plot
-##-------------
-library(stringr)
-library(readr)
-library(ggplot2)
-library(reshape2)
-
-table(sterm_snps_core$core)
-sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
-table(sterm_snps_CORE$core)
-
-
-
-##------------
-##prep
-##------------
-
-
-colnames(sterm_snps_core)[3:5]
-names_normal <- colnames(sterm_snps_core)[3:5]
-count <- 1 ## triangle above
-count <- 3 ; names <- rev(names_normal) ## triangle bellow
-
-
-sterm_curated_rev_names <- data.frame()
-# for (i in 1:length(names)) {  ## triangle above
-for (i in rev(1:length(names))) { ## triangle bellow
-
-   rowName <- names[i]
-    print(rowName)
-    
-  for(a in rev(1:length(names))){
-    
-    colNames <- names[a]
-    print(colNames)
-    
-    
-
-
-    countSNPs <- sum(sterm_snps_CORE[,rowName]!=sterm_snps_CORE[,colNames])
-    ANI_core <- 100*((CoreGeneSize_sterm-countSNPs)/CoreGeneSize_sterm)
-    tmp <- data.frame("genome1"=rowName,"genome2"=colNames,"SNPs"=countSNPs,"ANI"=ANI_core)
-    sterm_curated_rev_names <- rbind(sterm_curated_rev_names,tmp)
-    
-
-  }
-
-# count <- count +1  ## triangle above
-count <- count -1  ## triangle bellow
-
-}
-sterm_curated_rev_names
-
-
-##------------
-##make dendro of all snps sites
-##------------
-library(ggdendro)
-
-sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
-rownames(sterm_matrix) <- names_normal
-otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
-
-
-# Create dendro
-dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
-# Preview the plot
-print(dendro.plot)
-
-labels(otter.dendro)
-
-svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-print(dendro.plot)
-dev.off()
-
-sterm_curated_rev_names
-##reorder according to dendro
-levels(sterm_curated_rev_names$genome1)
-sterm_curated_rev_names$genome1 = factor(sterm_curated_rev_names$genome1, levels=labels(otter.dendro))
-levels(sterm_curated_rev_names$genome1)
-levels(sterm_curated_rev_names$genome2)
-sterm_curated_rev_names$genome2 = factor(sterm_curated_rev_names$genome2, levels=labels(otter.dendro))
-levels(sterm_curated_rev_names$genome2)
-
-# creat Heatmap
-# sterm_curated$X3 <- round(sterm_curated$X3,digits = 2)
-
-##-----------
-##change names
-##-----------
-sterm_curated_rev_names$genome1 <- revalue(sterm_curated_rev_names$genome1, c("Sterm_rmk202"="MAG RMK202"))
-sterm_curated_rev_names$genome2 <- revalue(sterm_curated_rev_names$genome2, c("Sterm_rmk202"="MAG RMK202"))
-
-
-##------------
-##for SNP legend
-##------------
-
-ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = SNPs))+
- geom_tile(color = "white",size=1.1)+
- #scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-  # midpoint = 99.5, limit = c(98.9,100), space = "Lab", 
-  # name="ANI") +
-  scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
-  # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
-  theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
-      axis.text.x = element_text(angle = 45, vjust = 1, 
-    size = 12, hjust = 1))+
- coord_fixed()
-# Print the heatmap
-print(ggheatmap)
-
-##------------
-##SNPs
-##------------
-
-
-plotFinal_sterm <- ggheatmap + 
-geom_text(aes(genome1, genome2, label = SNPs), color = "black", size = 2.5) +
-    labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
-  scale_y_discrete(position = 'right')+
-theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  # axis.text.y.left = element_text(angle = 75, hjust = 1,size=9),
-  panel.grid.major = element_blank(),
-  # scale_y_date(position = "right"),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  # legend.justification = c(1, 0),
-  legend.position = "right",
-  legend.text = element_text(angle = 0),
-  legend.direction = "vertical")+
-  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
-                title.position = "top", title.hjust = 0.5))
-plotFinal_sterm
-##save heatmap
-svg("~/Desktop/Projects/2018_culturomics/fastani/Sterm_SNPs_core_absolute_final.svg",width=5.5,height=4)
-plotFinal_sterm#+theme(legend.position = "none")
-dev.off()
-
-
-##------------
-##ANI 2
-##------------
-library(viridis)
-# creat Heatmap
-sterm_curated_rev_names$ANI_2 <- round(sterm_curated_rev_names$ANI,digits = 2)
-min(sterm_curated_rev_names$ANI)
-ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = ANI))+
- geom_tile(color = "white",size=1.1)+
- # scale_fill_gradient2(low = "red", high = "red4",
- # midpoint = 99.995, limit = c(99.99,100), space = "Lab",
- # name="ANI") +
-  # scale_fill_viridis(discrete = FALSE, option = "B",direction = -1)+
-  scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
-  theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
-      axis.text.x = element_text(angle = 45, vjust = 1, 
-    size = 12, hjust = 1))+
- coord_fixed()
-# Print the heatmap
-print(ggheatmap)
-
-plotFinal_sterm <- ggheatmap + 
-geom_text(aes(genome1, genome2, label = ANI_2), color = "black", size = 2.5) +
-  scale_y_discrete(position = 'right')+
-  labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
-theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  # axis.text = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  # legend.justification = c(1, 0),
-  legend.position = "right",
-  legend.text = element_text(angle = 0),
-  legend.direction = "vertical")+
-  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
-                title.position = "top", title.hjust = 0.5))
-plotFinal_sterm
-##save heatmap
-svg("~/Desktop/Projects/2018_culturomics/fastani/Sterm_SNPs_core_ANI.svg",width=5.5,height=4)
-plotFinal_sterm#+theme(legend.position = "none")
-dev.off()
-
-
-```
-
-
-```{r}
-###=================
-##Ldel
-###=================
-library(plyr)
-##--------------
-##snps
-##-------------
-
-colnames(annotation_sterm_snps_01)
-sterm_snps_core <- annotation_sterm_snps_01
-table(sterm_snps_core$X.CHROM.x)
-sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="L_delbrueckii_RMK202",]
-table(sterm_snps_core$X.CHROM.x)
-
-sterm_snps_core$Ldel_rmk202 <- TRUE
-sterm_snps_core$mst3 <- sterm_snps_core$L70<0.9
-sterm_snps_core$mst10 <- sterm_snps_core$L44<0.9
-sterm_snps_core$mst7 <- sterm_snps_core$L108<0.9
-sterm_snps_core$mst8 <- sterm_snps_core$L99<0.9
-sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
-sterm_snps_core$mst5 <- sterm_snps_core$L80<0.9
-sterm_snps_core$mst9 <- sterm_snps_core$L35<0.9
-sterm_snps_core$mst4 <- sterm_snps_core$L71<0.9
-sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
-
-sterm_snps_core <- sterm_snps_core %>% select(site,core,Ldel_rmk202,mst3, mst4,mst5, mst6,mst7, mst8,mst9, mst10)
-sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")][is.na(sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")])] <- TRUE
-
-
-##--------------
-##get length
-##-------------
-coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_bothLdelSterm.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
-# table(coreGeneNames_sterm_ldel$contig)
-coreGeneNames_sterm <- coreGeneNames_sterm_ldel[coreGeneNames_sterm_ldel$contig=="L_delbrueckii_RMK202",]
-# table(coreGeneNames_sterm$contig)
-CoreGeneSize_sterm <- sum(coreGeneNames_sterm$end-coreGeneNames_sterm$start)
-
-
-
-##--------------
-##plot
-##-------------
-library(stringr)
-library(readr)
-library(ggplot2)
-library(reshape2)
-
-table(sterm_snps_core$core)
-sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
-table(sterm_snps_CORE$core)
-
-
-
-##------------
-##prep
-##------------
-colnames(sterm_snps_core)
-colnames(sterm_snps_core)[3:11]
-names_normal <- colnames(sterm_snps_core)[3:11]
-# count <- 1 ## triangle above
-count <- 9 ; names <- rev(names_normal) ## triangle bellow
-
-sterm_curated_rev_names <- data.frame()
-# for (i in 1:length(names)) {  ## triangle above
-for (i in rev(1:length(names))) { ## triangle bellow
-
-   rowName <- names[i]
-    print(rowName)
-    
-  for(a in rev(1:length(names))){
-    
-    colNames <- names[a]
-    print(colNames)
-    
-    
-
-
-    countSNPs <- sum(sterm_snps_CORE[,rowName]!=sterm_snps_CORE[,colNames])
-    ANI_core <- 100*((CoreGeneSize_sterm-countSNPs)/CoreGeneSize_sterm)
-    tmp <- data.frame("genome1"=rowName,"genome2"=colNames,"SNPs"=countSNPs,"ANI"=ANI_core)
-    sterm_curated_rev_names <- rbind(sterm_curated_rev_names,tmp)
-    
-
-  }
-
-# count <- count +1  ## triangle above
-count <- count -1  ## triangle bellow
-
-}
-sterm_curated_rev_names
-
-##------------
-##make dendro of all snps sites
-##------------##------------
-##make dendro of all snps sites
-
-
-library(ggdendro)
-
-sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
-rownames(sterm_matrix) <- names_normal
-otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
-
-
-# Create dendro
-dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
-# Preview the plot
-print(dendro.plot)
-
-labels(otter.dendro)
-
-svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-print(dendro.plot)
-dev.off()
-
-sterm_curated_rev_names
-##reorder according to dendro
-levels(sterm_curated_rev_names$genome1)
-sterm_curated_rev_names$genome1 = factor(sterm_curated_rev_names$genome1, levels=labels(otter.dendro))
-levels(sterm_curated_rev_names$genome1)
-levels(sterm_curated_rev_names$genome2)
-sterm_curated_rev_names$genome2 = factor(sterm_curated_rev_names$genome2, levels=labels(otter.dendro))
-levels(sterm_curated_rev_names$genome2)
-
-# creat Heatmap
-# sterm_curated$X3 <- round(sterm_curated$X3,digits = 2)
-##-----------
-##change names
-##-----------
-sterm_curated_rev_names$genome1 <- revalue(sterm_curated_rev_names$genome1, c("Ldel_rmk202"="MAG RMK202"))
-sterm_curated_rev_names$genome2 <- revalue(sterm_curated_rev_names$genome2, c("Ldel_rmk202"="MAG RMK202"))
-
-# ##------------
-# ##for SNP legend
-# ##------------
-
-ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = SNPs))+
- geom_tile(color = "white",size=1.1)+
- #scale_fill_gradient2(low = "blue", high = "red", mid = "white",
-  # midpoint = 99.5, limit = c(98.9,100), space = "Lab",
-  # name="ANI") +
-  scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
-  # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
-  theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
-      axis.text.x = element_text(angle = 45, vjust = 1,
-    size = 12, hjust = 1))+
- coord_fixed()
-# Print the heatmap
-print(ggheatmap)
-
-##------------
-##SNPs
-##------------
-
-
-plotFinal_sterm <- ggheatmap + 
-geom_text(aes(genome1, genome2, label = SNPs), color = "black", size = 2.5) +
-    labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
-  scale_y_discrete(position = 'right')+
-theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  # axis.text.y.left = element_text(angle = 75, hjust = 1,size=9),
-  panel.grid.major = element_blank(),
-  # scale_y_date(position = "right"),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  # legend.justification = c(1, 0),
-  legend.position = "right",
-  legend.text = element_text(angle = 0),
-  legend.direction = "vertical")+
-  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
-                title.position = "top", title.hjust = 0.5))
-plotFinal_sterm
-##save heatmap
-svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_core_absolute_final.svg",width=5.5,height=4)
-plotFinal_sterm#+theme(legend.position = "none")
-dev.off()
-
-
-##------------
-##ANI 2
-##------------
-
-
-library(viridis)
-# creat Heatmap
-sterm_curated_rev_names$ANI_2 <- round(sterm_curated_rev_names$ANI,digits = 2)
-min(sterm_curated_rev_names$ANI)
-ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = ANI))+
- geom_tile(color = "white",size=1.1)+
- # scale_fill_gradient2(low = "red", high = "red4",
- # midpoint = 99.995, limit = c(99.99,100), space = "Lab",
- # name="ANI") +
-  # scale_fill_viridis(discrete = FALSE, option = "B",direction = -1)+
-  scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
-  theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
-      axis.text.x = element_text(angle = 45, vjust = 1, 
-    size = 12, hjust = 1))+
- coord_fixed()
-# Print the heatmap
-print(ggheatmap)
-
-
-plotFinal_sterm <- ggheatmap + 
-geom_text(aes(genome1, genome2, label = ANI_2), color = "black", size = 2.5) +
-  scale_y_discrete(position = 'right')+
-  labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
-theme(
-  axis.title.x = element_blank(),
-  axis.title.y = element_blank(),
-  # axis.text = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.ticks = element_blank(),
-  # legend.justification = c(1, 0),
-  legend.position = "right",
-  legend.text = element_text(angle = 0),
-  legend.direction = "vertical")+
-  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
-                title.position = "top", title.hjust = 0.5))
-plotFinal_sterm
-##save heatmap
-svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_core_ANI.svg",width=5.5,height=4)
-plotFinal_sterm#+theme(legend.position = "none")
-dev.off()
-
-```
-
-
 
 ######remove isolates
 
 ```{r}
 
-##remove isolates
-# annotation_sterm_snps_wide
-annotation_sterm_snps_long <- gather(sample_relative_wide, sample, Snps, "L44":"RMK202", factor_key=TRUE,na.rm = TRUE) 
-annotation_sterm_snps_long_02 <- merge(annotation_sterm_snps_long,annotation_all,by="site",all.x = TRUE)
 
-sample_relative_long <- annotation_sterm_snps_long_02
+##----------------
+##01_remove strains
+##----------------
+sample_relative_safe_woSTRAINS <- sample_relative_long[grep("^mst",sample_relative_long$sample,invert = TRUE),] 
 
-nrow(sample_relative_long)
-sample_relative_safe_woldel <- sample_relative_long[grep("^L\\d",sample_relative_long$sample,invert = TRUE),] 
-nrow(sample_relative_safe_woldel)
-sample_relative_safe_final <- sample_relative_safe_woldel[grep("^S\\d",sample_relative_safe_woldel$sample,invert = TRUE),] 
-nrow(sample_relative_safe_final)
-
-table(sample_relative_safe_final$X.CHROM.x)
-
-## ===========all metagenomes in long format 
-sample_relative_safe_final$sample <- droplevels(sample_relative_safe_final$sample)
-
+sample_relative_safe_woSTRAINS$sample <- droplevels(sample_relative_safe_woSTRAINS$sample)
+# sample_relative_safe_final==sample_relative_safe_woSTRAINS
 
 ##reorder samples
-sample_relative_safe_final$sample_02 = factor(sample_relative_safe_final$sample, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"))
-levels(sample_relative_safe_final$sample_02)
 
-##rename contigs
+sample_relative_safe_woSTRAINS$sample = factor(sample_relative_safe_woSTRAINS$sample, levels=c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+levels(sample_relative_safe_woSTRAINS$sample)
 
-table(sample_relative_safe_final$X.CHROM)
-
-sample_relative_safe_final$species <- sample_relative_safe_final$X.CHROM.x
-# sample_relative_safe_final$species <- ifelse(sample_relative_safe_final$X.CHROM=="contig_1","S.thermophilus",
-#                                              ifelse(sample_relative_safe_final$X.CHROM=="contig_2","L.delbrueckii",
-#                                                     ifelse(sample_relative_safe_final$X.CHROM=="contig_3","Lactococcus phage",
-#                                                            ifelse(sample_relative_safe_final$X.CHROM=="contig_4","Cow",
-#                                                                   ifelse(sample_relative_safe_final$X.CHROM=="contig_5","L.delbrueckii plasmid",
-#                                                                         ifelse(sample_relative_safe_final$X.CHROM=="plasmidSpades_CowMito","Cow mitogenome",NA))))))
-
-unique(sample_relative_safe_final$species)
-
-table(sample_relative_safe_final$species)
-
-  ##============
-###only bacteria
-   ##============
-
-
-sample_relative_safe_final_phage <- sample_relative_safe_final[grep("S_phage_RMK202",sample_relative_safe_final$species),]
-table(sample_relative_safe_final_phage$species)
-
-sample_relative_safe_final_phage[sample_relative_safe_final_phage$species=="S_phage_RMK202_33",]
-sample_relative_safe_final_phage[sample_relative_safe_final_phage$species=="S_phage_RMK202_09",]
-
-
-##plot
-  p1 <- ggplot(sample_relative_safe_final_phage,aes(x=sample_02,y=Snps,group=site))+ geom_line(size=0.2, alpha=.1)+ 
-    # facet_grid(day~kessel~species)+
-    # facet_grid(species~.)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="alternative allel frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   # scale_fill_manual(values=Ldel_colour)+
-      # scale_color_manual(values=Ldel_colour)+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-  p1
-#   pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes.pdf",width=9.8,height=20,paper='special')
-# p1
-# 
-# dev.off()
-  
-  library(plotly)
-# ggp <- ggplotly(p1)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_phages.html")
 
 
   ##============
-###only bacteria
+### plot 
    ##============
 
 all_colours <- rev(c("#EB4D4D","#10B552") ) 
 
-sample_relative_safe_final <- sample_relative_safe_final[sample_relative_safe_final$species %in% c("S_thermophilus_RMK202","L_delbrueckii_RMK202"),]
+colnames(sample_relative_safe_woSTRAINS)
 
 ##plot
-  p2 <- ggplot(sample_relative_safe_final,aes(x=sample_02,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
+  p2 <- ggplot(sample_relative_safe_woSTRAINS,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_identity,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
     # facet_grid(day~kessel~species)+
     facet_grid(species~.)+
     # facet_grid(treatment~species)+
@@ -6224,16 +5843,27 @@ dev.off()
 
 
   ##============
-###only in genes
+### subset :
+##----01==only genic mutations
+##----02==only core genes mutations
+##----03==only snps above 0.05
    ##============
-table(sample_relative_safe_final$significance)
-nrow(sample_relative_safe_final)
-sample_relative_safe_final_sub01 <- sample_relative_safe_final[sample_relative_safe_final$significance!="MODIFIER",]
-nrow(sample_relative_safe_final_sub01)
 
-table(sample_relative_safe_final_sub01$species)
-##plot
-  p3 <- ggplot(sample_relative_safe_final_sub01,aes(x=sample_02,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
+nrow(sample_relative_safe_woSTRAINS)
+sample_relative_safe_woSTRAINS_sub01 <- sample_relative_safe_woSTRAINS[which(sample_relative_safe_woSTRAINS$significance!="MODIFIER"),]
+nrow(sample_relative_safe_woSTRAINS_sub01)
+sample_relative_safe_woSTRAINS_sub02 <- sample_relative_safe_woSTRAINS_sub01[which(sample_relative_safe_woSTRAINS_sub01$core=="core"),]
+nrow(sample_relative_safe_woSTRAINS_sub02)
+sample_relative_safe_woSTRAINS_sub03 <- sample_relative_safe_woSTRAINS_sub02[which(sample_relative_safe_woSTRAINS_sub02$Snps>0.05),]
+nrow(sample_relative_safe_woSTRAINS_sub03)
+table(sample_relative_safe_woSTRAINS_sub03$species)
+
+  ##============
+### plot 
+   ##============
+
+
+  p3 <- ggplot(sample_relative_safe_woSTRAINS_sub03,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_identity,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
     # facet_grid(day~kessel~species)+
     facet_grid(species~.)+
     # facet_grid(treatment~species)+
@@ -6255,25 +5885,22 @@ table(sample_relative_safe_final_sub01$species)
           #legend.title = element_blank()
           )
   
-  p3
-  
 #   png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
 # 
-# p3
+p3
 # 
 # dev.off()
 
  library(plotly)
 ggp <- ggplotly(p3)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_onlyModifier.html")
-
-
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_onlyModifier.html")
 
 ```
 
 #####Venn-Diagramm
 
 ```{r}
+
 library(gplots)
 library(gridExtra)
 library(grid)
@@ -10411,147 +10038,474 @@ print(linearMod)
 ```
 
 
-#####identify highly identifical genes
 
-We could potentially have a problem of alignement in genes highly similiar. Therefore I look if which genes are cluster together. 
+## ANI Figure
 
-```{bash}
+add hierachial clustering and order accordingly. This is trivial in the heatmap2 function but non-trivial for ggplot heatmpa. [here](https://jcoliver.github.io/learn-r/008-ggplot-dendrograms-and-heatmaps.html) is a blog post how to do it. 
 
-  #--------------
-  ##Streptococcus thermophilus
-  #--------------
-  
-awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff
+```{r}
+###=================
+##Sterm
+###=================
 
-#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
+##--------------
+##snps
+##-------------
 
-bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna
+colnames(annotation_sterm_snps_01)
+sterm_snps_core <- annotation_sterm_snps_01
+table(sterm_snps_core$X.CHROM.x)
+sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="S_thermophilus_RMK202",]
+table(sterm_snps_core$X.CHROM.x)
 
-##==================
-##cd-hit
-##==================
-  
+sterm_snps_core$Sterm_rmk202 <- TRUE
+sterm_snps_core$mst1 <- sterm_snps_core$S50<0.9
+sterm_snps_core$mst2 <- sterm_snps_core$S72<0.9
+
+sterm_snps_core <- sterm_snps_core %>% select(site,core,Sterm_rmk202,mst1,mst2)
+sterm_snps_core[c("mst1", "mst2")][is.na(sterm_snps_core[c("mst1", "mst2")])] <- TRUE
+
+##--------------
+##get length
+##-------------
+coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_bothLdelSterm.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
+# table(coreGeneNames_sterm_ldel$contig)
+coreGeneNames_sterm <- coreGeneNames_sterm_ldel[coreGeneNames_sterm_ldel$contig=="S_thermophilus_RMK202",]
+# table(coreGeneNames_sterm$contig)
+CoreGeneSize_sterm <- sum(coreGeneNames_sterm$end-coreGeneNames_sterm$start)
+# 
+##--------------
+##plot
+##-------------
+library(stringr)
+library(readr)
+library(ggplot2)
+library(reshape2)
+
+table(sterm_snps_core$core)
+sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
+table(sterm_snps_CORE$core)
 
 
-   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna \
-    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
-  
-  
-  
-  
-  ###multifasta2fasta
-  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters
-  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt.clstr
 
-  ##prepare log file
-  #cluster_2.txt till cluster_24.txt
-  
-  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -24 |tail -23 > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt
-     
-   ##get gene names
-   num=2
-   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
-   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/
-   i=Cluster_2.txt
-   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
-    do
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i}
+##------------
+##prep
+##------------
+
+
+colnames(sterm_snps_core)[3:5]
+names_normal <- colnames(sterm_snps_core)[3:5]
+count <- 1 ## triangle above
+count <- 3 ; names <- rev(names_normal) ## triangle bellow
+
+
+sterm_curated_rev_names <- data.frame()
+# for (i in 1:length(names)) {  ## triangle above
+for (i in rev(1:length(names))) { ## triangle bellow
+
+   rowName <- names[i]
+    print(rowName)
     
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
-      
-    num=$((num+1))
+  for(a in rev(1:length(names))){
     
-    
-    done
- 
-
-    ##get gff
-    
-    genes=pgaptmp_001292
-    mkdir -p  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/
-    for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
-    do
-    rm  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
-    for genes in $(cut -f 1 /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i})
-      do
-        
-        grep "cds-${genes};" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff >> \
-          /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
-       
-        
-      done # $genes   
-    done   # $i
-    
-    
-    
-  mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
-
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/
-
-
-
-  #--------------
-  ##Lactobacillus delbrueckii
-  #--------------
-  
-awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff
-
-#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
-
-bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna
-
-##==================
-##cd-hit
-##==================
-  
-
-
-   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna \
-    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
-  
-  
-  
-  
-  ###multifasta2fasta
-  mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
-  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
-  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt.clstr
-
-  ##prepare log file
-  #cluster_2.txt till cluster_24.txt
-  
-  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -43  > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt
-     
-   ##get gene names
-   num=2
-   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
-   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/
-   i=Cluster_2.txt
-   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt)
-    do
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/names_${i}
-    
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
-      
-    num=$((num+1))
+    colNames <- names[a]
+    print(colNames)
     
     
-    done
- 
-    
-    
-  mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
 
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/ldel_all_repeatingGenes.txt
+    countSNPs <- sum(sterm_snps_CORE[,rowName]!=sterm_snps_CORE[,colNames])
+    ANI_core <- 100*((CoreGeneSize_sterm-countSNPs)/CoreGeneSize_sterm)
+    tmp <- data.frame("genome1"=rowName,"genome2"=colNames,"SNPs"=countSNPs,"ANI"=ANI_core)
+    sterm_curated_rev_names <- rbind(sterm_curated_rev_names,tmp)
+    
+
+  }
+
+# count <- count +1  ## triangle above
+count <- count -1  ## triangle bellow
+
+}
+sterm_curated_rev_names
+
+
+##------------
+##make dendro of all snps sites
+##------------
+library(ggdendro)
+
+sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
+rownames(sterm_matrix) <- names_normal
+otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
+
+
+# Create dendro
+dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
+# Preview the plot
+print(dendro.plot)
+
+labels(otter.dendro)
+
+svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+print(dendro.plot)
+dev.off()
+
+sterm_curated_rev_names
+##reorder according to dendro
+levels(sterm_curated_rev_names$genome1)
+sterm_curated_rev_names$genome1 = factor(sterm_curated_rev_names$genome1, levels=labels(otter.dendro))
+levels(sterm_curated_rev_names$genome1)
+levels(sterm_curated_rev_names$genome2)
+sterm_curated_rev_names$genome2 = factor(sterm_curated_rev_names$genome2, levels=labels(otter.dendro))
+levels(sterm_curated_rev_names$genome2)
+
+# creat Heatmap
+# sterm_curated$X3 <- round(sterm_curated$X3,digits = 2)
+
+##-----------
+##change names
+##-----------
+sterm_curated_rev_names$genome1 <- revalue(sterm_curated_rev_names$genome1, c("Sterm_rmk202"="MAG RMK202"))
+sterm_curated_rev_names$genome2 <- revalue(sterm_curated_rev_names$genome2, c("Sterm_rmk202"="MAG RMK202"))
+
+
+##------------
+##for SNP legend
+##------------
+
+ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = SNPs))+
+ geom_tile(color = "white",size=1.1)+
+ #scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+  # midpoint = 99.5, limit = c(98.9,100), space = "Lab", 
+  # name="ANI") +
+  scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
+  # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
+  theme_minimal()+ # minimal theme
+ theme(axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1))+
+ coord_fixed()
+# Print the heatmap
+print(ggheatmap)
+
+##------------
+##SNPs
+##------------
+
+
+plotFinal_sterm <- ggheatmap + 
+geom_text(aes(genome1, genome2, label = SNPs), color = "black", size = 2.5) +
+    labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
+  scale_y_discrete(position = 'right')+
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  # axis.text.y.left = element_text(angle = 75, hjust = 1,size=9),
+  panel.grid.major = element_blank(),
+  # scale_y_date(position = "right"),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  # legend.justification = c(1, 0),
+  legend.position = "right",
+  legend.text = element_text(angle = 0),
+  legend.direction = "vertical")+
+  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
+                title.position = "top", title.hjust = 0.5))
+plotFinal_sterm
+##save heatmap
+svg("~/Desktop/Projects/2018_culturomics/fastani/Sterm_SNPs_core_absolute_final.svg",width=5.5,height=4)
+plotFinal_sterm#+theme(legend.position = "none")
+dev.off()
+
+
+##------------
+##ANI 2
+##------------
+library(viridis)
+# creat Heatmap
+sterm_curated_rev_names$ANI_2 <- round(sterm_curated_rev_names$ANI,digits = 2)
+min(sterm_curated_rev_names$ANI)
+ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = ANI))+
+ geom_tile(color = "white",size=1.1)+
+ # scale_fill_gradient2(low = "red", high = "red4",
+ # midpoint = 99.995, limit = c(99.99,100), space = "Lab",
+ # name="ANI") +
+  # scale_fill_viridis(discrete = FALSE, option = "B",direction = -1)+
+  scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
+  theme_minimal()+ # minimal theme
+ theme(axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1))+
+ coord_fixed()
+# Print the heatmap
+print(ggheatmap)
+
+plotFinal_sterm <- ggheatmap + 
+geom_text(aes(genome1, genome2, label = ANI_2), color = "black", size = 2.5) +
+  scale_y_discrete(position = 'right')+
+  labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  # axis.text = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  # legend.justification = c(1, 0),
+  legend.position = "right",
+  legend.text = element_text(angle = 0),
+  legend.direction = "vertical")+
+  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
+                title.position = "top", title.hjust = 0.5))
+plotFinal_sterm
+##save heatmap
+svg("~/Desktop/Projects/2018_culturomics/fastani/Sterm_SNPs_core_ANI.svg",width=5.5,height=4)
+plotFinal_sterm#+theme(legend.position = "none")
+dev.off()
 
 
 ```
+
+
+```{r}
+###=================
+##Ldel
+###=================
+library(plyr)
+##--------------
+##snps
+##-------------
+
+colnames(annotation_sterm_snps_01)
+sterm_snps_core <- annotation_sterm_snps_01
+table(sterm_snps_core$X.CHROM.x)
+sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="L_delbrueckii_RMK202",]
+table(sterm_snps_core$X.CHROM.x)
+
+sterm_snps_core$Ldel_rmk202 <- TRUE
+sterm_snps_core$mst3 <- sterm_snps_core$L70<0.9
+sterm_snps_core$mst10 <- sterm_snps_core$L44<0.9
+sterm_snps_core$mst7 <- sterm_snps_core$L108<0.9
+sterm_snps_core$mst8 <- sterm_snps_core$L99<0.9
+sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
+sterm_snps_core$mst5 <- sterm_snps_core$L80<0.9
+sterm_snps_core$mst9 <- sterm_snps_core$L35<0.9
+sterm_snps_core$mst4 <- sterm_snps_core$L71<0.9
+sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
+
+sterm_snps_core <- sterm_snps_core %>% select(site,core,Ldel_rmk202,mst3, mst4,mst5, mst6,mst7, mst8,mst9, mst10)
+sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")][is.na(sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")])] <- TRUE
+
+
+##--------------
+##get length
+##-------------
+coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_bothLdelSterm.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
+# table(coreGeneNames_sterm_ldel$contig)
+coreGeneNames_sterm <- coreGeneNames_sterm_ldel[coreGeneNames_sterm_ldel$contig=="L_delbrueckii_RMK202",]
+# table(coreGeneNames_sterm$contig)
+CoreGeneSize_sterm <- sum(coreGeneNames_sterm$end-coreGeneNames_sterm$start)
+
+
+
+##--------------
+##plot
+##-------------
+library(stringr)
+library(readr)
+library(ggplot2)
+library(reshape2)
+
+table(sterm_snps_core$core)
+sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
+table(sterm_snps_CORE$core)
+
+
+
+##------------
+##prep
+##------------
+colnames(sterm_snps_core)
+colnames(sterm_snps_core)[3:11]
+names_normal <- colnames(sterm_snps_core)[3:11]
+# count <- 1 ## triangle above
+count <- 9 ; names <- rev(names_normal) ## triangle bellow
+
+sterm_curated_rev_names <- data.frame()
+# for (i in 1:length(names)) {  ## triangle above
+for (i in rev(1:length(names))) { ## triangle bellow
+
+   rowName <- names[i]
+    print(rowName)
+    
+  for(a in rev(1:length(names))){
+    
+    colNames <- names[a]
+    print(colNames)
+    
+    
+
+
+    countSNPs <- sum(sterm_snps_CORE[,rowName]!=sterm_snps_CORE[,colNames])
+    ANI_core <- 100*((CoreGeneSize_sterm-countSNPs)/CoreGeneSize_sterm)
+    tmp <- data.frame("genome1"=rowName,"genome2"=colNames,"SNPs"=countSNPs,"ANI"=ANI_core)
+    sterm_curated_rev_names <- rbind(sterm_curated_rev_names,tmp)
+    
+
+  }
+
+# count <- count +1  ## triangle above
+count <- count -1  ## triangle bellow
+
+}
+sterm_curated_rev_names
+
+##------------
+##make dendro of all snps sites
+##------------##------------
+##make dendro of all snps sites
+
+
+library(ggdendro)
+
+sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
+rownames(sterm_matrix) <- names_normal
+otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
+
+
+# Create dendro
+dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
+# Preview the plot
+print(dendro.plot)
+
+labels(otter.dendro)
+
+svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+print(dendro.plot)
+dev.off()
+
+sterm_curated_rev_names
+##reorder according to dendro
+levels(sterm_curated_rev_names$genome1)
+sterm_curated_rev_names$genome1 = factor(sterm_curated_rev_names$genome1, levels=labels(otter.dendro))
+levels(sterm_curated_rev_names$genome1)
+levels(sterm_curated_rev_names$genome2)
+sterm_curated_rev_names$genome2 = factor(sterm_curated_rev_names$genome2, levels=labels(otter.dendro))
+levels(sterm_curated_rev_names$genome2)
+
+# creat Heatmap
+# sterm_curated$X3 <- round(sterm_curated$X3,digits = 2)
+##-----------
+##change names
+##-----------
+sterm_curated_rev_names$genome1 <- revalue(sterm_curated_rev_names$genome1, c("Ldel_rmk202"="MAG RMK202"))
+sterm_curated_rev_names$genome2 <- revalue(sterm_curated_rev_names$genome2, c("Ldel_rmk202"="MAG RMK202"))
+
+# ##------------
+# ##for SNP legend
+# ##------------
+
+ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = SNPs))+
+ geom_tile(color = "white",size=1.1)+
+ #scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+  # midpoint = 99.5, limit = c(98.9,100), space = "Lab",
+  # name="ANI") +
+  scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
+  # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
+  theme_minimal()+ # minimal theme
+ theme(axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 45, vjust = 1,
+    size = 12, hjust = 1))+
+ coord_fixed()
+# Print the heatmap
+print(ggheatmap)
+
+##------------
+##SNPs
+##------------
+
+
+plotFinal_sterm <- ggheatmap + 
+geom_text(aes(genome1, genome2, label = SNPs), color = "black", size = 2.5) +
+    labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
+  scale_y_discrete(position = 'right')+
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  # axis.text.y.left = element_text(angle = 75, hjust = 1,size=9),
+  panel.grid.major = element_blank(),
+  # scale_y_date(position = "right"),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  # legend.justification = c(1, 0),
+  legend.position = "right",
+  legend.text = element_text(angle = 0),
+  legend.direction = "vertical")+
+  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
+                title.position = "top", title.hjust = 0.5))
+plotFinal_sterm
+##save heatmap
+svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_core_absolute_final.svg",width=5.5,height=4)
+plotFinal_sterm#+theme(legend.position = "none")
+dev.off()
+
+
+##------------
+##ANI 2
+##------------
+
+
+library(viridis)
+# creat Heatmap
+sterm_curated_rev_names$ANI_2 <- round(sterm_curated_rev_names$ANI,digits = 2)
+min(sterm_curated_rev_names$ANI)
+ggheatmap <- ggplot(sterm_curated_rev_names, aes(genome1, genome2, fill = ANI))+
+ geom_tile(color = "white",size=1.1)+
+ # scale_fill_gradient2(low = "red", high = "red4",
+ # midpoint = 99.995, limit = c(99.99,100), space = "Lab",
+ # name="ANI") +
+  # scale_fill_viridis(discrete = FALSE, option = "B",direction = -1)+
+  scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
+  theme_minimal()+ # minimal theme
+ theme(axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(angle = 45, vjust = 1, 
+    size = 12, hjust = 1))+
+ coord_fixed()
+# Print the heatmap
+print(ggheatmap)
+
+
+plotFinal_sterm <- ggheatmap + 
+geom_text(aes(genome1, genome2, label = ANI_2), color = "black", size = 2.5) +
+  scale_y_discrete(position = 'right')+
+  labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  # axis.text = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  # legend.justification = c(1, 0),
+  legend.position = "right",
+  legend.text = element_text(angle = 0),
+  legend.direction = "vertical")+
+  guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
+                title.position = "top", title.hjust = 0.5))
+plotFinal_sterm
+##save heatmap
+svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_core_ANI.svg",width=5.5,height=4)
+plotFinal_sterm#+theme(legend.position = "none")
+dev.off()
+
+```
+
+
+
 
 ##SNPeff analysis supplementary
 
