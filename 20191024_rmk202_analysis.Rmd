@@ -996,6 +996,32 @@ diamond blastp --threads 32 --max-target-seqs 1 --db /archiv/TREMBL_database/201
 
 1. create a file containing all paths to the files from [LIMS](https://uhts-lgtf.vital-it.ch/user/symlinkdataruns/1453/951)
 2. download the file with wget -i [File] in the appropitate folder
+```{bash}
+http://uhts-lgtf.vital-it.ch/symlink/V1_L6_R1_001_eVimQCCGzvPR.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V1_L6_R2_001_X0NeL654UFhg.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V1_L7_R1_001_jvgJBy864KhI.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V1_L7_R2_001_kzfyKrQ5YJuO.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V1_L8_R1_001_M9EtbZWANTlH.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V1_L8_R2_001_6LCQu5kVhdme.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L6_R1_001_D3J3VNGUO2sb.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L6_R2_001_Uh5JXQhzM0Rt.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L7_R1_001_JJDw9KIxeXvd.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L7_R2_001_6a1Vrn1zZPPQ.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L8_R1_001_lPTEu1ohnTPS.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V2_L8_R2_001_eyxyKJ20KL3i.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L6_R1_001_hf6ISQBSU3vw.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L6_R2_001_eXTnM0N6Wnps.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L7_R1_001_dQNFjCHgsKmE.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L7_R2_001_gfhhG5a76yw4.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L8_R1_001_DrKMggM4S7Eo.fastq.gz
+http://uhts-lgtf.vital-it.ch/symlink/V3_L8_R2_001_4fB1hvNMF3Ts.fastq.gz
+
+ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz |grep "^V"
+
+```
+
+
+
 
 
 ###name change
@@ -1005,7 +1031,7 @@ create a file with the labels and the names of the file in each a column
 ```{bash}
 
 
-for name in $(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/ |grep ".fastq.gz")
+for name in $(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz |grep "^V")
 do
 
   name_01=$(echo $name |cut -d '_' -f 1)
@@ -1051,6 +1077,41 @@ for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/
   
   done
 
+##-----------added files
+
+mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/all_fastq_gz/ 
+names=V1
+for names in $(cut -f 1 /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt)
+  do
+  
+  echo ${names}
+  
+  newName=$(grep "${names}" /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt |cut -f 2)
+  
+  forward_01=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L6_R1")
+  forward_02=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L7_R1")
+  forward_03=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L8_R1")
+  
+
+  cat /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${forward_01} \
+  /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${forward_02}  \
+  /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${forward_03} > \
+  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/all_fastq_gz/${newName}_R1.fastq.gz
+  
+  
+  reverse_01=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L6_R2")
+  reverse_02=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L7_R2")
+  reverse_03=$(ls /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/| grep "^${names}_L8_R2")
+  
+  cat /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${reverse_01} \
+  /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${reverse_02}  \
+  /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/fastq_gz/${reverse_03} > \
+  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/all_fastq_gz/${newName}_R2.fastq.gz
+  
+   done
+
+
+
 ```
 
 
@@ -1092,19 +1153,19 @@ for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/
 In the following we clip adaptors with [trim-galore](https://github.com/FelixKrueger/TrimGalore)
 
 ```{bash trimGalore}
-threads=5
+threads=35
 
 num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name.txt |tail -4)
+for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt)
   do
-  echo ${num}"/37  :" ${names}
+  echo ${num}"/3  :" ${names}
   num=$((num+1))
   
   
   
   #    rm -r /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq//trimmed_Galore/gz/
       mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq//trimmed_Galore/gz/
-      trim_galore -paired -o /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/ \
+      trim_galore --fastqc -paired -o /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/ \
         /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/all_fastq_gz/${names}_R1.fastq.gz   \
         /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/all_fastq_gz/${names}_R2.fastq.gz 
         
@@ -1127,12 +1188,23 @@ for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/
   multiqc /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC/ -o /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC/Multiqc
 
 
+  for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt)
+  do
+ mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC/log
+echo "/archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC/" >>  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC/log/multiqc_logfile.txt
+   
+     done 
+  
+  mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC//Multiqc_02
+  
+  multiqc --config /archiv/logs/multiQC_config.txt --file-list /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/01_againstUnpolished/log/multiqc_logfile.txt \
+  -o /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fastQC//Multiqc_02
 
 
 ```
 
 
-####KneadData
+x####KneadData
 
 Here, we filter out the cow genome contamination reads
 
@@ -1159,13 +1231,16 @@ bowtie2-build /archiv/cowDB/mixed/20190520/cow_genomeANDmito_DB.fna /archiv/cowD
 threads=37
 
 num=1
-for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name_K1.txt )
+#for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name_K1.txt )
+for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt)
   do
   echo ${num}"/37  :" ${names}
   num=$((num+1))
 rm -r /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}
 mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}
 
+gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq.gz
+gunzip /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R2_val_2.fq.gz
 
 
 kneaddata --input /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${names}_R1_val_1.fq \
@@ -4167,7 +4242,309 @@ scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_
 
 ```
 
+## Genome assembly stats
 
+#### BUSCO
+
+```{bash}
+
+
+rm /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+
+species=Sterm
+species=Ldel
+for speciesss in $(echo "Sterm Ldel")
+do
+echo "##------------------------"
+echo ${speciesss}
+echo "##------------------------"
+
+for genemess in $(ls /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${speciesss}/faa/ )
+  do
+  
+  genomesssss=$(echo ${genemess}|cut -d '.' -f 1)
+  
+  rm -r /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/${genemess}
+  rm -r /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/${genomesssss}
+
+  mkdir -p /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/${genomesssss}
+  cd /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/${genomesssss}
+  
+  python /home/vincent/apps/busco/scripts/run_BUSCO.py -c 32 -i /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${speciesss}/faa/${genemess} -o ${genomesssss} -l /home/vincent/apps/busco/lactobacillales_odb9 -m prot
+
+  #grep -v "^#" run_${genomesssss}/short_summary_${genomesssss}.txt| grep "C:" -A 7 
+  all_INFO=$(grep -v "^#" run_${genomesssss}/short_summary_${genomesssss}.txt| grep "C:" | sed "s/^[ \t]*//"  )
+  complet=$(echo ${all_INFO} | awk -F "[,[]" '{print $1}'|sed 's/%//g'|sed 's/C://g' )
+  single=$(echo ${all_INFO} | awk -F "[,[]" '{print $2}'|sed 's/%//g'|sed 's/S://g')
+  dupli=$(echo ${all_INFO} | awk -F "[,[]" '{print $3}'|sed 's/%]//g'|sed 's/D://g')
+  fragm=$(echo ${all_INFO} | awk -F "[,[]" '{print $4}'|sed 's/%//g'|sed 's/F://g')
+  Missi=$(echo ${all_INFO} | awk -F "[,[]" '{print $5}'|sed 's/%//g'|sed 's/M://g')
+  numbi=$(echo ${all_INFO} | awk -F "[,[]" '{print $6}'|sed 's/n://g')
+  
+ echo -e ${speciesss}"\t"${genomesssss}"\t"${complet}"\t"${single}"\t"${dupli}"\t"${fragm}"\t"${Missi}"\t"${numbi}  \
+ >> /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+
+  done
+done ## species
+
+sed -i  's/Streptococcus_thermophilus_RMK202_pgap/S_thermophilus_mag_rmk202/g' /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+sed -i  's/Lactobacillus_delbrueckii_RMK202_pgap/L_delbrueckii_mag_rmk202/g' /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+
+```
+
+#### remove small contigs
+
+```{bash}
+
+
+
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt )
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+
+  seqkit seq -m 300 /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/*/*19.fna -o /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/20190203/${id}_wo_300bp.fna
+ 
+    done
+
+```
+
+
+
+#### genome stats
+
+```{bash}
+
+##---------------
+##genome
+##---------------
+
+rm /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt )
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+# /archiv/Projects/2018_Culturomics/06_Spades/S72/Prokka/20190203/
+ 
+   contiNumber=$(grep ">" -c /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/*/${id}_wo_300bp.fna) 
+   GenomeLength=$(grep -v "^>" /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/*/${id}_wo_300bp.fna  |wc -c)
+   
+   # contiNumber=$(grep ">" -c /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/contigs.fasta) 
+   #GenomeLength=$(grep -v "^>" /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/contigs.fasta  |wc -c)
+    
+ echo -e ${id}"\t"${contiNumber}"\t"${GenomeLength}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt
+
+#"\t"${single}"\t"${dupli}"\t"${fragm}"\t"${Missi}"\t"${numbi}  \
+    done
+
+
+
+##---------------
+##MAG
+##---------------
+##---------Sterm
+
+id=S_thermophilus_mag_rmk202
+
+contiNumber=$(grep ">" -c /archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna)
+GenomeLength=$(grep -v "^>" /archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna  |wc -c)
+
+ echo -e ${id}"\t"${contiNumber}"\t"${GenomeLength}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt
+ 
+##---------Ldel
+id=L_delbrueckii_mag_rmk202
+
+contiNumber=$(grep ">" -c /archiv/Projects/2018_Culturomics/genomes/RMK_Lactobacillus_delbrueckii_RMK202.fna)
+GenomeLength=$(grep -v "^>" /archiv/Projects/2018_Culturomics/genomes/RMK_Lactobacillus_delbrueckii_RMK202.fna  |wc -c)
+
+ echo -e ${id}"\t"${contiNumber}"\t"${GenomeLength}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt
+ 
+ 
+```
+
+#### annotation stats
+
+```{bash}
+
+
+------
+
+rm /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt )
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+#   contiNumber=$(grep ">" -c /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/2*/*19.gff) 
+#   GenomeLength=$(grep -v "^>" /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/2*/*19.gff  |wc -c)
+  
+  gensss=$(grep "gene: " /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/201*/*19.txt |sed 's/gene: //g')
+  tRNAsss=$(grep "tRNA: " /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/201*/*19.txt |sed 's/tRNA: //g')
+  rRNAsss=$(grep "rRNA: " /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/201*/*19.txt |sed 's/rRNA: //g')
+  
+  
+ echo -e ${id}"\t"${gensss}"\t"${tRNAsss}"\t"${rRNAsss}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt
+
+#"\t"${single}"\t"${dupli}"\t"${fragm}"\t"${Missi}"\t"${numbi}  \
+    done
+
+###-----------Sterm RMK202 MAG
+gbkFile=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot.gbk
+id=S_thermophilus_mag_rmk202
+  gensss=$(grep "Genes (total)                     :: " ${gbkFile}|sed 's/Genes (total)                     :: //g'|sed "s/^[ \t]*//"|sed 's/,//g')
+  tRNAsss=$(grep "tRNAs                             :: " ${gbkFile} |sed 's/tRNAs                             :: //g'|sed "s/^[ \t]*//"|sed 's/,//g')
+  rRNAsss=$(grep "Genes (RNA)                       :: " ${gbkFile} |sed 's/Genes (RNA)                       :: //g'|sed "s/^[ \t]*//"|sed 's/,//g')
+  
+  
+ echo -e ${id}"\t"${gensss}"\t"${tRNAsss}"\t"${rRNAsss}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt
+
+    
+  
+###-----------Sterm RMK202 MAG
+gbkFile=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot.gbk
+id=L_delbrueckii_mag_rmk202
+
+  gensss=$(grep "Genes (total)                     :: " ${gbkFile}|sed 's/Genes (total)                     :: //g'|head -1 |sed "s/^[ \t]*//" |sed 's/,//g' )
+  tRNAsss=$(grep "tRNAs                             :: " ${gbkFile} |sed 's/tRNAs                             :: //g'|head -1 |sed "s/^[ \t]*//" |sed 's/,//g' )
+  rRNAsss=$(grep "Genes (RNA)                       :: " ${gbkFile} |sed 's/Genes (RNA)                       :: //g'|head -1 |sed "s/^[ \t]*//" |sed 's/,//g' )
+  
+ echo -e ${id}"\t"${gensss}"\t"${tRNAsss}"\t"${rRNAsss}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt
+
+```
+
+####mapping stats
+
+```{bash}
+
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+    
+
+ rm -r /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly
+  
+  
+  bwa index /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/20190203/${id}_wo_300bp.fna
+  
+  bwa mem -t 32 /archiv/Projects/2018_Culturomics/06_Spades/${id}/Prokka/20190203/${id}_wo_300bp.fna \
+  /archiv/Projects/2018_Culturomics/01_rawData/trimmed_Galore/fq/${id}/${id}_R1_val_1.fq /archiv/Projects/2018_Culturomics/01_rawData/trimmed_Galore/fq/${id}/${id}_R2_val_2.fq | samtools sort -@$32 -O BAM -o /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly/${id}_rawIllumina_bwamem_sorted.bam - 
+
+##-----Qualimap
+
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly//bamqc
+
+qualimap bamqc -bam /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly/${id}_rawIllumina_bwamem_sorted.bam -outdir /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly//bamqc --java-mem-size=80G
+
+    
+    done
+
+
+##---------------------
+##get data
+##---------------------
+
+rm /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+
+GCss=$(grep "GC percentage" /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly//bamqc/genome_results.txt| sed 's/GC percentage = //g'| sed "s/^[ \t]*//"|sed 's/%//g'  )
+
+coveragesss=$(grep "mean coverageData = " /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly//bamqc/genome_results.txt| sed 's/mean coverageData = //g'| sed "s/^[ \t]*//"|sed 's/X//g'  )
+
+
+
+#grep -A 10000 ">>>>>>> Coverage per contig" /archiv/Projects/2018_Culturomics/06_Spades/${id}/assembly/PostaAssembly//bamqc/genome_results.txt| grep -v ">>>>>>> Coverage per contig"| sed "s/^[ \t]*//" |sed -r '/^\s*$/d' 
+
+
+echo -e ${id}"\t"${GCss}"\t"${coveragesss}"\t""NA" >> /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt
+
+done
+
+##---------------------
+##get data ONT coverage
+##---------------------
+## GC
+infoseq /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged.fasta -noheading -nodatabase -nolength -nousa -nohead -noacc -notype -nodesc -delimiter '_' -outfile /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_mergeg_infoseq.txt
+
+
+##--------------Sterm
+oldName=contig_1
+NewName=S_thermophilus_mag_rmk202
+GCss=38
+## illumina both
+IlluminaCoverage=$(grep ">>>>>>> Coverage per contig" -A 20 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/rawIlluminaMapped/bamqc/genome_results.txt | grep "$oldName" |sed "s/^[ \t]*//"|cut -f 4) 
+
+## ONT both
+ONTCoverage=$(grep ">>>>>>> Coverage per contig" -A 20 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/04_fourthRacon_graphmap/Graphmap_ONT/bamqc/genome_results.txt | grep "$oldName" |sed "s/^[ \t]*//"|cut -f 4)
+
+## GC
+GCss=$(grep "S_thermophilus_RMK202" /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_mergeg_infoseq.txt | awk -F " " '{print $2}')
+
+## alltogether
+echo -e ${NewName}"\t"${GCss}"\t"${IlluminaCoverage}"\t"${ONTCoverage}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt
+
+
+
+##--------------Ldel
+
+oldName=contig_2
+NewName=L_delbrueckii_mag_rmk202
+GCss=38
+## illumina both
+IlluminaCoverage=$(grep ">>>>>>> Coverage per contig" -A 20 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/rawIlluminaMapped/bamqc/genome_results.txt | grep "$oldName" |sed "s/^[ \t]*//"|cut -f 4) 
+
+## ONT both
+ONTCoverage=$(grep ">>>>>>> Coverage per contig" -A 20 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/04_fourthRacon_graphmap/Graphmap_ONT/bamqc/genome_results.txt | grep "$oldName" |sed "s/^[ \t]*//"|cut -f 4)
+
+## GC
+GCss=$(grep "L_delbrueckii_RMK202" /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_mergeg_infoseq.txt | awk -F " " '{print $2}')
+
+## alltogether
+echo -e ${NewName}"\t"${GCss}"\t"${IlluminaCoverage}"\t"${ONTCoverage}  >> /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt
+
+
+```
+
+#### bring together
+```{bash}
+
+cat /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt
+cat /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+cat /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt
+cat /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt
+
+mkdir -p /archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/
+cp /archiv/Projects/2018_Culturomics/06_Spades//all_assembly_analysis.txt /archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/
+cp /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt /archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/
+cp /archiv/Projects/2018_Culturomics/06_Spades//all_genome_analysis.txt /archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/
+cp /archiv/Projects/2018_Culturomics/06_Spades//all_annotation_analysis.txt /archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/
+
+scp -r vincent@130.223.51.151:/archiv/Projects/2018_Culturomics/06_Spades/genomeAnalysi/ ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/
+
+```
+
+```{r}
+library(readr)
+genome_stats <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/genomeAnalysi/all_assembly_analysis.txt", "\t", escape_double = FALSE, col_names = c("strain","contigNumber","genomeSize"),  trim_ws = TRUE)
+Genes_stats <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/genomeAnalysi/all_annotation_analysis.txt", "\t", escape_double = FALSE, col_names = c("strain","genes","tRNA","rRNA"),  trim_ws = TRUE)
+BUSCO_stats <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/genomeAnalysi/all_analysis.txt", "\t", escape_double = FALSE, col_names = c("species","strain","completness","singleCopy","duplicated","fragmentation","Missing","numberGenesTested"),  trim_ws = TRUE)
+mapping_stats <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/genomeAnalysi/all_genome_analysis.txt", "\t", escape_double = FALSE, col_names =c("strain","GC","IlluminaCoverage","ONTcoverage"),  trim_ws = TRUE)
+
+tmp <- merge(BUSCO_stats,genome_stats,by="strain")
+tmp <- merge(tmp,Genes_stats,by="strain")
+GenomeAssemblyStats <- merge(tmp,mapping_stats,by="strain")
+
+```
 
 
 ## Mapping Data
@@ -4181,19 +4558,21 @@ scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_
 ##mapping to reference
 ##============
 
-name_folder=02_againstpolished_single_K1_final_kneaddata_withStrains
+ name_folder=02_againstpolished_single_K1_final_kneaddata_withStrains 
 
 threads=37
 #rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/
 
 mkdir -p /archiv/Projects/2019_RMK202_analysis/01_log
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt
+#rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt
 #cp /archiv/Projects/2019_pilotplant/01_rawData/01_rawfastq/change_name_allOfExperiment.txt /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt
 #cat /archiv/Projects/2019_RMK202_analysis/01_log/names.txt /archiv/Projects/2019_RMK202_analysis/01_log/names_only_extended.txt > /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt
 num=1
-rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/
+#rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/
 
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
+#  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_onlymeta.txt)
+#for names in $(cut -f 2 /archiv/Projects/2019_pilotplant/01_rawData/log/20191031_logDownload_changeName.txt|tail -1)
+for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
   do
   echo ${num}"/16  :" ${names}
   num=$((num+1))
@@ -4202,14 +4581,14 @@ rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/
   mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/
   
  # bwa mem -t ${threads} /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged.fasta
-  bwa mem -t ${threads} /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged_withStrains.fasta \
+  bwa mem -t ${threads} /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged.fasta \
   /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_1.fastq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_2.fastq | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
 
-samtools view -b -f 4 /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+#samtools view -b -f 4 /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
 
-bedtools bamtofastq -i /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
+#bedtools bamtofastq -i /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
 
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+#rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
 
 ##-----Qualimap
 
@@ -4586,14 +4965,14 @@ GL	Genotype Likelihood, log10-scaled likelihoods of the data given the called ge
 
 
 ###------------------adding readgroup to bam
-rm /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/log/multiqc_logfile_bams.txt
+rm /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
   for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 do
 
 
 java -jar /home/vincent/apps/picard/picard.jar AddOrReplaceReadGroups \
-       I=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
-       O=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
+       I=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
+       O=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
        RGID=${names} \
        RGLB=lib1 \
        RGPL=illumina \
@@ -4605,23 +4984,23 @@ rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_s
 
   for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 do
-echo "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/"${names}"/bwaMapping2DB/"${names}"_mapping2ref.bam " >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/log/multiqc_logfile_bams.txt
+echo "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/"${names}"/bwaMapping2DB/"${names}"_mapping2ref.bam " >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
 
 done
 
 ##remove trailing whitespaces
 
- sed -i 's/[ \t]*$//' /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/log/multiqc_logfile_bams.txt
+ sed -i 's/[ \t]*$//' /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
 
 ##-------------calling
-rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT
+rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT
+mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT
 
 
-    freebayes -F 0.05 -C 2 --min-coverage 20 -p 1 \
-      --bam-list /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/log/multiqc_logfile_bams.txt -f \
+    freebayes -F 0.05 -C 2 --min-coverage 30 -p 1 \
+      --bam-list /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt -f \
       /archiv/Projects/2019_RMK202_analysis/02_flye_Assembly/merged/RMK202_merged.fasta > \
-      /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf
+      /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf
   
 ##-------------zipping
 
@@ -4648,7 +5027,7 @@ Here we do [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html#buildAddCon
 ```{bash}
 
 ##----------------
-##Ldel
+##bring PGAP LOCAL
 ##----------------
 
 mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP
@@ -4657,197 +5036,206 @@ scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/LD_singu 
 
 scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/ST_singu vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/
 
-
+##=======================================================================================================================
+##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
+##=======================================================================================================================
 ##==================
 ##Building Database
 ##==================
 #/archiv/Projects/2018_Culturomics/genomes/Lactobacillus_delbrueckii_RMK202.fna
-
 #/archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna
 
-#NanoSample=th_K1_8h
-#sampleShort=th_K1
-#NanoSample=RMK202
-
-
+##-------------
 ##01_add genome name to
+##-------------
 
 vim /home/vincent/miniconda2/share/snpeff-4.3.1t-2/snpEff.config
-#2019_pilotPlant_di_K1.genome : 2019_ONTassembly_di_K1
-#2019_pilotPlant_th_K1.genome : 2019_ONTassembly_th_K1
-#2019_pilotPlant_th_K1_02.genome : 2019_ONTassembly_th_K1_02
 Streptococcus_thermophilus_RMK202_pgap.genome : Streptococcus_thermophilus_RMK202_pgap
 Lactobacillus_delbrueckii_RMK202_pgap.genome : Lactobacillus_delbrueckii_RMK202_pgap
 Streptococcus_phage_rmk202.genome : Streptococcus_phage_rmk202
 
-
+##-------------
 #02_put genome fasta and gff into right directory:
+##-------------
 
 sampleShort=Streptococcus_thermophilus_RMK202
-#sampleShort=Lactobacillus_delbrueckii_RMK202
-sampleShort=Streptococcus_phage
 
-
+##-------------
+#03_put genome fasta 
+##-------------
 rm -r /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
-#mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
-mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202
-#cat  /archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/sequences.fa
+mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
 
-##--phage
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_phage.fasta > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/sequences.fa
-#cat  /archiv/Projects/2018_Culturomics/genomes/${sampleShort}.fna  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/sequences.fa
+cat  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/sequences.fa
 
-#cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/${sampleShort}_pgap.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/genes.gff
 
-#cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Lactobacillus_delbrueckii_RMK202_pgap.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/genes.gff
-##--phage
 
-egrep -n -m 1 '##FASTA' /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff 
-head -163 /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff |grep -v "^#"  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes.gff
+##-------------
+#04 genes gff 
+##-------------
 
-##03_build database
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap//genes.gff
+
+
+##-------------
+##05_build database
+##-------------
 
 cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-java -jar snpEff.jar build -gff3 -v ${sampleShort}_rmk202
+java -jar snpEff.jar build -gff3 -v ${sampleShort}_pgap
 
 
 ##==================
 ##running snpEff
 ##==================
 
-##--------------
-##Ldel
-##--------------
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
+##-------------
+##06_preperation of SNV file
+##-------------
 
+grep "S_thermophilus_RMK202" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_sterm.vcf
 
+##-------------
+##07 SNveff calling
+##-------------
 
-##-------------split vcf
-
-mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap
-
-grep "L_delbrueckii_RMK202" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}.vcf
-
-grep -v "^#" /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}.vcf  |cut -f 1 |sort |uniq -c
-
-##-------------run command
 cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-
-java -Xmx64g -jar snpEff.jar ${sampleShort}_pgap  /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}.vcf > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
-
-#=====================================
-##============transfer local 
-#=====================================
-
-##--------EggNog gene annotation
-
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/Eggnog
-
-sampleShort=Streptococcus_thermophilus_RMK202
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_*mpactGeneIds_forTopGO.txt ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/Eggnog
-sampleShort=Lactobacillus_delbrueckii_RMK202
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_*mpactGeneIds_forTopGO.txt ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/Eggnog
+rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
 
 
-##--------mutation effects
-
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/effects
-
-sampleShort=Streptococcus_thermophilus_RMK202
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}-withOld_merged_forR_unmodified.csv ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/effects
-sampleShort=Lactobacillus_delbrueckii_RMK202
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}-withOld_merged_forR_unmodified.csv ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/effects
-
-##=======
-##move raw data local
-##=======
-sampleShort=Streptococcus_thermophilus_RMK202
-#sampleShort=Lactobacillus_delbrueckii_RMK202
-
-grep "^##" -v /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf | \
-  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf
+java -Xmx64g -jar snpEff.jar ${sampleShort}_pgap  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_sterm.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
 
 
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
+##-------------
+##08_prep for R
+##-------------
 
-grep "^##" -v /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf | \
-  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf
-
-##========local
-
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/
-
-sampleShort=Streptococcus_thermophilus_RMK202
-#sampleShort=Lactobacillus_delbrueckii_RMK202
-
-
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
-
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
-
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
-
-
-##eggnog
-sampleShort=Streptococcus_thermophilus_RMK202
-#sampleShort=Lactobacillus_delbrueckii_RMK202
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
-
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
+grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf | \
+  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf
 
 
 ##==================
-##phages
+##transfer local 
 ##==================
 
-sampleShort=Streptococcus_phage
 
-##-------------split vcf
+sampleShort=Streptococcus_thermophilus_RMK202
 
-mkdir -p /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202
 
-grep "S_phage_RMK202_" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}.vcf
+##-------------
+###snpEff
+##-------------
 
-grep -v "^#" /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}.vcf  |cut -f 1 |sort |uniq -c
+scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff_02.vcf 
 
-##-------------run command
+##-------------
+###eggnog
+##-------------
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
+
+
+
+
+
+##=======================================================================================================================
+##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
+##=======================================================================================================================
+##==================
+##Building Database
+##==================
+#/archiv/Projects/2018_Culturomics/genomes/Lactobacillus_delbrueckii_RMK202.fna
+#/archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna
+
+##-------------
+##01_add genome name to
+##-------------
+
+vim /home/vincent/miniconda2/share/snpeff-4.3.1t-2/snpEff.config
+Streptococcus_thermophilus_RMK202_pgap.genome : Streptococcus_thermophilus_RMK202_pgap
+Lactobacillus_delbrueckii_RMK202_pgap.genome : Lactobacillus_delbrueckii_RMK202_pgap
+
+##-------------
+#02_put genome fasta and gff into right directory:
+##-------------
+
+sampleShort=Lactobacillus_delbrueckii_RMK202
+
+##-------------
+#03_put genome fasta 
+##-------------
+rm -r /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
+mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
+
+cat  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202.fasta  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/sequences.fa
+
+
+
+##-------------
+#04 genes gff 
+##-------------
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Lactobacillus_delbrueckii_RMK202_pgap.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap//genes.gff
+
+
+##-------------
+##05_build database
+##-------------
+
 cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-
-java -Xmx64g -jar snpEff.jar ${sampleShort}_rmk202  /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}.vcf > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
-
+java -jar snpEff.jar build -gff3 -v ${sampleShort}_pgap
 
 
-grep "^##" -v /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf  | \
-  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf 
+##==================
+##running snpEff
+##==================
+
+##-------------
+##06_preperation of SNV file
+##-------------
+
+grep "L_delbrueckii_RMK202" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_ldel.vcf
+
+##-------------
+##07 SNveff calling
+##-------------
+
+cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
+rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
 
 
-###prep for eggnog
+java -Xmx64g -jar snpEff.jar ${sampleShort}_pgap  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_ldel.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
 
-tail -1758  /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes.faa
+##-------------
+##08_prep for R
+##-------------
 
-awk -F "\t" 'BEGIN{OFS="\t"} {if($3=="CDS") print $0}' /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.gff 
+grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf | \
+  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf
 
-bedtools getfasta -fi /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/sequences.fa \
-  -bed /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.gff \
-  -fo /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.ffn
 
-sed -i 's/:/./g' /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.ffn
-transeq /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.ffn /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.faa
-sed -i 's/\./:/g' /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.faa
+##==================
+##transfer local 
+##==================
 
-###move local
 
-sampleShort=Streptococcus_phage
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/SnpEff/${sampleShort}_rmk202/variantCallsfreebayes_all_${sampleShort}_snpEff_r.vcf  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
+#sampleShort=Streptococcus_thermophilus_RMK202
+sampleShort=Lactobacillus_delbrueckii_RMK202
 
-sampleShort=Streptococcus_phage
-scp vincent@130.223.51.151:/home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_rmk202/genes_cds.faa ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff_forEggnog.faa
+##-------------
+###snpEff
+##-------------
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff_02.vcf 
+
+##-------------
+###eggnog
+##-------------
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
+
 
 
 ```
@@ -5470,7 +5858,7 @@ dev.off()
 ###=================
 ##Ldel
 ###=================
-
+library(plyr)
 ##--------------
 ##snps
 ##-------------
@@ -5787,8 +6175,8 @@ sample_relative_safe_final_phage[sample_relative_safe_final_phage$species=="S_ph
 # dev.off()
   
   library(plotly)
-ggp <- ggplotly(p1)
-htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_phages.html")
+# ggp <- ggplotly(p1)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_phages.html")
 
 
   ##============
@@ -5831,7 +6219,7 @@ p2
 dev.off()
 
  library(plotly)
-ggp <- ggplotly(p2)
+# ggp <- ggplotly(p2)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all.html")
 
 
@@ -5927,8 +6315,39 @@ nrow(sample_relative_safe_final_iso_cleaned)
 # sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)==0),]
 sample_relative_safe_final_iso_cleaned_ldel <- sample_relative_safe_final_iso_cleaned
 
+dim(sample_relative_safe_final_iso_cleaned_ldel)
+
+sum((sample_relative_safe_final_iso_cleaned_ldel$L99>0.9 & sample_relative_safe_final_iso_cleaned_ldel$L80>0.9& sample_relative_safe_final_iso_cleaned_ldel$L71>0.9& sample_relative_safe_final_iso_cleaned_ldel$L70>0.9& sample_relative_safe_final_iso_cleaned_ldel$L108>0.9& sample_relative_safe_final_iso_cleaned_ldel$L35>0.9& sample_relative_safe_final_iso_cleaned_ldel$L39>0.9& sample_relative_safe_final_iso_cleaned_ldel$L104>0.9& sample_relative_safe_final_iso_cleaned_ldel$L44>0.9) %in% TRUE)
+
+inAll_Ldel <- sample_relative_safe_final_iso_cleaned_ldel[which((sample_relative_safe_final_iso_cleaned_ldel$L99>0.9 & sample_relative_safe_final_iso_cleaned_ldel$L80>0.9& sample_relative_safe_final_iso_cleaned_ldel$L71>0.9& sample_relative_safe_final_iso_cleaned_ldel$L70>0.9& sample_relative_safe_final_iso_cleaned_ldel$L108>0.9& sample_relative_safe_final_iso_cleaned_ldel$L35>0.9& sample_relative_safe_final_iso_cleaned_ldel$L39>0.9& sample_relative_safe_final_iso_cleaned_ldel$L104>0.9& sample_relative_safe_final_iso_cleaned_ldel$L44>0.9) %in% TRUE),]
 
 
+sample_relative_wide_strains <- sample_relative_wide
+sample_relative_wide_strains[is.na(sample_relative_wide_strains)] <- 0
+
+colMeans(sample_relative_wide_strains[which(sample_relative_wide_strains$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])
+
+Ldel_L99_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99>0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L99_snps
+
+Ldel_L80_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80>0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L80_snps
+
+Ldel_L71_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71>0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L71_snps
+
+Ldel_L70_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70>0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L70_snps
+
+Ldel_L108_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108>0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L108_snps
+
+Ldel_L35_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35>0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L35_snps
+
+Ldel_L39_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39>0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L39_snps
+
+Ldel_L104_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104>0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L104_snps
+
+Ldel_L44_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44>0.9) %in% TRUE),];Ldel_L44_snps
+
+##--------------
+##Sterm
+##--------------
 
 
 sample_relative_safe_final_snps_iso <- sample_relative_wide[,c("site","S72","S50")]
@@ -5997,9 +6416,15 @@ dev.off()
 ##------Ldel
 
 onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned_ldel$site
+sample_relative_safe_final_iso_cleaned_ldel
+
 onlysecond_sterm <- sample_relative_safe_final_meta_cleaned[sample_relative_safe_final_meta_cleaned$X.CHROM=="L_delbrueckii_RMK202","site"]
 meta_ldel <- sample_relative_safe_final_meta_cleaned_02[sample_relative_safe_final_meta_cleaned$X.CHROM=="L_delbrueckii_RMK202",]
 
+##---Explained by
+colMeans(meta_ldel[2:6],na.rm = TRUE) ##EXPLAINED by unknown
+colMeans(sample_relative_wide[,c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")],na.rm = TRUE) ##explained by isolates 01
+colMeans(sample_relative_wide[which(sample_relative_wide$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])  ##explained by isolates 02
 
 
 both_metaIso_ldel <- meta_ldel[onlysecond_sterm %in% onlyfirst_sterm,]
@@ -6027,8 +6452,573 @@ dev.off()
 # 1042/4621
 
 
+```
+
+##### disentengle Ldel
+
+```{r}
+
+###-----------
+##plot all SNPs that occur in one sample
+###-----------
+
+###---------change name
+table(sample_relative_wide$X.CHROM)
+sample_relative_wide_renamed <- sample_relative_wide
+# colnames(sample_relative_wide)
+colnames(sample_relative_wide_renamed) <- revalue(colnames(sample_relative_wide_renamed), c("S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4"))
+colnames(sample_relative_wide_renamed)
+
+
+###----------not explained by isolates or reference
+colMeans(only_meta_ldel[2:6],na.rm = TRUE) 
+# meta_ldel
+meta_ldel_notExplained <- gather(only_meta_ldel, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+meta_ldel_notExplained$grouping <- "not Explained\nbyGenomes"
+colMeans(only_meta_ldel[2:6],na.rm = TRUE) ##EXPLAINED by unknown
+
+###----------explained by isolates
+
+Ldel_L99_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst8>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")]
+colMeans(Ldel_L99_snps[2:6],na.rm = TRUE)
+Ldel_mst8_snps_Explained <- gather(Ldel_L99_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst8_snps_Explained$grouping <- "mst8"
+
+Ldel_L80_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst5>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L80_snps
+colMeans(Ldel_L80_snps[2:6],na.rm = TRUE)
+Ldel_mst5_snps_Explained <- gather(Ldel_L80_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst5_snps_Explained$grouping <- "mst5";Ldel_mst5_snps_Explained
+
+Ldel_L71_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst4>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L71_snps
+colMeans(Ldel_L71_snps[2:6],na.rm = TRUE)
+Ldel_mst4_snps_Explained <- gather(Ldel_L71_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst4_snps_Explained$grouping <- "mst4";Ldel_mst4_snps_Explained
+
+Ldel_L70_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst3>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L70_snps
+colMeans(Ldel_L70_snps[2:6],na.rm = TRUE)
+Ldel_mst3_snps_Explained <- gather(Ldel_L70_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst3_snps_Explained$grouping <- "mst3";Ldel_mst3_snps_Explained
+
+Ldel_L108_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst7>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L108_snps
+colMeans(Ldel_L108_snps[2:6],na.rm = TRUE)
+Ldel_mst7_snps_Explained <- gather(Ldel_L108_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst7_snps_Explained$grouping <- "mst7";Ldel_mst7_snps_Explained
+
+Ldel_L35_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst9>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L35_snps
+colMeans(Ldel_L35_snps[2:6],na.rm = TRUE)
+Ldel_mst9_snps_Explained <- gather(Ldel_L35_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst9_snps_Explained$grouping <- "mst9";Ldel_mst9_snps_Explained
+
+Ldel_L104_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst6>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L104_snps
+colMeans(Ldel_L104_snps[2:6],na.rm = TRUE)
+Ldel_mst6_snps_Explained <- gather(Ldel_L104_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst6_snps_Explained$grouping <- "mst6";Ldel_mst6_snps_Explained
+
+Ldel_L44_snps <- sample_relative_wide_renamed[which((sample_relative_wide_renamed$mst10>0.9) %in% TRUE),c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")];Ldel_L44_snps
+colMeans(Ldel_L44_snps[2:6],na.rm = TRUE)
+Ldel_mst10_snps_Explained <- gather(Ldel_L44_snps, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+Ldel_mst10_snps_Explained$grouping <- "mst10";Ldel_mst10_snps_Explained
+
+
+###----------merge different samples
+
+alltogether_SNPs <- rbind(meta_ldel_notExplained,Ldel_mst3_snps_Explained,Ldel_mst4_snps_Explained,Ldel_mst5_snps_Explained,Ldel_mst6_snps_Explained,Ldel_mst7_snps_Explained,Ldel_mst8_snps_Explained,Ldel_mst9_snps_Explained,Ldel_mst10_snps_Explained)
+
+table(alltogether_SNPs$grouping)
+alltogether_SNPs$grouping = factor(alltogether_SNPs$grouping, levels=c("not Explained\nbyGenomes","mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10"))
+
+###----------boxplot
+
+
+  pall_sterm_CORE_box <- ggplot(alltogether_SNPs,aes(x=grouping,y=Snps,color=sample,fill=sample))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+###----------look at SNP frequency 
+# table(sample_relative_wide_renamed$X.CHROM)
+sample_relative_wide_renamed_Ldel <- sample_relative_wide_renamed[which(sample_relative_wide_renamed$X.CHROM=="L_delbrueckii_RMK202"),]
+sample_relative_wide_frequency <- sample_relative_wide_renamed_Ldel %>% select(site,mst3,mst7,mst6,mst9,mst4,mst8,mst5,mst10) %>% gather(., sample, Snps, "mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10", factor_key=TRUE,na.rm = TRUE) 
+
+ggplot(sample_relative_wide_frequency,aes(x=Snps))+geom_histogram()+facet_grid(sample~.,scales = "free")+
+  lims(x=c(0.1,1))+
+  theme_classic()
+
+###----------frequeny in Isolate vs. frequency in meta
+meta_vs_iso <- data.frame()
+
+for (meta in c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")) {
+  
+  
+  for (iso in c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")) {
+    
+    grouping <- ifelse(iso %in% c("mst3","mst7","mst6","mst9","mst4"),"group1","group2")
+    
+    tmp <- data.frame(site=sample_relative_wide_renamed_Ldel$site,metaName=meta,isoName=iso,groupingName=grouping,metaSNPs=sample_relative_wide_renamed_Ldel[,meta],isoSNPs=sample_relative_wide_renamed_Ldel[,iso])
+    meta_vs_iso <- rbind(meta_vs_iso,tmp)
+    
+  }
+
+}##meta
+
+ggplot(meta_vs_iso,aes(x=isoSNPs,y=metaSNPs,color=isoName))+geom_point()+theme_classic()
+ggplot(meta_vs_iso,aes(x=isoSNPs,y=metaSNPs,color=groupingName))+geom_point()+theme_classic()
+ggplot(meta_vs_iso,aes(x=isoSNPs,y=metaSNPs,color=metaName))+geom_point()+theme_classic()
+
+
+##make NA to zero
+meta_vs_iso_cleaned <- meta_vs_iso
+# meta_vs_iso_cleaned <- meta_vs_iso[!is.na(meta_vs_iso$metaSNPs),]
+# meta_vs_iso_cleaned <- meta_vs_iso_cleaned[!is.na(meta_vs_iso_cleaned$isoSNPs),]
+
+meta_vs_iso_cleaned[c("metaSNPs", "isoSNPs")][is.na(meta_vs_iso_cleaned[c("metaSNPs", "isoSNPs")])] <- 0
+
+
+meta_vs_iso_cleaned <- meta_vs_iso_cleaned[which(meta_vs_iso_cleaned$metaSNPs>"0" |meta_vs_iso_cleaned$isoSNPs>"0"),]
+
+# ggplot(meta_vs_iso_cleaned)+stat_density2d(aes(x=isoSNPs,y=metaSNPs))+theme_classic()
+# ggplot(meta_vs_iso_cleaned,aes(x=isoSNPs,y=metaSNPs))+geom_hex(binwidth = c(0.02, 0.02),aes(fill=log(..count..)))+theme_classic()
+# ggplot(meta_vs_iso_cleaned,aes(x=isoSNPs,y=metaSNPs))+geom_hex(binwidth = c(0.02, 0.02))+theme_classic()
+ggplot(meta_vs_iso_cleaned,aes(x=isoSNPs,y=metaSNPs))+geom_hex(binwidth = c(0.03, 0.03),aes(fill=log(..count..)))+theme_classic()
+
+###----------summed frequeny in Isolate vs. frequency in meta
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates <- sample_relative_wide_renamed_Ldel %>% select(site,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202)
+  sample_relative_wide_renamed_Ldel_rowsumsIsolates$rowSumsIsolates <- rowSums(sample_relative_wide_renamed_Ldel[,c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")],na.rm = TRUE)
+  sample_relative_wide_renamed_Ldel_rowsumsIsolates_long <- gather(sample_relative_wide_renamed_Ldel_rowsumsIsolates, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+
+ 
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[c("rowSumsIsolates", "Snps")][is.na(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[c("rowSumsIsolates", "Snps")])] <- 0
+
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long <- sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[which(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long$rowSumsIsolates>"0" |sample_relative_wide_renamed_Ldel_rowsumsIsolates_long$Snps>"0"),]
+
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long,aes(x=rowSumsIsolates,y=Snps))+geom_hex(binwidth = c(0.3, 0.02),aes(fill=log(..count..)))+theme_classic()
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long,aes(x=rowSumsIsolates,y=Snps))+geom_point()+theme_classic()
+
+
+###----------tsne
+
+library(Rtsne)
+library(ggrepel)
+library(philentropy)
+
+sample_relative_wide_renamed_Ldel_onlyIsolates <- sample_relative_wide_renamed_Ldel %>% select(mst3,mst7,mst6,mst9,mst4,mst8,mst5,mst10)
+sample_relative_wide_renamed_Ldel_onlyIsolates[c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")][is.na(sample_relative_wide_renamed_Ldel_onlyIsolates[c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")])] <- 0
+annotation_prep <- sample_relative_wide_renamed_Ldel_onlyIsolates[!duplicated(sample_relative_wide_renamed_Ldel_onlyIsolates), ]
+
+dist_sterm <- distance(as.matrix(annotation_prep), method = "jaccard")
+
+tsne <- Rtsne(dist_sterm, dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+ 
+
+# tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+ # tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+tsne_plot <- as.data.frame(tsne$Y)
+tsne_plot$site <- sample_relative_wide_renamed_Ldel[!duplicated(sample_relative_wide_renamed_Ldel_onlyIsolates), 3]
+
+sample_relative_wide_renamed_Ldel_onlyIsolates_02 <- sample_relative_wide_renamed_Ldel %>% select(site,mst3,mst7,mst6,mst9,mst4,mst8,mst5,mst10)
+
+tsne_plot <- merge(tsne_plot,sample_relative_wide_renamed_Ldel_onlyIsolates_02,by="site",all.x = TRUE)
+
+
+##plot blank
+ggplot(tsne_plot,aes(x=V1,y=V2))+geom_point()
+
+
+##------------clusters
+# set.seed(123456)
+# ds.real = dbscan(tsne_plot[,c(1,2)], 1.5)
+# tsne_plot$density = factor(ds.real$cluster)
+# ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
+#     V2) %>% summarize_all(mean)
+# ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) + 
+#     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density), 
+#     data = ds.cent) + guides(colour = FALSE)
+
+
+##clusters
+hc.norm = hclust(dist(tsne_plot[,c(1,2)]))
+tsne_plot$hclust = factor(cutree(hc.norm, 7))
+hc.norm.cent = tsne_plot %>% group_by(hclust) %>% select(V1, 
+    V2) %>% summarize_all(mean)
+plotTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, color = hclust, text =paste("effect:", site,"\nmst3:",mst3,"\nmst7:",mst7,"\nmst6:",mst6,"\nmst9:",mst9,"\nmst4:",mst4,"\nmst8:",mst8,"\nmst5:",mst5,"\nmst10:",mst10))) + 
+  # facet_grid(species~.)+
+    geom_point(alpha = 0.3) + theme_bw() +# geom_label_repel(aes(label = hclust), data = hc.norm.cent) +
+  guides(colour = FALSE) + 
+    ggtitle("Linkage criterion: Complete")
+
+  # pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.pdf",width=5,height=5,paper='special')
+  # svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.svg",width=4,height=4)
+  # png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.png",width=1600,height=1600,res=300)
+plotTsne
+
+library(plotly)
+ggp <- ggplotly(plotTsne)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_notexplained_ldel_colored_tsne_isolates.html")
+
+##--------------
+##make a line graph
+##--------------
+
+  pall_sterm_CORE_box <- ggplot(alltogether_SNPs,aes(x=grouping,y=Snps,color=sample,fill=sample))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+nrow(alltogether_SNPs)
+alltogether_SNPs_reduced <- alltogether_SNPs[which(alltogether_SNPs$Snps!=0),]
+nrow(alltogether_SNPs_reduced)
+
+  ggplot(alltogether_SNPs_reduced,aes(x=grouping,y=Snps,group=site))+ geom_line(size=0.2, alpha=.2)+ 
+       facet_grid(sample~.)+
+   labs("",
+         x="",
+         # y="",
+          y="not\nexplained")+
+      #  scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       # scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0),limits = c(0,0.2)) +
+     scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+    # ylim(0,0.2)+
+  theme_classic()+
+ theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       # axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+  
+  
+  ##-------------
+  ##plot uniques
+  ##-------------
+  length(alltogether_SNPs$site)
+  length(unique(alltogether_SNPs$site))
+  
+  
+  sum(sample_relative_wide$site %in% unique(alltogether_SNPs$site))
+  sample_relative_wide_subset_wide <- sample_relative_wide[which(sample_relative_wide$site %in% unique(alltogether_SNPs$site)),]
+
+sample_relative_wide_subset_long <- gather(sample_relative_wide_subset_wide, sample, Snps, c("L104","L108","L35","L39","L44","L70","L71","L80","L99"), factor_key=TRUE,na.rm = TRUE) 
+nrow(sample_relative_wide_subset_long)
+
+# sample_relative_wide_subset_long$sample"L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6","Lactobacillus_delbrueckii_RMK202"="RMK202"
+
+sample_relative_wide_subset_long$sample <- revalue(sample_relative_wide_subset_long$sample, c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6","Lactobacillus_delbrueckii_RMK202"="RMK202"))
+
+sample_relative_wide_subset_long[sample_relative_wide_subset_long$Snps<0.8,"Snps"] <- 0
+
+sample_relative_wide_subset_long$sample = factor(sample_relative_wide_subset_long$sample, levels=c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10"))
+
+  ggplot(sample_relative_wide_subset_long,aes(x=sample,y=Snps,group=site))+ geom_line(size=0.2, alpha=.2)+ 
+       # facet_grid(sample~.)+
+   labs("",
+         x="",
+         # y="",
+          y="not\nexplained")+
+      #  scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       # scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0),limits = c(0,0.2)) +
+     scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+    # ylim(0,0.2)+
+  theme_classic()+
+ theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       # axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+  
+  ###----------tsne this
+
+library(Rtsne)
+library(ggrepel)
+library(philentropy)
+
+  
+
+  
+sample_relative_wide_subset_wide_set <- sample_relative_wide_subset_wide
+sample_relative_wide_subset_wide_set[is.na(sample_relative_wide_subset_wide_set)] <- 0
+
+colnames(sample_relative_wide_subset_wide_set) <- revalue(colnames(sample_relative_wide_subset_wide_set), c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6"))  
+
+
+sample_relative_wide_subset_wide_preped <- sample_relative_wide_subset_wide_set[,c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")]
+sample_relative_wide_subset_wide_preped[duplicated(sample_relative_wide_subset_wide_preped), ]
+
+nrow(sample_relative_wide_subset_wide_preped)
+annotation_prep <- sample_relative_wide_subset_wide_preped[!duplicated(sample_relative_wide_subset_wide_preped), ]
+nrow(annotation_prep)
+
+annotation_prep[is.na(annotation_prep)] <- 0
+
+dist_sterm <- distance(as.matrix(annotation_prep), method = "jaccard")
+
+tsne <- Rtsne(dist_sterm, dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+ 
+
+# tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+ # tsne <- Rtsne(sample_relative_safe_final_tsne_safe_sterm_woDuplicates[,c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202")], dims = 2, perplexity=30, verbose=TRUE, max_iter = 500)
+tsne_plot <- as.data.frame(tsne$Y)
+tsne_plot$site <- sample_relative_wide_subset_wide_set[!duplicated(sample_relative_wide_subset_wide_preped), "site"]
+
+sample_relative_wide_renamed_Ldel_onlyIsolates_02 <- sample_relative_wide_subset_wide_set %>% select(site,mst3,mst7,mst6,mst9,mst4,mst8,mst5,mst10)
+# sample_relative_wide_renamed_Ldel_onlyIsolates_02 <- sample_relative_wide_subset_wide_set %>% select(site,L104,L108,L35,L39,L44,L70,L71,L80,L99)
+
+tsne_plot <- merge(tsne_plot,sample_relative_wide_renamed_Ldel_onlyIsolates_02,by="site",all.x = TRUE)
+
+
+##plot blank
+ggplot(tsne_plot,aes(x=V1,y=V2))+geom_point()
+
+
+##------------clusters
+# set.seed(123456)
+# ds.real = dbscan(tsne_plot[,c(1,2)], 1.5)
+# tsne_plot$density = factor(ds.real$cluster)
+# ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
+#     V2) %>% summarize_all(mean)
+# ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) + 
+#     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density), 
+#     data = ds.cent) + guides(colour = FALSE)
+
+
+##clusters
+hc.norm = hclust(dist(tsne_plot[,c(1,2)]))
+tsne_plot$hclust = factor(cutree(hc.norm, 7))
+hc.norm.cent = tsne_plot %>% group_by(hclust) %>% select(V1, 
+    V2) %>% summarize_all(mean)
+plotTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, color = hclust, text =paste("effect:", site,"\nmst3:",mst3,"\nmst7:",mst7,"\nmst6:",mst6,"\nmst9:",mst9,"\nmst4:",mst4,"\nmst8:",mst8,"\nmst5:",mst5,"\nmst10:",mst10))) + 
+  # facet_grid(species~.)+
+    geom_point(alpha = 0.3) + theme_bw() +# geom_label_repel(aes(label = hclust), data = hc.norm.cent) +
+  guides(colour = FALSE) + 
+    ggtitle("Linkage criterion: Complete")
+
+  # pdf("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.pdf",width=5,height=5,paper='special')
+  # svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.svg",width=4,height=4)
+  # png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_tsnePlot_sterm.png",width=1600,height=1600,res=300)
+plotTsne
+
+
+library(plotly)
+ggp <- ggplotly(plotTsne)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_notexplained_ldel_colored_tsne_isolates_02.html")
+
+
+##-------------
+##Unique for Strains
+##-------------
+
+sample_relative_wide_strains <- sample_relative_wide
+sample_relative_wide_strains[is.na(sample_relative_wide_strains)] <- 0
+
+colnames(sample_relative_wide_strains) <- revalue(colnames(sample_relative_wide_strains), c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6"))  
+
+
+colMeans(sample_relative_wide_strains[which(sample_relative_wide_strains$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])
+
+Ldel_mst8_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8>0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst8_snps
+
+Ldel_mst5_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5>0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst5_snps
+
+Ldel_mst4_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4>0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst4_snps
+
+Ldel_mst3_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3>0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst3_snps
+
+Ldel_mst7_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7>0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst7_snps
+
+Ldel_mst9_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9>0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst9_snps
+
+Ldel_L39_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39>0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_L39_snps
+
+Ldel_mst6_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6>0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst6_snps
+
+Ldel_mst10_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10>0.9) %in% TRUE),];Ldel_mst10_snps
+
+
+
+##-------------
+##Unique for all strains in one of three subgroups
+##-------------
+library(robustbase)
+sample_relative_wide_strains <- sample_relative_wide
+sample_relative_wide_strains[is.na(sample_relative_wide_strains)] <- 0
+
+colnames(sample_relative_wide_strains) <- revalue(colnames(sample_relative_wide_strains), c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6"))  
+
+colMeans(sample_relative_wide_strains[which(sample_relative_wide_strains$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])
+
+Ldel_subcluster_01 <- sample_relative_wide_strains[which(((sample_relative_wide_strains$mst8<0.1 & sample_relative_wide_strains$mst5<0.1&sample_relative_wide_strains$mst10<0.1) &(sample_relative_wide_strains$mst4>0.9& sample_relative_wide_strains$mst3>0.9& sample_relative_wide_strains$mst7>0.9& sample_relative_wide_strains$mst9>0.9 & sample_relative_wide_strains$mst6>0.9)) %in% TRUE),];Ldel_subcluster_01;Ldel_subcluster_01 %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()
+
+Ldel_subcluster_02 <- sample_relative_wide_strains[which(((sample_relative_wide_strains$mst8>0.9) & (sample_relative_wide_strains$mst5<0.1&sample_relative_wide_strains$mst10<0.1 & sample_relative_wide_strains$mst4<0.1& sample_relative_wide_strains$mst3<0.1& sample_relative_wide_strains$mst7<0.1& sample_relative_wide_strains$mst9<0.1 & sample_relative_wide_strains$mst6<0.1)) %in% TRUE),];Ldel_subcluster_02;Ldel_subcluster_02 %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()
+
+Ldel_subcluster_03 <- sample_relative_wide_strains[which(((sample_relative_wide_strains$mst8<0.1) & (sample_relative_wide_strains$mst5>0.9&sample_relative_wide_strains$mst10>0.9) & (sample_relative_wide_strains$mst4<0.1& sample_relative_wide_strains$mst3<0.1& sample_relative_wide_strains$mst7<0.1& sample_relative_wide_strains$mst9<0.1 & sample_relative_wide_strains$mst6<0.1)) %in% TRUE),];Ldel_subcluster_03;Ldel_subcluster_03 %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()
+
+Ldel_subcluster_largeCulster_02_03 <- sample_relative_wide_strains[which(((sample_relative_wide_strains$mst8>0.9 & sample_relative_wide_strains$mst5>0.9&sample_relative_wide_strains$mst10>0.9) & (sample_relative_wide_strains$mst4<0.1& sample_relative_wide_strains$mst3<0.1& sample_relative_wide_strains$mst7<0.1& sample_relative_wide_strains$mst9<0.1 & sample_relative_wide_strains$mst6<0.1)) %in% TRUE),];Ldel_subcluster_largeCulster_02_03;Ldel_subcluster_largeCulster_02_03 %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians();Ldel_subcluster_largeCulster_02_03 %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+
+
+Ldel_mst5_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5>0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst5_snps
+
+Ldel_mst4_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4>0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst4_snps
+
+Ldel_mst3_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3>0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst3_snps
+
+Ldel_mst7_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7>0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst7_snps
+
+Ldel_mst9_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9>0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst9_snps
+
+Ldel_L39_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39>0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_L39_snps
+
+Ldel_mst6_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6>0.9& sample_relative_wide_strains$mst10<0.9) %in% TRUE),];Ldel_mst6_snps
+
+Ldel_mst10_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$mst8<0.9 & sample_relative_wide_strains$mst5<0.9& sample_relative_wide_strains$mst4<0.9& sample_relative_wide_strains$mst3<0.9& sample_relative_wide_strains$mst7<0.9& sample_relative_wide_strains$mst9<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$mst6<0.9& sample_relative_wide_strains$mst10>0.9) %in% TRUE),];Ldel_mst10_snps
+
+###----------summed frequeny in Isolate vs. frequency in meta
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates <- sample_relative_wide_renamed_Ldel %>% select(site,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202)
+  sample_relative_wide_renamed_Ldel_rowsumsIsolates$rowSumsIsolates <- rowSums(sample_relative_wide_renamed_Ldel[,c("mst3","mst7","mst6","mst9","mst4","mst8","mst5","mst10")],na.rm = TRUE)
+  sample_relative_wide_renamed_Ldel_rowsumsIsolates_long <- gather(sample_relative_wide_renamed_Ldel_rowsumsIsolates, sample, Snps, "Lyo_202_2012":"Versand_202", factor_key=TRUE,na.rm = TRUE) 
+
+ 
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[c("rowSumsIsolates", "Snps")][is.na(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[c("rowSumsIsolates", "Snps")])] <- 0
+
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long <- sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[which(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long$rowSumsIsolates>"0" |sample_relative_wide_renamed_Ldel_rowsumsIsolates_long$Snps>"0"),]
+
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long,aes(x=rowSumsIsolates,y=Snps))+geom_hex(binwidth = c(0.3, 0.02),aes(fill=log(..count..)))+theme_classic()
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long,aes(x=rowSumsIsolates,y=Snps))+geom_point()+theme_classic()
+
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset <- sample_relative_wide_renamed_Ldel_rowsumsIsolates_long[which(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long$rowSumsIsolates>1),]
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset,aes(x=rowSumsIsolates,y=Snps))+geom_point()+theme_classic()
+
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset <- sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset[which(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset$Snps>0.2),]
+ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset,aes(x=rowSumsIsolates,y=Snps))+geom_point()+theme_classic()
+
+length(unique(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset$site))
+
+sample_relative_wide_strains_ldel_interesting <- sample_relative_wide_strains_ldel[which(sample_relative_wide_strains_ldel$site %in% unique(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset$site)),]
+
+
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset_PLOT <- merge(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset,sample_relative_wide_strains_ldel,by="site",all.x = TRUE)
+PLOT1 <- ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset_PLOT,aes(x=rowSumsIsolates,y=Snps, text =paste("effect:", site,"\nmst3:",mst3,"\nmst7:",mst7,"\nmst6:",mst6,"\nmst9:",mst9,"\nmst4:",mst4,"\nmst8:",mst8,"\nmst5:",mst5,"\nmst10:",mst10)))+geom_point()+theme_classic()
+
+PLOT1
+
+library(plotly)
+ggp <- ggplotly(PLOT1)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_notexplained_ldel_colored_tsne_isolates_03.html")
+
+
+##---------------
+##subset snps to the ones that only occure in the metagenome
+##---------------
+
+keep <- sample_relative_wide_strains_ldel%>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% rowSums() >0 
+
+sample_relative_wide_strains_ldel%>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()
+sample_relative_wide_strains_ldel%>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+
+# sample_relative_wide_strains_ldel_kept <- sample_relative_wide_strains_ldel[which(keep),]
+# sample_relative_wide_strains_ldel_kept%>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()
+sample_relative_wide_strains_ldel_kept%>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+sample_relative_wide_strains_ldel_kept_long <- sample_relative_wide_strains_ldel_kept %>% gather(.,sample, snps,c("Lyo_202_2012","Lyo_202_2014","Konserve_202",RMK202,"Versand_202")) 
+sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset_PLOT <- merge(sample_relative_wide_strains_ldel_kept_long,sample_relative_wide_strains_ldel,by="site",all.x = TRUE)
+
+nrow(sample_relative_wide_strains_ldel_kept)
+library(plyr)
+# Renamed_gained_lost_SNPs_long_02$sample <- revalue(Renamed_gained_lost_SNPs_long_02$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+Renamed_gained_lost_SNPs_long_02$sample = factor(Renamed_gained_lost_SNPs_long_02$sample, levels=c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202"))
+
+
+
+
+# plot1 <- ggplot(sample_relative_wide_renamed_Ldel_rowsumsIsolates_long_subset_PLOT,aes(x=sample,y=snps, text =paste("effect:", site,"\nmst3:",mst3,"\nmst7:",mst7,"\nmst6:",mst6,"\nmst9:",mst9,"\nmst4:",mst4,"\nmst8:",mst8,"\nmst5:",mst5,"\nmst10:",mst10)))+geom_boxplot()
+# plot1
+# library(plotly)
+# ggp <- ggplotly(plot1)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_notexplained_ldel_colored_tsne_isolates_04.html")
+
+##-------------
+##Unique for strains in one of three subgroups
+##-------------
+
+Ldel_subcluster_cluster_01_parts <- sample_relative_wide_strains_ldel_kept[which(((sample_relative_wide_strains_ldel_kept$mst8<0.1 & sample_relative_wide_strains_ldel_kept$mst5<0.1 & sample_relative_wide_strains_ldel_kept$mst10<0.1) & (sample_relative_wide_strains_ldel_kept$mst4>0.9 | sample_relative_wide_strains_ldel_kept$mst3>0.9 | sample_relative_wide_strains_ldel_kept$mst7>0.9 | sample_relative_wide_strains_ldel_kept$mst9>0.9 | sample_relative_wide_strains_ldel_kept$mst6>0.9)) %in% TRUE),];Ldel_subcluster_cluster_01_parts;Ldel_subcluster_cluster_01_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians();Ldel_subcluster_cluster_01_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+cluster1_wo_mag <- Ldel_subcluster_cluster_01_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()%>% t()  %>% data.frame() 
+cluster1_wo_mag$group <- "cluster1_woMAG"
+
+Ldel_subcluster_cluster_023_parts <- sample_relative_wide_strains_ldel_kept[which(((sample_relative_wide_strains_ldel_kept$mst8>0.9 | sample_relative_wide_strains_ldel_kept$mst5>0.9|sample_relative_wide_strains_ldel_kept$mst10>0.9) & (sample_relative_wide_strains_ldel_kept$mst4<0.1& sample_relative_wide_strains_ldel_kept$mst3<0.1& sample_relative_wide_strains_ldel_kept$mst7<0.1& sample_relative_wide_strains_ldel_kept$mst9<0.1 & sample_relative_wide_strains_ldel_kept$mst6<0.1)) %in% TRUE),];Ldel_subcluster_cluster_023_parts;Ldel_subcluster_cluster_023_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians();Ldel_subcluster_cluster_023_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+cluster2_wo_mag <- Ldel_subcluster_cluster_023_parts %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()%>% t()  %>% data.frame() 
+cluster2_wo_mag$group <- "cluster2_all"
+
+
+##not explained
+table(sample_relative_wide_strains$X.CHROM)
+sample_relative_wide_strains_ldel <- sample_relative_wide_strains[which(sample_relative_wide_strains$X.CHROM=="L_delbrueckii_RMK202"),]
+
+Ldel_subcluster_cluster_non <- sample_relative_wide_strains_ldel_kept[which(((sample_relative_wide_strains_ldel_kept$mst8<0.1& sample_relative_wide_strains_ldel_kept$mst5<=0.9&sample_relative_wide_strains_ldel_kept$mst10<=0.9& sample_relative_wide_strains_ldel_kept$mst4<=0.9& sample_relative_wide_strains_ldel_kept$mst3<=0.9& sample_relative_wide_strains_ldel_kept$mst7<=0.9& sample_relative_wide_strains_ldel_kept$mst9<=0.9 & sample_relative_wide_strains_ldel_kept$mst6<=0.9)) %in% TRUE),];Ldel_subcluster_cluster_non;Ldel_subcluster_cluster_non %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians();Ldel_subcluster_cluster_non %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% gather(.) %>% ggplot(.,aes(x=key,y=value))+geom_boxplot()
+
+unexplained <- Ldel_subcluster_cluster_non %>% select(Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202) %>% as.matrix() %>% colMedians()%>% t()  %>% data.frame() 
+unexplained$group <- "unexplainsed"
+
+##cluster one with mag
+
+merged_medians <- rbind(cluster1_wo_mag,cluster2_wo_mag,unexplained)
+MAG_COUNT <- 1-colSums(merged_medians[1:5]) %>% data.frame() %>% t()  %>% data.frame() 
+cluster_1_wMag <- MAG_COUNT+cluster1_wo_mag[1:5]
+
+cluster_1_wMag$group <- "cluster1 with MAG"
+
+
+merged_medians <- rbind(cluster_1_wMag,cluster2_wo_mag,unexplained)
 
 ```
+
+
+Finally I have the conclusion that the large majority of the ldel community is exlained with the metagenome assembled genome. The remaining variation is in average very small. 
 
 ##### lost or gained SNPs
 
@@ -6292,70 +7282,6 @@ gainedSNPs_long_02$direction <- "lost"
 
 no new mutations detected.
 
-## dN/dS ratio
-
-```{r}
-
-prep_for_dN_dS_wide <- spread(all_sterm_plot_hist, sample, allele_frequency)
-
-prep_for_dN_dS_wide <- prep_for_dN_dS_wide[which(prep_for_dN_dS_wide$significance!="MODIFIER"),]
-
-length(table(prep_for_dN_dS_wide$geneName))
-sort(table(prep_for_dN_dS_wide$geneName),decreasing = TRUE)
-
-table(prep_for_dN_dS_wide$significance)
-gene <- "pgaptmp_001693"
-
-dN_dS_ratios <- data.frame()
-for (gene in unique(prep_for_dN_dS_wide$geneName)) {
-  
-  dS <- prep_for_dN_dS_wide %>% filter(geneName==gene) %>% filter(significance=="LOW")
-   dN <-  prep_for_dN_dS_wide %>% filter(geneName==gene) %>% filter(significance %in% c("MODERATE","HIGH"))
-dS 
-dN 
-#tmp <- data.frame(gene, "dS"=nrow(dS),"dN"=nrow(dN),"dN_dS"=(nrow(dN)+0.00001)/(nrow(dS)+0.00001))
-tmp <- data.frame(gene, "dS"=nrow(dS),"dN"=nrow(dN),"dN_dS"=(nrow(dN))/(nrow(dS)+nrow(dN)))
-
-dN_dS_ratios <- rbind(dN_dS_ratios,tmp)
-
-}
-nrow(dN_dS_ratios)
-
-plotDens <- ggplot(dN_dS_ratios,aes(x=dN_dS))+geom_histogram()+
-  geom_vline(xintercept=mean(dN_dS_ratios$dN_dS))+
-  theme_classic()+
-  labs(x="dN/(dN+dS)",
-       y="gene count")
-
-sum(dN_dS_ratios$dN_dS>1)
-
-dN_dS_ratios <- arrange(dN_dS_ratios,desc(dN_dS)) 
-sum(dN_dS_ratios$dN_dS>mean(dN_dS_ratios$dN_dS))
-
-mean(dN_dS_ratios$dN_dS)
-
-colnames(annotation_all[11:39])
-annotation_prep <- annotation_all %>% select(colnames(annotation_all[11:39]))
-nrow(annotation_prep)
-annotation_prep <- annotation_prep[!duplicated(annotation_prep), ]
-nrow(annotation_prep)
-
-dN_dS_ratios_final <- merge(dN_dS_ratios,annotation_prep,by.x="gene",by.y="geneName",all.x = TRUE)
-dN_dS_ratios_final_02 <- arrange(dN_dS_ratios_final,desc(dN_dS)) 
-
-
-library(xlsx)
-
-write.xlsx(dN_dS_ratios_final_02,file="Users//Desktop/presenations/my_presentations/20191007_groupmeeting/figures/dN_dS_ratios_genes_rmk202.xls", sheetName = "Sheet1", 
-  col.names = TRUE, row.names = FALSE, append = FALSE)
-
-
-png("~/Desktop/presenations/my_presentations/20191007_groupmeeting/figures/dN_dS_ratios_genes_density_rmk202.png",width=1300,height=1000,res=300)
-plotDens
-dev.off()
-# prep_for_dN_dS_wide %>% filter(geneName=="pgaptmp_000898")
-```
-
 
 ######nucleotide diversity over time
 ```{r}
@@ -6554,9 +7480,9 @@ library(dbscan)
 library(Rtsne)
 library(ggrepel)
 library(wesanderson)
-##------------------------
+##=====================
 ##sterm
-##------------------------
+##=====================
 # 
 # nrow(meta_sterm)
 # both_metaIso_sterm <- meta_sterm[onlysecond_sterm %in% onlyfirst_sterm,]
@@ -6630,6 +7556,84 @@ boxplot_explained_s72 <- data.frame(name=(explained_s72[,1]),rowSums=rowSums(exp
 
 explained_s72_plot$sample <- revalue(explained_s72_plot$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
 explained_s72_plot$sample = factor(explained_s72_plot$sample, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+
+##=====================
+##Ldel
+##=====================
+# 
+# nrow(meta_sterm)
+# both_metaIso_sterm <- meta_sterm[onlysecond_sterm %in% onlyfirst_sterm,]
+# nrow(both_metaIso_sterm)
+# only_meta_sterm <- meta_sterm[!onlysecond_sterm %in% onlyfirst_sterm,]
+# nrow(only_meta_sterm)
+# # sum(duplicated(only_meta_sterm))
+# only_isolates_sterm <- sample_relative_safe_final_iso_cleaned_sterm[!onlyfirst_sterm %in% onlysecond_sterm,]
+
+###-----not explained by isolates
+
+
+  not_explained_Ldel_plot <- gather(only_meta_ldel, sample, allele_frequency, "Lyo_202_2012":"Versand_202", factor_key=TRUE)
+  # not_explained_sterm_plot$site <- paste(not_explained_sterm_plot$X.CHROM,not_explained_sterm_plot$POS,not_explained_sterm_plot$REF,not_explained_sterm_plot$ALT,sep="_")
+
+  not_explained_Ldel_plot$group <- "not_explained"
+  boxplot_not_explained_Ldel <- data.frame(name=(only_meta_ldel[,1]),rowSums=rowSums(only_meta_ldel[,-1]),name="not explained\nLdel")
+nrow(boxplot_not_explained_Ldel)
+
+table(not_explained_Ldel_plot$sample)
+
+
+# nucleotid_div_all$samples = factor(nucleotid_div_all$samples, levels=c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202"))
+library(plyr)
+not_explained_Ldel_plot$sample <- revalue(not_explained_Ldel_plot$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+table(not_explained_Ldel_plot$sample)
+not_explained_Ldel_plot$sample = factor(not_explained_Ldel_plot$sample, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+
+
+###-----explained by both
+  
+  both_metaIso_sterm_inIsolates$site==both_metaIso_sterm$site
+nrow(both_metaIso_sterm)
+cutoff <- 0.9
+explained_sterm_both <- both_metaIso_sterm[((both_metaIso_sterm_inIsolates$S50>=cutoff)  & (both_metaIso_sterm_inIsolates$S72>=cutoff)) %in% TRUE,]
+nrow(explained_sterm_both)
+  explained_sterm_both_plot <- gather(explained_sterm_both, sample, allele_frequency, "Lyo_202_2012":"Versand_202", factor_key=TRUE)
+
+explained_sterm_both_plot$sample <- revalue(explained_sterm_both_plot$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+explained_sterm_both_plot$sample = factor(explained_sterm_both_plot$sample, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+
+  
+boxplot_explained_sterm_both <- data.frame(name=(explained_sterm_both[,1]),rowSums=rowSums(explained_sterm_both[,-1]),name="both explained\nsterm")
+
+# both_metaIso_sterm_inIsolates[((both_metaIso_sterm_inIsolates$S50>=cutoff)  & (both_metaIso_sterm_inIsolates$S72>=cutoff)) %in% TRUE,]
+
+
+explained_sterm_both_plot$group <- "both"
+
+explained_s50  <-both_metaIso_sterm[((both_metaIso_sterm_inIsolates$S50>=cutoff)  & (both_metaIso_sterm_inIsolates$S72<cutoff)) %in% TRUE,]
+dim(explained_s50)
+# explained_s50$group <- "S50"
+  explained_s50_plot <- gather(explained_s50, sample, allele_frequency, "Lyo_202_2012":"Versand_202", factor_key=TRUE)
+nrow(explained_s50)
+explained_s50_plot$group <- "S50"
+
+
+explained_s50_plot$sample <- revalue(explained_s50_plot$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+explained_s50_plot$sample = factor(explained_s50_plot$sample, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+
+
+boxplot_explained_s50 <- data.frame(name=(explained_s50[,1]),rowSums=rowSums(explained_s50[,-1]),name="explained\ns50")
+
+explained_s72  <-  both_metaIso_sterm[((both_metaIso_sterm_inIsolates$S50<cutoff)  & (both_metaIso_sterm_inIsolates$S72>=cutoff)) %in% TRUE,]
+dim(explained_s72)
+  explained_s72_plot <- gather(explained_s72, sample, allele_frequency, "Lyo_202_2012":"Versand_202", factor_key=TRUE)
+factor(explained_s72_plot$sample)
+nrow(explained_s72)
+explained_s72_plot$group <- "S72"
+boxplot_explained_s72 <- data.frame(name=(explained_s72[,1]),rowSums=rowSums(explained_s72[,-1]),name="explained\ns72")
+
+
+explained_s72_plot$sample <- revalue(explained_s72_plot$sample, c("Lyo_202_2012"="Lyoampulle\n2012", "Lyo_202_2014"="Lyoampulle\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+explained_s72_plot$sample = factor(explained_s72_plot$sample, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
 ```
 
 
@@ -6645,7 +7649,6 @@ Finally, we decided to look at following SNPs:
 
 
 ```{r}
-
 ###-------------
 ##--------merge all
 ###-------------
@@ -6872,7 +7875,311 @@ pall_sterm_woModi_LOW
 # ggp <- ggplotly(pall_sterm_woModi)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
 
- 
+
+###-------------
+##only copre
+###-------------
+
+coreGeneNames_rmk202 <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_FINAL.txt", "\t", escape_double = FALSE, col_names = c("site","core"), trim_ws = TRUE)
+dim(all_sterm_plot)
+all_sterm_plot_core <- merge(all_sterm_plot,coreGeneNames_rmk202,by="site",all.x = TRUE,all.y = FALSE)
+dim(all_sterm_plot_core)
+
+table(all_sterm_plot_core$core)
+all_sterm_plot_core <- all_sterm_plot_core[all_sterm_plot_core$core=="core",]
+table(all_sterm_plot_core$core)
+(table(all_sterm_plot_core$group)/5)/(nrow(all_sterm_plot_core)/5)
+
+
+
+  pall_sterm_CORE <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE
+#  library(plotly)
+# ggp <- ggplotly(pall_sterm_woModi)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
+
+###---------
+##boxplot
+###---------
+
+  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,color=group,fill=group))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+
+  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=group,y=allele_frequency,color=sample,fill=sample))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+pall_sterm_CORE_box_median <- aggregate(.~sample+group, data=all_sterm_plot_core[,c("allele_frequency","sample","group")], median, na.rm=TRUE)
+pall_sterm_CORE_box_median
+
+pall_sterm_CORE_box_median_wide <- spread(pall_sterm_CORE_box_median, group, allele_frequency)
+pall_sterm_CORE_box_median_wide
+
+Final_Abundance_Sterm_wide <- pall_sterm_CORE_box_median_wide %>% select(sample,mst1,mst2,not_explained)
+
+Final_Abundance_Sterm_wide$MAG_rmk202 <- 1-pall_sterm_CORE_box_median_wide$both
+Final_Abundance_Sterm_wide$mst1 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst1
+Final_Abundance_Sterm_wide$mst2 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst2
+Final_Abundance_Sterm_wide$not_explained <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$not_explained
+Final_Abundance_Sterm_wide
+Final_Abundance_Sterm_long <- gather(Final_Abundance_Sterm_wide,Identity, Population, "mst1":"MAG_rmk202", factor_key=TRUE,na.rm = TRUE) 
+colnames(Final_Abundance_Sterm_long)[1] <- "Generation"
+Final_Abundance_Sterm_long$Generation <- revalue(Final_Abundance_Sterm_long$Generation, c("Lyoampulle\n2012"=as.double(1) ,"Lyoampulle\n2014"=as.double(2),"working\nstock"=as.double(3), "starter\nculture\n2012"=as.double(4), "starter\nculture\n2018"=as.double(5)))
+
+Final_Abundance_Sterm_long
+
+```
+
+##Muller plot strains
+
+good [blog](https://cran.r-project.org/web/packages/ggmuller/vignettes/ggmuller.html)
+or [this blog](https://cran.r-project.org/web/packages/MullerPlot/vignettes/MullerPlot.html)
+
+
+```{r}
+library(ggmuller)
+# 
+# ###test data
+# Muller_df <- get_Muller_df(example_edges, example_pop_df)
+# Muller_plot(Muller_df)
+# 
+# ###mydata
+# 
+# library(ape)
+# 
+# parent_identity_file <- data.frame(Parent=1:4,Identity=colnames(Final_Abundance_Sterm_wide)[2:5])
+# Final_Abundance_Sterm_long$Identity <- revalue(Final_Abundance_Sterm_long$Identity, c("mst1"=as.double(1) ,"mst2"=as.double(2),"not_explained"=as.double(3), "MAG_rmk202"=as.double(4)))
+# parent_identity_file$Identity <- revalue(parent_identity_file$Identity, c("mst1"=as.double(1) ,"mst2"=as.double(2),"not_explained"=as.double(3), "MAG_rmk202"=as.double(4)))
+# 
+# parent_identity_file$Identity %in% Final_Abundance_Sterm_long$Identity
+# Final_Abundance_Sterm_long$Identity %in% parent_identity_file$Identity
+# 
+# parent_identity_file <- as.matrix(parent_identity_file)
+# 
+# Muller_df <- get_Muller_df(parent_identity_file, Final_Abundance_Sterm_long)
+# get_Muller_df()
+# parent_identity_file
+
+###---------
+##secon sample
+###---------
+library(MullerPlot)
+data("Attributes")
+Attributes
+is.matrix(Attributes)
+parent_identity_file <- as.matrix(data.frame(names=colnames(Final_Abundance_Sterm_wide)[2:5],parents=NA,colors=c("red","orange","green","blue")))
+# parent_identity_file <- as.matrix(data.frame(colnames(Final_Abundance_Sterm_wide)[2:5],as.character(1:4),c("red","orange","green","blue")))
+
+parent_identity_file
+
+data("PopulationDataTable")
+PopulationDataTable[,1:14]
+
+
+
+Final_Abundance_Sterm_matrix <- as.matrix(t(Final_Abundance_Sterm_wide[2:5]))
+# colnames(Final_Abundance_Sterm_matrix) <- Final_Abundance_Sterm_wide[,1]
+colnames(Final_Abundance_Sterm_matrix) <- 1:5
+
+
+layout(matrix(c(1,2), nrow = 1), widths = c(0.8, 0.2))
+par(mar=c(3, 3, 1, 0))
+m.plot <- Muller.plot(attributes = parent_identity_file, population.data = Final_Abundance_Sterm_matrix,
+                      data.method = "table", time.interval.method = "equal",mgp=c(2,0.5,0))
+
+```
+
+## dN/dS ratio
+
+```{r}
+
+prep_for_dN_dS_wide <- spread(all_sterm_plot_hist, sample, allele_frequency)
+
+prep_for_dN_dS_wide <- prep_for_dN_dS_wide[which(prep_for_dN_dS_wide$significance!="MODIFIER"),]
+
+length(table(prep_for_dN_dS_wide$geneName))
+sort(table(prep_for_dN_dS_wide$geneName),decreasing = TRUE)
+
+table(prep_for_dN_dS_wide$significance)
+gene <- "pgaptmp_001693"
+
+dN_dS_ratios <- data.frame()
+for (gene in unique(prep_for_dN_dS_wide$geneName)) {
+  
+  dS <- prep_for_dN_dS_wide %>% filter(geneName==gene) %>% filter(significance=="LOW")
+   dN <-  prep_for_dN_dS_wide %>% filter(geneName==gene) %>% filter(significance %in% c("MODERATE","HIGH"))
+dS 
+dN 
+#tmp <- data.frame(gene, "dS"=nrow(dS),"dN"=nrow(dN),"dN_dS"=(nrow(dN)+0.00001)/(nrow(dS)+0.00001))
+tmp <- data.frame(gene, "dS"=nrow(dS),"dN"=nrow(dN),"dN_dN+dS"=(nrow(dN))/(nrow(dS)+nrow(dN)),"dN_dS"=(nrow(dN))/(nrow(dS)))
+
+dN_dS_ratios <- rbind(dN_dS_ratios,tmp)
+
+}
+nrow(dN_dS_ratios)
+
+plotDens <- ggplot(dN_dS_ratios,aes(x=dN_dS))+geom_histogram()+
+  geom_vline(xintercept=mean(dN_dS_ratios$dN_dS))+
+  theme_classic()+
+  labs(x="dN/(dN+dS)",
+       y="gene count")
+
+sum(dN_dS_ratios$dN_dS>1)
+
+dN_dS_ratios <- arrange(dN_dS_ratios,desc(dN_dS)) 
+sum(dN_dS_ratios$dN_dS>mean(dN_dS_ratios$dN_dS))
+
+mean(dN_dS_ratios$dN_dS)
+
+colnames(annotation_all[11:39])
+annotation_prep <- annotation_all %>% select(colnames(annotation_all[11:39]))
+nrow(annotation_prep)
+annotation_prep <- annotation_prep[!duplicated(annotation_prep), ]
+nrow(annotation_prep)
+
+dN_dS_ratios_final <- merge(dN_dS_ratios,annotation_prep,by.x="gene",by.y="geneName",all.x = TRUE)
+dN_dS_ratios_final_02 <- arrange(dN_dS_ratios_final,desc(dN_dS)) 
+
+
+library(xlsx)
+
+# write.xlsx(dN_dS_ratios_final_02,file="Users//Desktop/presenations/my_presentations/20191007_groupmeeting/figures/dN_dS_ratios_genes_rmk202.xls", sheetName = "Sheet1", 
+  # col.names = TRUE, row.names = FALSE, append = FALSE)
+
+
+png("~/Desktop/presenations/my_presentations/20191007_groupmeeting/figures/dN_dS_ratios_genes_density_rmk202.png",width=1300,height=1000,res=300)
+plotDens
+dev.off()
+# prep_for_dN_dS_wide %>% filter(geneName=="pgaptmp_000898")
+##------------
+##prepare 
+##------------
+threshold_mutation <- 1
+
+dN_dS_ratios$category <- ifelse((dN_dS_ratios$dN_dN.dS>mean(dN_dS_ratios$dN_dN.dS) &dN_dS_ratios$dN>threshold_mutation),"used","not used") 
+table(dN_dS_ratios$category)
+dN_dS_ratios$category
+dN_dS_ratios$category = factor(dN_dS_ratios$category, levels=c("used","not used"))
+colors <- c("red","grey")
+
+##------------
+##plot dN/dS to mutation number
+##------------
+dN_dS_ratios$mutations <- dN_dS_ratios$dS+dN_dS_ratios$dN
+plotpoint <- ggplot(dN_dS_ratios,aes(x=dN_dN.dS,y=dN,group=category,color=category,fill=category))+geom_point()+
+  geom_vline(xintercept=mean(dN_dS_ratios$dN_dN.dS))+
+  geom_hline(yintercept=threshold_mutation)+
+  scale_fill_manual(values=colors)+
+  scale_color_manual(values=colors)+
+  theme_classic()+
+  annotate(geom="text", x=0.9, y=0.9*(max(dN_dS_ratios$dN)), label=paste0("used:",sum(dN_dS_ratios$category=="used")), color="red")+
+  annotate(geom="text", x=0.1, y=0.9*(max(dN_dS_ratios$dN)), label=paste0("not used:",sum(dN_dS_ratios$category=="not used")), color="grey")+
+  theme(legend.title = element_blank())+
+  # coord_trans( y="log2")+
+  labs(x="dN/(dN+dS)",
+       y="dN")
+plotpoint
+
+
+plotDens_x <- ggplot(dN_dS_ratios,aes(x=dN_dN.dS,group=category,fill=category))+geom_histogram()+
+  geom_vline(xintercept=mean(dN_dS_ratios$dN_dN.dS))+
+  scale_fill_manual(values=colors)+
+  # scale_color_manual(values=colors)+
+  theme_classic()+
+  theme(legend.position="none")+
+  labs(x="",
+       y="gene count")
+plotDens_x
+
+plotDens_y <- ggplot(dN_dS_ratios,aes(x=dN,group=category,fill=category))+geom_histogram()+
+  geom_vline(xintercept=threshold_mutation)+
+  scale_fill_manual(values=colors)+
+  coord_flip()+
+  # scale_color_manual(values=colors)+
+  theme_classic()+
+  theme(legend.position="none")+
+  labs(x="",
+       y="gene count")
+plotDens_y
+
+
+
+##-------put together
+source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R")
+
+ legend <- g_legend(plotpoint)
+# blank <- grid.rect(gp=gpar(col="white"))
+
+
+grid.arrange(plotDens_x,legend,plotpoint+theme(legend.position="none"),plotDens_y,
+        ncol=2, nrow=2, widths=c(4, 2), heights=c(2,4))
+
+svg("~/Desktop/Manuscripts/2019_RMK202/Figures/dN_dS_ratio.svg",width=6,height=5)
+# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
+
+
+grid.arrange(plotDens_x,legend,plotpoint+theme(legend.position="none"),plotDens_y,
+        ncol=2, nrow=2, widths=c(4, 2), heights=c(2,4))
+
+dev.off()
+
 ```
 
 
@@ -8259,7 +9566,7 @@ library(ggrepel)
 
 ##---------prep not explained
 not_explained_sterm_plot_prep <- not_explained_sterm_plot[,c(-2,-4)]
-not_explained_sterm_plot_prep$sample_renamed <- factor(not_explained_sterm_plot_prep$sample_renamed)
+# not_explained_sterm_plot_prep$sample_renamed <- factor(not_explained_sterm_plot_prep$sample_renamed)
 notExplained_sterm_wide <- spread(not_explained_sterm_plot_prep, sample_renamed, allele_frequency)
 nrow(notExplained_sterm_wide)
 
