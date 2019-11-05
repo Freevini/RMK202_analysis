@@ -5890,10 +5890,10 @@ table(sample_relative_safe_woSTRAINS_sub03$species)
 p3
 # 
 # dev.off()
-
- library(plotly)
-ggp <- ggplotly(p3)
-htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_onlyModifier.html")
+# 
+#  library(plotly)
+# ggp <- ggplotly(p3)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_onlyModifier.html")
 
 ```
 
@@ -5906,184 +5906,288 @@ library(gridExtra)
 library(grid)
 library(VennDiagram)
 
-colnames(sample_relative_wide)
-nrow(sample_relative_wide)
+# colnames(sample_relative_wide)
+# nrow(sample_relative_wide)
 
- sample_relative_safe_final_no_snps <- sample_relative_wide[,c("site","RMK202","Lyo_202_2014","S72","Lyo_202_2012","L99","L80","Versand_202","L71","L70","Konserve_202","L108","L35","S50","L39","L104","L44")]
+ # sample_relative_safe_final_no_snps <- sample_relative_wide[,c("site","RMK202","Lyo_202_2014","S72","Lyo_202_2012","L99","L80","Versand_202","L71","L70","Konserve_202","L108","L35","S50","L39","L104","L44")]
 
- ##meta
-sample_relative_safe_final_snps_meta <- sample_relative_wide[,c("site","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")]
+ ##-------------------------------
+ ##meta has coverage
+##-------------------------------
+sample_relative_safe_final_snps_meta <- sample_relative_wide %>% select(site,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
 sum(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)==0)
 sum(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0)
 sample_relative_safe_final_meta_cleaned <- sample_relative_wide[(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0),]
-sample_relative_safe_final_meta_cleaned_02 <- sample_relative_safe_final_snps_meta[(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0),]
-# sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_meta,na.rm = TRUE)==0),]
+# sample_relative_safe_final_meta_cleaned_02 <- sample_relative_safe_final_snps_meta[(rowSums(sample_relative_safe_final_snps_meta[,-1],na.rm = TRUE)>0),]
 
 
+ ##-------------------------------
+ ##isolates has coverage
+##-------------------------------
 
-# which(is.na(sample_relative_safe_final_meta_cleaned_02))
-# sample_relative_safe_final_meta_cleaned_02[is.na(sample_relative_safe_final_meta_cleaned_02)] <- 0
-# which(is.na(sample_relative_safe_final_meta_cleaned_02))
-   
-
- ##isolates
-##ldel
-sample_relative_safe_final_snps_iso <- sample_relative_wide[,c("site","L99","L80","L71","L70","L108","L35","L39","L104","L44")]
-# head(table(sample_relative_safe_final_snps_iso$site))
-sample_relative_safe_final_snps_iso <- sample_relative_safe_final_snps_iso[grep("L_delbrueckii_RMK202_",sample_relative_safe_final_snps_iso$site),]
-nrow(sample_relative_safe_final_snps_iso)
-sum(rowSums(sample_relative_safe_final_snps_iso[,-1],na.rm = TRUE)==0)
-hist(rowSums(sample_relative_safe_final_snps_iso[,-1]))
-
-sample_relative_safe_final_iso_cleaned <- sample_relative_safe_final_snps_iso[(rowSums(sample_relative_safe_final_snps_iso[,-1],na.rm = TRUE)>0.9),]
-# sample_relative_safe_final_iso_cleaned_test <- sample_relative_safe_final_tsne[which(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)>0),]
-# sample_relative_safe_final_iso_cleaned==sample_relative_safe_final_iso_cleaned_test
-nrow(sample_relative_safe_final_iso_cleaned)
-# sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)==0),]
-sample_relative_safe_final_iso_cleaned_ldel <- sample_relative_safe_final_iso_cleaned
-
-dim(sample_relative_safe_final_iso_cleaned_ldel)
-
-sum((sample_relative_safe_final_iso_cleaned_ldel$L99>0.9 & sample_relative_safe_final_iso_cleaned_ldel$L80>0.9& sample_relative_safe_final_iso_cleaned_ldel$L71>0.9& sample_relative_safe_final_iso_cleaned_ldel$L70>0.9& sample_relative_safe_final_iso_cleaned_ldel$L108>0.9& sample_relative_safe_final_iso_cleaned_ldel$L35>0.9& sample_relative_safe_final_iso_cleaned_ldel$L39>0.9& sample_relative_safe_final_iso_cleaned_ldel$L104>0.9& sample_relative_safe_final_iso_cleaned_ldel$L44>0.9) %in% TRUE)
-
-inAll_Ldel <- sample_relative_safe_final_iso_cleaned_ldel[which((sample_relative_safe_final_iso_cleaned_ldel$L99>0.9 & sample_relative_safe_final_iso_cleaned_ldel$L80>0.9& sample_relative_safe_final_iso_cleaned_ldel$L71>0.9& sample_relative_safe_final_iso_cleaned_ldel$L70>0.9& sample_relative_safe_final_iso_cleaned_ldel$L108>0.9& sample_relative_safe_final_iso_cleaned_ldel$L35>0.9& sample_relative_safe_final_iso_cleaned_ldel$L39>0.9& sample_relative_safe_final_iso_cleaned_ldel$L104>0.9& sample_relative_safe_final_iso_cleaned_ldel$L44>0.9) %in% TRUE),]
+dim(sample_relative_wide)
+in_isolates <- sample_relative_wide[which((sample_relative_wide$mst1>0.9 | sample_relative_wide$mst2>0.9| sample_relative_wide$mst3>0.9| sample_relative_wide$mst4>0.9| sample_relative_wide$mst5>0.9| sample_relative_wide$mst6>0.9 | sample_relative_wide$mst7>0.9 | sample_relative_wide$mst8>0.9 |sample_relative_wide$mst9>0.9 |  sample_relative_wide$mst10>0.9) %in% TRUE),]
+dim(in_isolates)
 
 
-sample_relative_wide_strains <- sample_relative_wide
-sample_relative_wide_strains[is.na(sample_relative_wide_strains)] <- 0
+##----------------
+##plotting Venn with Isolates
+##----------------
+##==================================================================ldel
 
-colMeans(sample_relative_wide_strains[which(sample_relative_wide_strains$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])
+#----------------------total snps in analysis
+total_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst5<=0.9) %>% filter( mst8<=0.9 & mst10<=0.9) %>% filter("Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
+#----------------------in isolate
+isolates_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9)%>% nrow()
+#----------------------in meta
+meta_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
+##---------------------in meta or isolate
+shared_tmp <- sample_relative_wide  %>%replace(is.na(.), 0)  %>%replace(is.na(.), 0)%>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
 
-Ldel_L99_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99>0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L99_snps
-
-Ldel_L80_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80>0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L80_snps
-
-Ldel_L71_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71>0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L71_snps
-
-Ldel_L70_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70>0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L70_snps
-
-Ldel_L108_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108>0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L108_snps
-
-Ldel_L35_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35>0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L35_snps
-
-Ldel_L39_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39>0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L39_snps
-
-Ldel_L104_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104>0.9& sample_relative_wide_strains$L44<0.9) %in% TRUE),];Ldel_L104_snps
-
-Ldel_L44_snps <- sample_relative_wide_strains[which((sample_relative_wide_strains$L99<0.9 & sample_relative_wide_strains$L80<0.9& sample_relative_wide_strains$L71<0.9& sample_relative_wide_strains$L70<0.9& sample_relative_wide_strains$L108<0.9& sample_relative_wide_strains$L35<0.9& sample_relative_wide_strains$L39<0.9& sample_relative_wide_strains$L104<0.9& sample_relative_wide_strains$L44>0.9) %in% TRUE),];Ldel_L44_snps
-
-##--------------
-##Sterm
-##--------------
-
-
-sample_relative_safe_final_snps_iso <- sample_relative_wide[,c("site","S72","S50")]
-sample_relative_safe_final_snps_iso <- sample_relative_safe_final_snps_iso[grep("S_thermophilus_RMK202_",sample_relative_safe_final_snps_iso$site),]
-nrow(sample_relative_safe_final_snps_iso)
-hist(rowSums(sample_relative_safe_final_snps_iso[,-1]))
-
-sum(rowSums(sample_relative_safe_final_snps_iso[,-1],na.rm = TRUE)==0)
-sample_relative_safe_final_iso_cleaned <- sample_relative_safe_final_snps_iso[(rowSums(sample_relative_safe_final_snps_iso[,-1],na.rm = TRUE)>0.9),]
-# sample_relative_safe_final_iso_cleaned_test <- sample_relative_safe_final_tsne[which(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)>0),]
-# sample_relative_safe_final_iso_cleaned==sample_relative_safe_final_iso_cleaned_test
-nrow(sample_relative_safe_final_iso_cleaned)
-# sample_relative_safe_final_tsne[(rowSums(sample_relative_safe_final_snps_iso,na.rm = TRUE)==0),]
-sample_relative_safe_final_iso_cleaned_sterm <- sample_relative_safe_final_iso_cleaned
-
-##shared among two strains
-sum((sample_relative_safe_final_iso_cleaned$S72>0.9 & sample_relative_safe_final_iso_cleaned$S50>0.9) %in% TRUE)
-# only one strain not the other
-sum((sample_relative_safe_final_iso_cleaned$S72<0.9 & sample_relative_safe_final_iso_cleaned$S50>0.9) %in% TRUE)
-# only one strain not the other
-sum((sample_relative_safe_final_iso_cleaned$S72>0.9 & sample_relative_safe_final_iso_cleaned$S50<0.9) %in% TRUE)
-
-
-###---venn diagramm
-# table(sample_relative_safe_final_iso_cleaned$X.CHROM)
-##------Sterm
-
-# onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned[sample_relative_safe_final_iso_cleaned$X.CHROM=="S_thermophilus_RMK202",]
-
-onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned_sterm$site
-length(onlyfirst_sterm)
-onlysecond_sterm <- sample_relative_safe_final_meta_cleaned[sample_relative_safe_final_meta_cleaned$X.CHROM=="S_thermophilus_RMK202","site"]
-length(onlysecond_sterm)
-meta_sterm <- sample_relative_safe_final_meta_cleaned_02[sample_relative_safe_final_meta_cleaned$X.CHROM=="S_thermophilus_RMK202",]
-# meta_sterm <- sample_relative_safe_final_meta_cleaned_02[sample_relative_safe_final_meta_cleaned_02$X.CHROM=="S_thermophilus_RMK202",]
-
-both_metaIso_sterm <- meta_sterm[onlysecond_sterm %in% onlyfirst_sterm,]
-both_metaIso_sterm_inIsolates <- sample_relative_safe_final_iso_cleaned_sterm[onlyfirst_sterm %in% onlysecond_sterm,]
-
-# both_metaIso_sterm_inIsolates$site==both_metaIso_sterm$site
-only_meta_sterm <- meta_sterm[!onlysecond_sterm %in% onlyfirst_sterm,]
-nrow(only_meta_sterm)
-# sum(duplicated(only_meta_sterm))
-only_isolates_sterm <- sample_relative_safe_final_iso_cleaned_sterm[!onlyfirst_sterm %in% onlysecond_sterm,]
-
-both_n <- sum(onlysecond_sterm %in% onlyfirst_sterm)
-
-
-first_n <- length(onlyfirst_sterm)
-second_n <- length(onlysecond_sterm)
-
-# 13186+1849+386
-# 1849/15421
-# 13186/15421
-# 386/15421
-nrow(sample_relative_safe_final_meta_cleaned)
-venn.plot <- draw.pairwise.venn(first_n,second_n, both_n, c("in Metagenome", "in Isolates"))
-svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_sterm.svg",width=6,height=4)
+##----------------
+##plotting Venn in meta or not
+##----------------
+plot.new()
+venn.plot <- draw.pairwise.venn(isolates_tmp,meta_tmp, shared_tmp, c("in isolates", "only in metagenome"), lty = rep("blank", 
+    2), fill = c("light blue", "grey"), alpha = rep(0.5, 2), cat.pos = c(0, 
+    0), cat.dist = rep(0.025, 2))
 grid.draw(venn.plot)
-dev.off()
 
-
-
-#venn(list(isolates = onlyfirst_sterm, meta = onlysecond_sterm))
-
-##------Ldel
-
-onlyfirst_sterm <- sample_relative_safe_final_iso_cleaned_ldel$site
-sample_relative_safe_final_iso_cleaned_ldel
-
-onlysecond_sterm <- sample_relative_safe_final_meta_cleaned[sample_relative_safe_final_meta_cleaned$X.CHROM=="L_delbrueckii_RMK202","site"]
-meta_ldel <- sample_relative_safe_final_meta_cleaned_02[sample_relative_safe_final_meta_cleaned$X.CHROM=="L_delbrueckii_RMK202",]
-
-##---Explained by
-colMeans(meta_ldel[2:6],na.rm = TRUE) ##EXPLAINED by unknown
-colMeans(sample_relative_wide[,c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")],na.rm = TRUE) ##explained by isolates 01
-colMeans(sample_relative_wide[which(sample_relative_wide$site %in% inAll_Ldel$site),c("Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")])  ##explained by isolates 02
-
-
-both_metaIso_ldel <- meta_ldel[onlysecond_sterm %in% onlyfirst_sterm,]
-nrow(both_metaIso_ldel)
-only_meta_ldel <- meta_ldel[!onlysecond_sterm %in% onlyfirst_sterm,]
-nrow(only_meta_ldel)
-# sum(duplicated(only_meta_sterm))
-only_isolates_ldel <- sample_relative_safe_final_iso_cleaned_ldel[!onlyfirst_sterm %in% onlysecond_sterm,]
-nrow(only_isolates_ldel)
-
-
-both_n <- sum(onlysecond_sterm %in% onlyfirst_sterm)
-first_n <- length(onlyfirst_sterm)
-second_n <- length(onlysecond_sterm)
-
-venn.plot <- draw.pairwise.venn(first_n,second_n, both_n, c("in Isolates", "in Metagenome"))
 svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_ldel.svg",width=6,height=4)
 grid.draw(venn.plot)
 dev.off()
 
+##==============================
+##-------------group1
+group1_count <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% nrow()
+##-------------group2
+group2_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst8>0.9) %>% nrow()
+##-------------group3
+group3_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst5>0.9|mst10>0.9) %>% nrow()
+#----------------------in meta
+meta_tmp <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+##==============================
+group1_group2_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst8>0.9) %>% nrow() 
+group1_group3_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst5>0.9|mst10>0.9) %>% nrow() 
+group1_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+group2_group3_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>%filter( mst8>0.9) %>% filter( mst5>0.9|mst10>0.9) %>% nrow() 
+group2_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>%filter( mst8>0.9) %>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+group3_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>%filter( mst5>0.9|mst10>0.9) %>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+##==============================
+group1_group2_group3_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst8>0.9) %>% filter( mst5>0.9|mst10>0.9) %>%nrow() 
+group1_group2_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst8>0.9) %>%  filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+group1_group3_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>%  filter( mst5>0.9|mst10>0.9) %>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>%nrow() 
+group2_group3_meta_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst8>0.9) %>%  filter( mst5>0.9|mst10>0.9) %>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>%nrow() 
+##==============================
+group1_group2_group3_match <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst8>0.9) %>% filter( mst5>0.9|mst10>0.9)%>%filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>%nrow() 
 
-# 2439+1140+1042
-# 2439/4621
-# 1140/4621
-# 1042/4621
 
+##----------------
+##plotting Venn triple
+##----------------
+
+plot.new()
+venn.plot <- draw.triple.venn(group1_count, group2_count, group3_count, group1_group2_match,  group2_group3_match, group1_group3_match,
+    group1_group2_group3_match, category = c("L.delbrueckii\ngroup1", "L.delbrueckii\ngroup2", "L.delbrueckii\ngroup3"), lty = "blank", 
+    fill = c("skyblue", "pink1", "mediumorchid"))
+grid.draw(venn.plot)
+
+
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_ldel_tri.svg",width=6,height=4)
+grid.draw(venn.plot)
+dev.off()
+
+
+##==================================================================Sterm
+
+#----------------------total snps in analysis
+total_tmp <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 | mst2>0.9| "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+
+#----------------------in isolate
+isolates_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 | mst2>0.9) %>% nrow()
+#----------------------in meta
+meta_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+##---------------------in meta or isolate
+shared_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter((mst1>0.9 | mst2>0.9) , ("Lyo\n1996">0.9| "Lyo\n2012">0.9| "Lyo\n2014">0.9| "working\nstock">0.9 | "starter\nculture\n2012">0.9) | "starter\nculture\n2018">0.9 ) %>% nrow()
+##----------------
+##plotting Venn in meta or not
+##----------------
+plot.new()
+venn.plot <- draw.pairwise.venn(isolates_tmp,meta_tmp, shared_tmp, c("in isolates", "only in metagenome"), lty = rep("blank", 
+    2), fill = c("light blue", "grey"), alpha = rep(0.5, 2), cat.pos = c(0, 
+    0), cat.dist = rep(0.025, 2))
+grid.draw(venn.plot)
+
+
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_sterm.svg",width=6,height=4)
+grid.draw(venn.plot)
+dev.off()
+
+##==============================
+##-------------mst1
+mst1_count <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 ) %>% nrow()
+##-------------mst2
+mst2_count <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter( mst2>0.9) %>% nrow()
+#----------------------in meta
+meta_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+##==============================
+mst1_mst2_match <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 ) %>% filter( mst2>0.9) %>% nrow() 
+mst1_meta_match <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 ) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+mst2_meta_match <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst2>0.9 ) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+##==============================
+mst1_mst2_meta_match <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter( mst1>0.9) %>% filter(mst2>0.9 ) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow() 
+
+
+##----------------
+##plotting Venn di
+##----------------
+
+
+plot.new()
+venn.plot <- draw.pairwise.venn(mst1_count,mst2_count, mst1_mst2_match, c("S.thermophilus\nmst1", "S.thermophilus\nmst2"), lty = rep("blank", 
+    2), fill = c("light blue","pink"), alpha = rep(0.5, 2), cat.pos = c(0, 
+    0), cat.dist = rep(0.025, 2))
+grid.draw(venn.plot)
+
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_venn_diagramm_sterm_di_strains.svg",width=6,height=4)
+grid.draw(venn.plot)
+dev.off()
+
+##=====================================
+##frequency plot
+##=====================================
+
+
+##==================================================Streptococcus thermophilus===================================================================
+
+
+##-------------mst1
+mst1_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 )  %>% filter( mst2<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.05) %>% add_column(.,group="S.thermophilus\nmst1")
+##-------------mst2
+mst2_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1<=0.9 )  %>% filter( mst2>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% filter(Frequency>0.05) %>% add_column(.,group="S.thermophilus\nmst2")
+##-------------not explained
+not_explained_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1<=0.9 )  %>% filter( mst2<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% filter(Frequency>0.05) %>% add_column(.,group="not\nexplained")
+
+all_sterm_frequency <- rbind(mst1_only_frequency,mst2_only_frequency,not_explained_frequency)
+
+MAG_frequency <- 1-(median(mst1_only_frequency$Frequency)+median(mst2_only_frequency$Frequency))
+##----------------
+##plotting frequency
+##----------------
+all_sterm_frequency$group = factor(all_sterm_frequency$group, levels=c("S.thermophilus\nmst1","S.thermophilus\nmst2","not\nexplained"))
+
+sterm_freqeunyPlot <- ggplot(all_sterm_frequency,aes(x=group,y=Frequency))+ geom_violin(aes(color=group,fill=group))+geom_boxplot(aes(alpha = 0.2),outlier.shape=NA)+theme_classic()+
+      scale_fill_manual(values=c("light blue","pink","grey"))+
+      scale_color_manual(values=c("light blue","pink","grey"))+
+  labs(y="alternative allele\nfrequeny")+
+    theme(legend.position="none",
+       # axis.text.x = element_text(size=8),
+       axis.title.x = element_blank())
+
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_frequeny_sterm.svg",width=6,height=4)
+sterm_freqeunyPlot
+dev.off()
+
+##==================================================Lactobacillus delbrueckii===================================================================
+##-------------group1
+group1_count <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% nrow()
+##-------------group2
+group2_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst8>0.9) %>% nrow()
+##-------------group3
+group3_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst5>0.9|mst10>0.9) %>% nrow()
+#----------------------in meta
+meta_tmp <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+
+##-------------group1
+group1_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="L.delbrueckii\ngroup1")
+##-------------group2
+group2_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% add_column(.,group="L.delbrueckii\ngroup2")
+##-------------group3
+group3_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% filter(Frequency>0.0)%>% add_column(.,group="L.delbrueckii\ngroup3")
+
+##-------------not explained
+not_explained_frequency_ldel <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="not\nexplained")
+
+
+all_ldel_frequency <- rbind(group1_only_frequency,group2_only_frequency,not_explained_frequency_ldel,group3_only_frequency)
+
+# MAG_frequency <- 1-(median(mst1_only_frequency$Frequency)+median(mst2_only_frequency$Frequency))
+##----------------
+##plotting frequency
+##----------------
+all_ldel_frequency$group = factor(all_ldel_frequency$group, levels=c("L.delbrueckii\ngroup1","L.delbrueckii\ngroup2","L.delbrueckii\ngroup3","not\nexplained"))
+table(all_ldel_frequency$group)
+
+ldel_freqeunyPlot <- ggplot(all_ldel_frequency,aes(x=group,y=Frequency))+ geom_violin(aes(color=group,fill=group))+geom_boxplot(aes(alpha = 0.2),outlier.shape=NA)+theme_classic()+
+      scale_fill_manual(values=c("skyblue", "pink1", "mediumorchid","grey"))+
+      scale_color_manual(values=c("skyblue", "pink1", "mediumorchid","grey"))+
+  lims(y=c(0,0.2))+
+  labs(y="alternative allele\nfrequeny")+
+    theme(legend.position="none",
+       # axis.text.x = element_text(size=8),
+       axis.title.x = element_blank())
+ldel_freqeunyPlot
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_frequeny_ldel.svg",width=6,height=4)
+ldel_freqeunyPlot
+dev.off()
 
 ```
+
+##### strain count
+needs previous chunk to run
+```{r}
+
+##==================================================Streptococcus thermophilus===================================================================
+##---------------------------------
+##Sample medians calulation per group
+##---------------------------------
+##-------------mst1
+mst1_Median <-  sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1>0.9 )  %>% filter( mst2<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians()
+##-------------mst2
+mst2_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1<=0.9 )  %>% filter( mst2>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians()
+##-------------not explained
+not_explained_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="S. thermophilus")  %>% filter(mst1<=0.9 )  %>% filter( mst2<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians()
+
+##---------------------------------
+##Gather data
+##---------------------------------
+relAbundance_isolates_sterm <- rbind(mst1_Median,mst2_Median,not_explained_Median)
+S_thermophilusMAG_rmk202 <- 1-(relAbundance_isolates_sterm[1,]+relAbundance_isolates_sterm[2,])
+relAbundance_isolates_sterm <- rbind(mst1_Median,mst2_Median,S_thermophilusMAG_rmk202)
+##---------------------------------
+##plot data
+##---------------------------------
+
+##==================================================Lactobacillus delbrueckii===================================================================
+##---------------------------------
+##Sample medians calulation per group
+##---------------------------------
+group1_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 )%>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>%dplyr::group_by(sample) %>% dplyr::summarize(median = median(Frequency, na.rm = TRUE)) %>% rownames(sample) %>%select(median) %>% t() %>%as.data.frame()
+##-------------group2
+group2_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>%select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians(na.rm = FALSE)
+##-------------group3
+group3_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>%select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians(na.rm = TRUE)
+
+##-------------not explained
+not_explained_Median_ldel <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% as.matrix %>%colMedians()
+
+
+##---------------------------------
+##Gather data
+##---------------------------------
+
+relAbundance_isolates_ldel <- rbind(group1_Median,group2_Median,group3_Median,not_explained_Median_ldel)
+S_thermophilusMAG_rmk202 <- 1-(relAbundance_isolates_sterm[1,]+relAbundance_isolates_sterm[2,])
+relAbundance_isolates_sterm <- rbind(mst1_Median,mst2_Median,S_thermophilusMAG_rmk202)
+```
+
+
 
 ##### disentengle Ldel
 
 ```{r}
+
+
 
 ###-----------
 ##plot all SNPs that occur in one sample
@@ -6093,7 +6197,6 @@ dev.off()
 table(sample_relative_wide$X.CHROM)
 sample_relative_wide_renamed <- sample_relative_wide
 # colnames(sample_relative_wide)
-colnames(sample_relative_wide_renamed) <- revalue(colnames(sample_relative_wide_renamed), c("S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4"))
 colnames(sample_relative_wide_renamed)
 
 
