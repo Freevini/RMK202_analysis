@@ -3053,6 +3053,8 @@ scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_r
 
 #####merge ONT and spades assembly
 
+
+
 ```{bash}
 
 
@@ -3083,8 +3085,37 @@ for contigs in $(grep ">"  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_r
   echo ${contigs}
 samtools faidx  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly/di_rmk202_MAG_plasmidAssembly_renamed.fasta ${contigs} > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/${contigs}.fasta
   done
+
+###-----------get PGAP .fsa
+
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/PGAP
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_sterm/final/PGAP
   
+scp /home/vincent/Downloads/L_delbrueckii_RMK202.fasta vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/PGAP/
+scp /home/vincent/Downloads/S_thermophilus_RMK202.fasta vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_sterm/final/PGAP/
+
+
+###-----------merge PGAP contigs
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.fna \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.fna \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//splitContigs/L_del_phage_01.fasta \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/*.fasta > \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished_unformated.fasta
+
+
+
+fasta_formatter -w 50 -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished_unformated.fasta -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
+
+
+
+
+
 ###-----------merge contigs
+
+
+
 mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/
 
 cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta \
@@ -3113,7 +3144,6 @@ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_
 
 scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/Sterm_phage/S_term_phage_01.fasta ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_FINALgENOMEassembly/
 ```
-
 
 
 ###remove remaining cow contigs
@@ -3486,8 +3516,9 @@ Do the mapping of the annotations [here](https://www.genome.jp/kegg/tool/map_pat
 
 ```{bash}
 
-scp /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/eggnog/*_pgap* vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/
+scp /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_ldel/L_delbrueckii_RMK202.annotations vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel//eggnog/
 
+scp /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_sterm/S_thermophilus_RMK202.annotations vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm//eggnog/
 ##=================
 ##create mappable files
 ##=================
@@ -3530,6 +3561,93 @@ write.table(Lactobacillus_delbrueckii_RMK202_subset4Brite, "~/Desktop/Projects/2
 ```
 
 ####Rast annotation of phages
+also merge phages and prepare for Rast and eggnog assembly
+
+the phages are called:
+1. S_term_phage_01
+2. L_del_phage_01
+
+the id/locustag should be:
+1. stph01
+2. ldph01
+
+```{bash}
+
+##--------------prepare the phage contigs
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/*.fasta > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/S_term_phage_01.fsa
+
+##----------------------
+##move Phages local for Rast annoation and Eggnog
+##----------------------
+
+
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_sterm/
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_ldel/
+
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/S_term_phage_01.fsa /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_sterm/
+
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//splitContigs/L_del_phage_01.fasta /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_ldel/
+
+##----------------------
+##rename faa after RAST
+##----------------------
+
+ sed -i 's/fig|6666666.498386.peg./L_del_phage_01_/g' L_del_phage_01.faa 
+
+
+ sed -i 's/fig|6666666.498387.peg./S_term_phage_01_/g' S_term_phage_01.faa 
+
+
+##----------------------
+##rename gff after RAST
+##----------------------
+
+ sed -i 's/fig|6666666.498387.peg./S_term_phage_01_/g' /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_sterm/S_term_phage_01.gff
+
+ sed 's/fig|6666666.498386.peg./L_del_phage_01_/g' /home/vincent/Downloads/6666666.498386.gff > /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_ldel/L_del_phage_01.gff
+
+
+##----------------------
+##merge eggnog output
+##----------------------
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/merged/
+cat /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/sterm/*.annotations \
+/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/ldel/*.annotations \
+/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_ldel/*.annotations \
+/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/phage_sterm/*.annotations |grep "^#" -v > \
+/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/merged/merged_all_eggnog.annotations
+      
+
+##----------------------
+##move Phages back to big machine for Rast annoation and Eggnog
+##----------------------
+
+/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/
+
+
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/
+
+scp -r  /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/ vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/
+
+
+
+##----------------------
+##merge all gff for snpEFF
+##----------------------
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/merged
+
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff | grep -v "^CP046}" |awk -F "\t" '{OFS"\t"}{if($3=="gene") print $0}' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/merged/all_genes_rmk202.gff
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gff | grep -v "^CP046}" |awk -F "\t" '{OFS"\t"}{if($3=="gene") print $0}' >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/merged/all_genes_rmk202.gff
+
+cat \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/phage_ldel/*.gff \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/phage_sterm/*.gff >> \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/merged/all_genes_rmk202.gff
+      
+```
 
 
 ####KEGG
@@ -3867,7 +3985,8 @@ done
 ##with MAG
 
 
-echo "/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Lactobacillus_delbrueckii_RMK202.fasta" >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt
+
+echo "/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta" >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt
 
 
 
@@ -3875,10 +3994,10 @@ fastANI -t 5 --ql /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undepl
   --rl /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt \
   -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt
 
-sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_undeplexed_plasmids\/1AB\/Polishing_FINAL\/08_eightFreebayes\/freebayesOuput\/splitFasta\/finalWithIllumina\///g'  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/L[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
+sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/circlaring_ldel\/final\///g'  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/L[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
 
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Lactobacillus_delbrueckii/Lactobacillus_delbrueckii_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
+#scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Lactobacillus_delbrueckii/Lactobacillus_delbrueckii_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
 
 
 ###-------------------
@@ -3900,10 +4019,8 @@ do
 
 done
 
-##with christians MAG
 
-
-echo "/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Streptococcus_thermophilus_RMK202.fasta" >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt
+echo "/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_sterm/final/S_thermophilus_mag_rmk202.fasta" >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt
 
 
 ##FASTANI
@@ -3913,9 +4030,9 @@ fastANI -t 5 --ql /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undepl
   -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt
   
 
-sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_undeplexed_plasmids\/1AB\/Polishing_FINAL\/08_eightFreebayes\/freebayesOuput\/splitFasta\/finalWithIllumina\///g'  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/S[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
+sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/circlaring_sterm\/final\///g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/S[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Streptococcus_thermophilus/Streptococcus_thermophilus_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
+#cp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Streptococcus_thermophilus/Streptococcus_thermophilus_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
 
 
 ```
@@ -4177,7 +4294,6 @@ sed '1d' Strepto_rmk202_snps_complete.txt |tr [a-z] [A-Z]   |sed 's/./&\t/g' > S
 
 ```{r}
 library(readr)
-Strepto_core_snps <- read_delim("~/Desktop/Projects/2019_Pilotplan/snps/Strepto_rmk202_snps_complete_split.txt",  "\t", escape_double = FALSE, col_names = c("S72","S50","rmk202_mag","NAs"), trim_ws = TRUE) 
 Strepto_core_snps <- Strepto_core_snps[,-4]
 
 Sterm_matrix <- setNames(data.frame(matrix(ncol = ncol(Strepto_core_snps), nrow = ncol(Strepto_core_snps))), colnames(Strepto_core_snps))
@@ -4439,31 +4555,104 @@ scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_
 
 ####PGAP annotation
 
+creat all files from the PGAP annoation
+
 ```{bash}
 
 scp /home/vincent/Downloads/L_delbrueckii_RMK202.current.gb vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel
 scp /home/vincent/Downloads/S_thermophilus_RMK202.current.gb vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm
 
-##----------------------------------------
 
+###================
+##description file
+###================
+
+BaseLocation_Ldel=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/
+gb_file_ldel=L_delbrueckii_RMK202.current.gb
+BaseFILNAME=L_delbrueckii_RMK202
+
+
+BaseLocation_Sterm=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/
+gb_file_sterm=S_thermophilus_RMK202.current.gb
+BaseFILNAME_sterm=S_thermophilus_RMK202
+
+
+
+
+!!!!!!!!!!!!!!!check genome name
+
+##----------------------------------------
 ##---------Ldel
-any2fasta /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gb > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.fna
-/usr/bin/bp_genbank2gff3 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gb --outdir - > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gff
+##----------------------------------------
+
+mkdir -p ${BaseLocation_Ldel}
+##---------fna
+any2fasta ${BaseLocation_Ldel}/${gb_file_ldel} > ${BaseLocation_Ldel}/${BaseFILNAME}.fna
+
+##---------gff complete
+/usr/bin/bp_genbank2gff3 ${BaseLocation_Ldel}/${gb_file_ldel} --outdir - > ${BaseLocation_Ldel}/${BaseFILNAME}.gff
 
 
-##---------Sterm
-any2fasta /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gb > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.fna
-sudo /usr/bin/bp_genbank2gff3 /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gb --outdir - > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff
+##---------gff complete
+cat ${BaseLocation_Ldel}/${BaseFILNAME}.gff | grep -v "^CP046}" |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $0}' > ${BaseLocation_Ldel}/${BaseFILNAME}_gene.gff
 
+##---------gff gene
+cat /${BaseLocation_Ldel}/${BaseFILNAME}.gff | grep -v "^CP046}" |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $0}' |sed 's/ID=//g' |sed 's/;Name.*//g' |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$9,$8,$7}' >  ${BaseLocation_Ldel}/${BaseFILNAME}_gene.bed
+
+
+##---------gene ffn
+bedtools getfasta -s -name  -fi ${BaseLocation_Ldel}/${BaseFILNAME}.fna \
+  -bed ${BaseLocation_Ldel}/${BaseFILNAME}_gene.bed  | sed 's/::.*//g' > ${BaseLocation_Ldel}/${BaseFILNAME}_genes.ffn
+  
+  
+##---------gene faa
+transeq  -sequence ${BaseLocation_Ldel}/${BaseFILNAME}_genes.ffn > \
+  -outseq  ${BaseLocation_Ldel}/${BaseFILNAME}_genes.faa
+sed -i 's/_1$//g'  ${BaseLocation_Ldel}/${BaseFILNAME}_genes.faa
+
+grep ">" ${BaseLocation_Ldel}/${BaseFILNAME}_genes.faa |sed 's/>//g' |cut -d '_' -f 1|sort|uniq -c
 
 ##----------------------------------------
-##change name
+##---------Sterm
+##----------------------------------------
 
-/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/vincent2/output
+mkdir -p ${BaseLocation_Sterm}
+##---------fna
+any2fasta ${BaseLocation_Sterm}/${gb_file_sterm} > ${BaseLocation_Sterm}/${BaseFILNAME_sterm}.fna
 
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/vincent2/output/L_delbrueckii_RMK202/annot.faa > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/vincent2/output/L_delbrueckii_RMK202/L_delbrueckii_RMK202_mag.faa
+##---------gff complete
+/usr/bin/bp_genbank2gff3 ${BaseLocation_Sterm}/${gb_file_sterm} --outdir - > ${BaseLocation_Sterm}/${BaseFILNAME_sterm}.gff
 
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/vincent2/output/S_thermophilus_RMK202/annot.faa > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/vincent2/output/S_thermophilus_RMK202/S_thermophilus_RMK202_mag.faa
+
+##---------gff complete
+cat ${BaseLocation_Sterm}/${BaseFILNAME_sterm}.gff | grep -v "^CP046}" |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $0}' > ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_gene.gff
+
+##---------gff gene
+cat /${BaseLocation_Sterm}/${BaseFILNAME_sterm}.gff | grep -v "^CP046}" |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $0}' |sed 's/ID=//g' |sed 's/;Name.*//g' |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$9,$8,$7}' >  ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_gene.bed
+
+
+##---------gene ffn
+bedtools getfasta -s -name  -fi ${BaseLocation_Sterm}/${BaseFILNAME_sterm}.fna \
+  -bed ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_gene.bed  | sed 's/::.*//g' > ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.ffn
+  
+  
+##---------gene faa
+transeq  -sequence ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.ffn > \
+  -outseq  ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.faa
+sed -i 's/_1$//g'  ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.faa
+
+grep ">" ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.faa |sed 's/>//g' |cut -d '_' -f 1|sort|uniq -c
+
+###================
+##bring local
+###================
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/sterm/
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/ldel/
+
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm//S_thermophilus_RMK202_genes.faa /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/sterm/
+
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel//L_delbrueckii_RMK202_genes.faa /home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/ldel/
+
 
 
 ```
@@ -4791,81 +4980,95 @@ GenomeAssemblyStats <- merge(tmp,mapping_stats,by="strain")
 #####mapping to single polished genome
 
 ```{bash}
+
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
+
+##!!!!!!!!!!!!!change names of Forward and Reverse reads
+
+###================
+##script
+###================
 ##============
 ##mapping to reference
 ##============
+bwa index $Assembly
+# name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
 
- name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
-
-threads=37
-
-
-mkdir -p /archiv/Projects/2019_RMK202_analysis/01_log
+mkdir -p ${logFilelocation}
 
 num=1
 
-for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
+for names in $(cat ${samplesss})
   do
   echo ${num}"/16  :" ${names}
   num=$((num+1))
-  rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}
+  rm -r ${BaseLocation}/${names}
 
-  mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/
+  mkdir -p ${BaseLocation}/${names}/bwaMapping2DB/
   
  # bwa mem -t ${threads} /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta
-  bwa mem -t ${threads} /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta \
-  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_1.fastq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_2.fastq | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
+  bwa mem -t ${threads} ${Assembly} \
+  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_1.fastq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_2.fastq | samtools sort -@${threads} -O BAM -o ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
 
-samtools view -b -f 4 /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+samtools view -b -f 4 ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
 
-bedtools bamtofastq -i /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
+bedtools bamtofastq -i ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
 
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+rm ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam &
 
 ##-----Qualimap
 
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc
+mkdir -p ${BaseLocation}/${names}/bwaMapping2DB//bamqc
 
-qualimap bamqc -bam /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
+qualimap bamqc -bam ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir ${BaseLocation}/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
 
 
- mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log
-echo "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/"${name_folder}"/"${names}"/bwaMapping2DB//bamqc" >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt
+ mkdir -p ${BaseLocation}/log
+echo ${BaseLocation}"/"${names}"/bwaMapping2DB/bamqc" >> ${BaseLocation}/log/multiqc_logfile_finalGenome.txt
    done 
    
    
-    rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
-    
-  mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
+#    rm -r ${BaseLocation}/MultiQC
+ 
+#  mkdir -p ${BaseLocation}/MultiQC
   
-  multiqc --config /archiv/logs/multiQC_config.txt --file-list  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt \
-    -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
+#  multiqc --config /archiv/logs/multiQC_config.txt --file-list  ${BaseLocation}/log/multiqc_logfile_finalGenome.txt \
+#    -o ${BaseLocation}/MultiQC
 
-
-  
-#scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/MultiQC/multiqc_report.html ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/
 
 ##-------------------------------------------------  
 ##-----check read coverage
+##-------------------------------------------------  
 name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
 threads=37
 names=Konserve_202
 
 
 num=1
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/mappings.txt
+rm ${BaseLocation}/log/mappings.txt
 
 #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
   do
-mapped=$(grep "     number of mapped reads = " /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
+mapped=$(grep "     number of mapped reads = " ${BaseLocation}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
 
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/log/
-echo -e ${names}"\tonlyMeta\t"${mapped} >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/log/mappings.txt
+mkdir -p ${BaseLocation}/log/mappings.txt
+echo -e ${names}"\tonlyMeta\t"${mapped} >> ${BaseLocation}/log/mappings.txt
 
 done
 
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
+##-------------------------------------------------  
+##move local
+##-------------------------------------------------  
+
+#scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
 ```
 
 ###### unmapped assembly
@@ -5028,6 +5231,9 @@ p1
  dev.off()
 
 ```
+
+
+
 #####mapping to all genomes
 ```{bash}
 
@@ -5053,133 +5259,283 @@ bwa index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/
 
  name_folder=02_againstpolished_allRMKs202
 
-threads=37
+###================
+##description file
+###================
+threads=5
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_allRMKs202
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/assemblyFinalwithIsolates.fasta
 
+##!!!!!!!!!!!!!change names of Forward and Reverse reads
 
-mkdir -p /archiv/Projects/2019_RMK202_analysis/01_log
+###================
+##script
+###================
+##============
+##mapping to reference
+##============
+
+# name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
+
+mkdir -p ${logFilelocation}
 
 num=1
 
-for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
+for names in $(cat ${samplesss})
   do
   echo ${num}"/16  :" ${names}
   num=$((num+1))
-  rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}
+  rm -r ${BaseLocation}/${names}
 
-  mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/
+  mkdir -p ${BaseLocation}/${names}/bwaMapping2DB/
   
  # bwa mem -t ${threads} /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta
-  bwa mem -t ${threads} /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/assemblyFinalwithIsolates.fasta \
-  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_1.fastq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_2.fastq | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
+  bwa mem -t ${threads} ${Assembly} \
+  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_1.fastq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/kneaddata/${names}/${names}/${names}*neaddata_paired_2.fastq | samtools sort -@${threads} -O BAM -o ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam - 
 
-samtools view -b -f 4 /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+samtools view -b -f 4 ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam > ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
 
-bedtools bamtofastq -i /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
+bedtools bamtofastq -i ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam -fq ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq
 
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam
+rm ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.bam &
 
 ##-----Qualimap
 
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc
+mkdir -p ${BaseLocation}/${names}/bwaMapping2DB//bamqc
 
-qualimap bamqc -bam /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
+qualimap bamqc -bam ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam -outdir ${BaseLocation}/${names}/bwaMapping2DB//bamqc --java-mem-size=80G
 
 
- mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log
-echo "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/"${name_folder}"/"${names}"/bwaMapping2DB//bamqc" >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt
+ mkdir -p ${BaseLocation}/log
+echo ${BaseLocation}"/"${names}"/bwaMapping2DB/bamqc" >> ${BaseLocation}/log/multiqc_logfile_finalGenome.txt
    done 
    
    
-#    rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
-    
-#  mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
+#    rm -r ${BaseLocation}/MultiQC
+ 
+#  mkdir -p ${BaseLocation}/MultiQC
   
-#  multiqc --config /archiv/logs/multiQC_config.txt --file-list  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/multiqc_logfile_finalGenome.txt \
-#    -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/MultiQC
+#  multiqc --config /archiv/logs/multiQC_config.txt --file-list  ${BaseLocation}/log/multiqc_logfile_finalGenome.txt \
+#    -o ${BaseLocation}/MultiQC
 
-
-  
-#scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/MultiQC/multiqc_report.html ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_undeplexed/1AB/
 
 ##-------------------------------------------------  
 ##-----check read coverage
-name_folder=02_againstpolished_allRMKs202 
-threads=37
-names=Konserve_202
+##-------------------------------------------------  
+
+#name_folder=02_againstpolished_allRMKs202 
+#threads=37
+#names=Konserve_202
 
 
 num=1
 #rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/mappings.txt
-
 #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
   do
-mapped=$(grep "     number of mapped reads = " /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/log/
-echo -e ${names}"\tallisolates\t"${mapped} >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/log/mappings.txt
+mapped=$(grep "     number of mapped reads = " ${BaseLocation}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
+
+mkdir -p ${BaseLocation}/log/mappings.txt
+echo -e ${names}"\tonlyMeta\t"${mapped} >> ${BaseLocation}/log/mappings.txt
 
 done
 
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/log/mappings_02.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
+
 ##-------------------------------------------------  
-##-----normal spades on unmaped
+##move local
 ##-------------------------------------------------  
 
-#rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1/
-num=1
-threads=32
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
-  do
-  echo ${num}"/16  :" ${names}
-  num=$((num+1))
-rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/spadesAssembly_meta_unmapped/assembly
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/spadesAssembly_meta_unmapped/assembly
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
 
-/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py -t ${threads} -m 100 \
-  -s /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq \
-  -o /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/spadesAssembly_meta_unmapped/assembly
-  done
-  
-  num=1
-threads=32
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
-  do
-  echo"------------------------"
-  echo  ${names}
-  
+```
 
-  grep ">" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/spadesAssembly_meta_unmapped/assembly/contigs.fasta
-  done
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
-  do
-  echo"------------------------"
-  echo  ${names}
-  
+## SNP calling freebayes (K1)
 
-  cd /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/${names}/spadesAssembly_meta_unmapped/assembly/
-  for file in contigs.fasta;do
-grep -F ">" $file | sed -e 's/_/ /g' |sort -nrk 6 |awk '$6>=2.0 && $4>=500 {print $0}'| sed -e 's/ /_/g'|sed -e 's/>//g'>$file.txt
-echo sequences to keep
-wc -l $file.txt
-echo running fastagrep.pl
-../fastagrep.pl -f $file.txt $file > HCov.$file
-echo sequences kept
-grep -c ">" HCov.$file
+This is a good (blog)[https://bioinformatics-core-shared-training.github.io/cruk-summer-school-2017/Day2/vcf-intro.nb.html] on how to use freebayes and how to parse the output. 
+Finally I will do freebayes on all samples simultaniously. 
+
+Interesting output from column 11 on:
+
+GT	Genotype v :1
+DP	Read Depth  :1040
+DPR	Number of observation for each allele  : 1,1037
+RO	Reference allele observation count :1
+QR	Sum of quality of the reference observations :10
+AO	Alternate allele observation count :1037
+QA	Sum of quality of the alternate observations :36917
+GL	Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy
+
+Very nice [blog](http://www.ddocent.com/filtering/) illustrating good filtering practices.
+
+```{bash}
+
+
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
+
+###--------special
+FREEBAYES_out=freebayesOuput_WithONT_Parallel_default
+
+###================
+##script
+###================
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##-----------change read group
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+#name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
+#names=Lyo_202_2014
+###------------------adding readgroup to bam
+rm ${BaseLocation}/log/multiqc_logfile_bams.txt
+mkdir -p  ${BaseLocation}/log/
+  #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
+  for names in $(cat ${samplesss})
+do
+echo ${names}
+
+#java -jar /home/vincent/apps/picard/picard.jar AddOrReplaceReadGroups \
+#       I=${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
+#       O=${BaseLocation}/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
+#       RGID=${names} \
+#       RGLB=lib1 \
+#       RGPL=illumina \
+#       RGPU=unit1 \
+#       RGSM=${names}
+
+#rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
+
+echo ${BaseLocation}"/"${names}"/bwaMapping2DB/"${names}"_mapping2ref.bam " >> ${BaseLocation}/log/multiqc_logfile_bams.txt
 
 done
-  
-  
-  done
-  
-  
-    for file in contigs.fasta;do
-grep -F ">" $file
 
+
+
+
+##remove trailing whitespaces
+
+ sed -i 's/[ \t]*$//' ${BaseLocation}/log/multiqc_logfile_bams.txt
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##-----------check bam mapping
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+ for map in $(cat ${BaseLocation}/log/multiqc_logfile_bams.txt)
+    do
+    echo "----------------------------------------------------"
+    echo $map
+    samtools flagstat $map |grep "mapped ("
+    
+    done
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##-----------indexing file
+##--------------------------------------------------------------------------------------------------------------------------------------
+##need before freebayes parallel
+
+  for names in $(cat ${BaseLocation}/log/multiqc_logfile_bams.txt)
+do
+
+samtools index ${names}
 
 done
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##-----------SNP calling
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+#rm -r ${BaseLocation}/freebayesOuput_WithONT_notParallel_default
+#mkdir -p ${BaseLocation}/freebayesOuput_WithONT_notParallel_default
+
+
+  #  freebayes -F 0.05 -C 3 --min-coverage 30 --pooled-discrete \
+  #    --bam-list ${BaseLocation}/log/multiqc_logfile_bams.txt -f \
+  #    ${Assembly} > \
+  #   ${BaseLocation}/freebayesOuput_WithONT_notParallel_default/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf
+  
+##--------------------------------------------------------------------------------------------------------------------------------------
+##-----------SNP calling parallel
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+
+  rm -r ${BaseLocation}/${FREEBAYES_out}
+  mkdir -p ${BaseLocation}/${FREEBAYES_out}
+ 
+  
+    freebayes-parallel <(fasta_generate_regions.py ${Assembly} 100000) 36 -f ${Assembly} -C 5 --pooled-continuous --min-alternate-fraction 0.05 --min-coverage 10 --bam-list ${BaseLocation}/log/multiqc_logfile_bams.txt > ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf
+  
+  
+  grep "^#" -v ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf |cut -f 1 |sort|uniq -c
+  
+##-------------zipping
+
+#bgzip -c /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf.gz
+#tabix -p  vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
+
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##------------vcftools filtering
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+
+###==============================1. Qualty filtering QC>30
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf --minQ 30 --recode --recode-INFO-all --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC  
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf  --counts2 --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC  
+
+###==============================4. hist-indel-len
+
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC.recode.vcf --hist-indel-len --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC
+
+###==============================2. remove indel
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC.recode.vcf --mac 1 --remove-indels --minQ 30 --recode --recode-INFO-all --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL
+
+###==============================3. INFO
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf --missing-indv --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC  
+###==============================4. hist-indel-len
+
+
+vcftools --vcf ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf --hist-indel-len --out ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL
+
+grep "^#" -v ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf |cut -f 1 |sort|uniq -c
+
+
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##------------prep for R
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+grep "^##" -v ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf >  ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR.vcf
+
+
+##--------------------------------------------------------------------------------------------------------------------------------------
+##------------bring local
+##--------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/freebayesOuput_WithONT_Parallel_default/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/
 
 
 ```
+
 
 
 #####Prophage detection
@@ -5834,149 +6190,27 @@ all_final[which(all_final$species=="L_delbrueckii_RMK202"),]
 ```
 
 
-## SNP calling freebayes (K1)
+##Add Information
 
-This is a good (blog)[https://bioinformatics-core-shared-training.github.io/cruk-summer-school-2017/Day2/vcf-intro.nb.html] on how to use freebayes and how to parse the output. 
-Finally I will do freebayes on all samples simultaniously. 
-
-Interesting output from column 11 on:
-
-GT	Genotype v :1
-DP	Read Depth  :1040
-DPR	Number of observation for each allele  : 1,1037
-RO	Reference allele observation count :1
-QR	Sum of quality of the reference observations :10
-AO	Alternate allele observation count :1037
-QA	Sum of quality of the alternate observations :36917
-GL	Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy
-
-Very nice [blog](http://www.ddocent.com/filtering/) illustrating good filtering practices.
-
-```{bash}
-
-name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
-names=Lyo_202_2014
-###------------------adding readgroup to bam
-rm /home/vincent/Projects/2019_pilotplant/04_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
-  #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
-do
-
-
-java -jar /home/vincent/apps/picard/picard.jar AddOrReplaceReadGroups \
-       I=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
-       O=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
-       RGID=${names} \
-       RGLB=lib1 \
-       RGPL=illumina \
-       RGPU=unit1 \
-       RGSM=${names}
-
-#rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
-
-done
-rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
-
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
-do
-
-echo "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/"${names}"/bwaMapping2DB/"${names}"_mapping2ref.bam " >> /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
-
-done
-
-##remove trailing whitespaces
-
- sed -i 's/[ \t]*$//' /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt
-
-##-------------index bamfile
-##need before freebayes parallel
-
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
-do
-
-samtools index /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_mapping2ref.bam
-
-done
-
-##-------------calling
-#rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02
-#mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02
-
-
-#    freebayes -F 0.05 -C 3 --min-coverage 30 --pooled-discrete \
-#      --bam-list /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt -f \
-#      /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta > \
-#      /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_all_f_005_min_20x_again.vcf
-  
-  #grep "^#" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_all_f_005_min_20x.vcf |cut -f 1 |sort|uniq -c
-  
-  ##-------------parallel calling
-  rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02
-  mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02
- 
-  
-    freebayes-parallel <(fasta_generate_regions.py /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta 100000) 36 -f /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta -C 5 --pooled-continuous --min-alternate-fraction 0.05 --min-coverage 10 --bam-list /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/multiqc_logfile_bams.txt > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf
-  
-  
-  grep "^#" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf |cut -f 1 |sort|uniq -c
-  
-##-------------zipping
-
-bgzip -c /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf.gz
-#tabix -p  vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final/freebayesOuput_WithONT/variantCallsfreebayes_all.vcf.gz
-
-##------------------------------
-##-------------vcftools filtering
-##------------------------------
-
-##-------------read filtering
-cd /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT_02/
-
-vcftools --vcf variantCallsfreebayes_minAlt3x_0.05_minCov10x.vcf --maf 0.05 --minQ 30 --recode --recode-INFO-all --out variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC
-#vcftools --vcf variantCallsfreebayes_all_f_005_min_20x.vcf --mac 3 --minQ 30 --recode --recode-INFO-all --out variantCallsfreebayes_minAlt3x_minQ30
-
-##-------------only SNPs
-
-vcftools --vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf --remove-indels --recode --recode-INFO-all --out /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_vcf_snpsOnly
-
-grep "^#" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_vcf_snpsOnly.recode.vcf | cut -f 1 |sort|uniq -c
-
-
-##-------------SNP density
-
-vcftools --vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf --SNPdensity 1000 --out /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_vcf
-
-##---------------hist-indel-len
-
-vcftools --vcf /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf --hist-indel-len --out /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_vcf
-
-
-
-
-##-------------zipping
-
-grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf >  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf
-
-
-##------------bring local
-
-
-
-
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/
-
-
-```
-
-
-######snpEff
+#####snpEff
 
 Here we do [snpEff](http://snpeff.sourceforge.net/SnpEff_manual.html#buildAddConfig).
 
 
 ```{bash}
+
+
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
+FREEBAYES_out=freebayesOuput_WithONT_Parallel_default
+sampleShort=PGAP_meta_all ##For st_thermophilus
+
 
 ##----------------
 ##bring PGAP LOCAL
@@ -5989,7 +6223,7 @@ scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/LD_singu 
 scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/ST_singu vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/
 
 ##=======================================================================================================================
-##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
+##-----------------------------------------------all together----------------------------------------------
 ##=======================================================================================================================
 ##==================
 ##Building Database
@@ -6002,15 +6236,17 @@ scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/ST_singu 
 ##-------------
 
 vim /home/vincent/miniconda2/share/snpeff-4.3.1t-2/snpEff.config
-S_thermophilus_mag_rmk202.genome : S_thermophilus_mag_rmk202
-L_delbrueckii_mag_rmk202.genome : L_delbrueckii_mag_rmk202
+#S_thermophilus_mag_rmk202.genome : S_thermophilus_mag_rmk202
+#L_delbrueckii_mag_rmk202.genome : L_delbrueckii_mag_rmk202
 #Streptococcus_phage_rmk202.genome : Streptococcus_phage_rmk202
+PGAP_meta_all.genome : PGAP_meta_all
 
 ##-------------
 #02_put genome fasta and gff into right directory:
 ##-------------
 
-sampleShort=S_thermophilus_mag_rmk202
+#sampleShort=S_thermophilus_mag_rmk202
+#sampleShort=CP046134 ##For st_thermophilus
 
 #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta 
 
@@ -6020,7 +6256,7 @@ sampleShort=S_thermophilus_mag_rmk202
 rm -r /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}
 mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}
 
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids/di_rmk202_MAG_reference_polished.fasta  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/sequences.fa
+cat ${Assembly} > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}/sequences.fa
 
 
 
@@ -6028,13 +6264,17 @@ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_
 #04 genes gff 
 ##-------------
 
-grep "^#" -v /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff|grep "CP0" |cut -f 1|sort|uniq -c
+#grep "^#" -v /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff|grep -e "${sampleShort}" |cut -f 1|sort|uniq -c
 
-sed 's/CP046134/S_thermophilus_mag_rmk202/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff | grep "^S_thermophilus_mag_rmk202" |awk -F "\t" '{OFS"\t"}{if($3=="CDS") print $0}' > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}//genes.gff
+#cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff | grep -e "^${sampleShort}" |awk -F "\t" '{OFS"\t"}{if($3=="CDS") print $0}' > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}//genes.gff
 
-#/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gff
-#cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/S_thermophilus_RMK202.current.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}//genes.gff
 
+##-------------
+#04 all genes gff 
+##-------------
+
+##already preped in RAST chunk
+ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/merged/all_genes_rmk202.gff |sed 's/gene/CDS/g' > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}//genes.gff
 
 ##-------------
 ##05_build database
@@ -6052,171 +6292,53 @@ java -jar snpEff.jar build -gff3 -v ${sampleShort}
 ##06_preperation of SNV file
 ##-------------
 
-grep "S_thermophilus_mag_rmk202" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_sterm.vcf
+#grep -e "${sampleShort}" ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf > ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_all.vcf
 
 ##-------------
 ##07 SNveff calling
 ##-------------
 
 cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}/
+rm -r ${sampleShort} ${BaseLocation}/${FREEBAYES_out}/SnpEff/${sampleShort}/
+mkdir -p ${sampleShort} ${BaseLocation}/${FREEBAYES_out}/SnpEff/${sampleShort}/
 
 
-java -Xmx64g -jar snpEff.jar ${sampleShort} /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_sterm.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
+java -Xmx64g -jar snpEff.jar ${sampleShort} ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf > ${BaseLocation}/${FREEBAYES_out}/SnpEff/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_snpeff.vcf
 
 
 ##-------------
 ##08_prep for R
 ##-------------
 
-grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf  | \
-  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}/variantCallsfreebayes_all_${sampleShort}_snpEff_prepforR.vcf 
+grep "^#" -v ${BaseLocation}/${FREEBAYES_out}/SnpEff/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_snpeff.vcf  | \
+  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > ${BaseLocation}/${FREEBAYES_out}/SnpEff/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_snpeff_prepforR.vcf
 
 
 ##==================
 ##transfer local 
 ##==================
 
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
+FREEBAYES_out=freebayesOuput_WithONT_Parallel_default
 
-sampleShort=Streptococcus_thermophilus_RMK202
 
 
 ##-------------
 ###snpEff
 ##-------------
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff_02.vcf 
+scp vincent@130.223.51.116:${BaseLocation}/${FREEBAYES_out}/SnpEff/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_snpeff_prepforR.vcf ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/
 
 ##-------------
 ###eggnog
 ##-------------
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
+#scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
 
-
-
-
-
-##=======================================================================================================================
-##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
-##=======================================================================================================================
-##==================
-##Building Database
-##==================
-#/archiv/Projects/2018_Culturomics/genomes/Lactobacillus_delbrueckii_RMK202.fna
-#/archiv/Projects/2018_Culturomics/genomes/Streptococcus_thermophilus_RMK202.fna
-
-##-------------
-##01_add genome name to
-##-------------
-
-vim /home/vincent/miniconda2/share/snpeff-4.3.1t-2/snpEff.config
-Streptococcus_thermophilus_RMK202_pgap.genome : Streptococcus_thermophilus_RMK202_pgap
-Lactobacillus_delbrueckii_RMK202_pgap.genome : Lactobacillus_delbrueckii_RMK202_pgap
-
-##-------------
-#02_put genome fasta and gff into right directory:
-##-------------
-
-sampleShort=Lactobacillus_delbrueckii_RMK202
-
-##-------------
-#03_put genome fasta 
-##-------------
-rm -r /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
-mkdir -p /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap
-
-cat  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202.fasta  > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap/sequences.fa
-
-
-
-##-------------
-#04 genes gff 
-##-------------
-
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Lactobacillus_delbrueckii_RMK202_pgap.gff > /home/vincent/miniconda2/share/snpeff-4.3.1t-2/data/${sampleShort}_pgap//genes.gff
-
-
-##-------------
-##05_build database
-##-------------
-
-cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-java -jar snpEff.jar build -gff3 -v ${sampleShort}_pgap
-
-
-##==================
-##running snpEff
-##==================
-
-##-------------
-##06_preperation of SNV file
-##-------------
-
-grep "L_delbrueckii_RMK202" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_ldel.vcf
-
-##-------------
-##07 SNveff calling
-##-------------
-
-cd /home/vincent/miniconda2/share/snpeff-4.3.1t-2/
-rm -r /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/
-
-
-java -Xmx64g -jar snpEff.jar ${sampleShort}_pgap  /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x_ldel.vcf > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf 
-
-##-------------
-##08_prep for R
-##-------------
-
-grep "^##" -v /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff.vcf | \
-  awk -F "\t" 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8}' > /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf
-
-
-##==================
-##transfer local 
-##==================
-
-
-#sampleShort=Streptococcus_thermophilus_RMK202
-sampleShort=Lactobacillus_delbrueckii_RMK202
-
-##-------------
-###snpEff
-##-------------
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrain/SnpEff/${sampleShort}_pgap/variantCallsfreebayes_all_${sampleShort}_snpEff_forR.vcf ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_snpEff_02.vcf 
-
-##-------------
-###eggnog
-##-------------
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
-
-
-##=======================================================================================================================
-##-----------------------------------------------merge species----------------------------------------------
-##=======================================================================================================================
-
-##-------------
-###snpEff
-##-------------
-cat ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S*_snpEff_02.vcf  \
-  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L*_snpEff_02.vcf > \
-  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_both_snpEff.vcf
-
-
-##-------------
-###eggnog
-##-------------
-
-grep -v "^#" ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_S*_eggnog.vcf | sed 's/gnl|extdb|//g'|awk -F " " 'BEGIN{OFS="_"}{print "S_thermophilus_RMK202",$0}' >  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf
-grep -v "^#" ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_L*_eggnog.vcf | sed 's/gnl|extdb|//g'|awk -F " " 'BEGIN{OFS="_"}{print "L_delbrueckii_RMK202",$0}' >>  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf
-
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/eggnog/${sampleShort}_pgap_query_seqs.fa.emapper.annotations  ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_${sampleShort}_eggnog.vcf 
 
 
 ```
@@ -6236,49 +6358,86 @@ We could potentially have a problem of alignement in genes highly similiar. Ther
 
 ```{bash}
 
-##=======================================================================================================================
-##-----------------------------------------------Streptococcus thermophilus----------------------------------------------
-##=======================================================================================================================
-  
-awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff
 
-#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
 
-bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/di_rmk202_MAG_reference_polished.fasta
 
+
+
+BaseLocation_Ldel=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/
+BaseFILNAME=L_delbrueckii_RMK202
+
+
+BaseLocation_Sterm=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/
+BaseFILNAME_sterm=S_thermophilus_RMK202
+
+
+###================
+##script
+###================
+
+
+##==================
+##merge all fna files
+##==================
+
+
+rm -r ${BaseLocation}/Repeats/
+mkdir -p ${BaseLocation}/Repeats/
+
+cat ${BaseLocation_Ldel}/${BaseFILNAME}_genes.ffn \
+  ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_genes.ffn > \
+ ${BaseLocation}/Repeats/both_genes.ffn
+
+cat ${BaseLocation_Ldel}/${BaseFILNAME}.current.gff \
+  ${BaseLocation_Sterm}/${BaseFILNAME_sterm}.current.gff > \
+ ${BaseLocation}/Repeats/both_genes.ffn
+ 
 ##==================
 ##cd-hit
 ##==================
+
+cd-hit-est -i ${BaseLocation}/Repeats/both_genes.ffn \
+    -o ${BaseLocation}/Repeats/both__cdsClustering.txt -c 0.90 -M 30000 -T 37 -sc 1 -sf 1
+
+  # cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna \
+  #  -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
   
 
 
-   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap_cds.fna \
-    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
-  
-  
-  
-  
+
+
+
+
   ###multifasta2fasta
-  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters
-  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/sterm_cdsClustering.txt.clstr
+  mkdir -p ${BaseLocation}/Repeats/splitClusters
+  cd ${BaseLocation}/Repeats/splitClusters
+  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' ${BaseLocation}/Repeats/both__cdsClustering.txt.clstr
 
   ##prepare log file
   #cluster_2.txt till cluster_24.txt
   
-  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -24 |tail -23 > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt
+  ls ${BaseLocation}/Repeats/splitClusters |sort -V |head -84 |tail -83 > ${BaseLocation}/Repeats/splitClusters/files_of_INterest.txt
      
    ##get gene names
    num=2
-   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
-   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/
+   rm ${BaseLocation}/Repeats/bigCluster/all_repeatingGenes.txt
+   mkdir -p ${BaseLocation}/Repeats/bigCluster/
    i=Cluster_2.txt
-   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
+   for i in $(cat ${BaseLocation}/Repeats/splitClusters/files_of_INterest.txt)
     do
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i}
+   grep -v "^uster" ${BaseLocation}/Repeats/splitClusters/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
+    ${BaseLocation}/Repeats/bigCluster/names_${i}
     
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt
+   grep -v "^uster" ${BaseLocation}/Repeats/splitClusters/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
+   ${BaseLocation}/Repeats/bigCluster/all_repeatingGenes.txt
       
     num=$((num+1))
     
@@ -6288,16 +6447,16 @@ bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_
 
     ##get gff
     
-    genes=pgaptmp_001292
-    mkdir -p  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/
-    for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters/files_of_INterest.txt)
+  # genes=pgaptmp_001292
+    mkdir -p  ${BaseLocation}/Repeats//bigCluster_genes/
+    for i in $(cat ${BaseLocation}/Repeats/splitClusters/files_of_INterest.txt)
     do
-    rm  /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
-    for genes in $(cut -f 1 /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/names_${i})
+    rm  ${BaseLocation}/Repeats//bigCluster_genes//genes_${i}
+    for genes in $(cut -f 1 ${BaseLocation}/Repeats/bigCluster//names_${i})
       do
         
-        grep "cds-${genes};" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff >> \
-          /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster_genes/genes_${i}
+        grep "${genes}.p" ${BaseLocation}/Repeats/both_genes.ffn >> \
+          ${BaseLocation}/Repeats//bigCluster_genes/genes_${i}
        
         
       done # $genes   
@@ -6308,78 +6467,7 @@ bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_
   mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
 
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/
-
-##=======================================================================================================================
-##-----------------------------------------------Lactobacillus delbrueckii----------------------------------------------
-##=======================================================================================================================
-
-
-  
-awk -F "[\t;]" 'BEGIN{OFS="\t"} {if($3=="CDS") print $1, $4,$5,$9}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot.gff |sed 's/ID=cds-//g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff
-
-#bedtools index /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202.fasta
-
-bedtools getfasta -name -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202.fasta -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/annot_cds.gff > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna
-
-##==================
-##cd-hit
-##==================
-  
-
-
-   cd-hit -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Ldel_RMK202_pgap_cds.fna \
-    -o /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
-  
-  
-  
-  
-  ###multifasta2fasta
-  mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
-  cd /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel
-  awk 'NR%1==0{ print > "Cluster_"++i".txt" }' RS='>Cl' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/ldel_cdsClustering.txt.clstr
-
-  ##prepare log file
-  #cluster_2.txt till cluster_24.txt
-  
-  ls /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters |sort -V |head -43  > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt
-     
-   ##get gene names
-   num=2
-   rm /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
-   mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/
-   i=Cluster_2.txt
-   for i in $(cat /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/files_of_INterest.txt)
-    do
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}' |awk -F "... at " 'BEGIN{OFS="\t"}{print $1,$2}' |sed 's/... \*//g' |sed '$ d' > \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/names_${i}
-    
-   grep -v "^uster" /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/${i} |awk -F ">" '{print $2}'  |awk -F "... at " -v count="$num" 'BEGIN{OFS="\t"}{print $1,$2,count}' |sed 's/... \*//g' |sed '$ d' >> \
-    /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt
-      
-    num=$((num+1))
-    
-    
-    done
- 
- 
-##=======================================================================================================================
-##-----------------------------------------------merge and transfer----------------------------------------------
-##=======================================================================================================================
-
-
-awk -F " " 'BEGIN{OFS="_"}{print "S_thermophilus_RMK202",$0}' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes.txt > /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt 
-    
-awk -F " " 'BEGIN{OFS="_"}{print "L_delbrueckii_RMK202",$0}' /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/splitClusters_ldel/bigCluster_ldel/all_repeatingGenes.txt >> /archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt 
-
-##-------------------
-##local
-##-------------------
-
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation/CDS_clustering/bigCluster/all_repeatingGenes_both.txt  ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes_both.txt
-
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/Repeats/bigCluster/all_repeatingGenes.txt ~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/
 
 ```
 
@@ -6397,16 +6485,17 @@ species=Sterm
 
 ##-------extract OG names
 #rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/orthofinder/Results_Jul18/Orthogroups/test.txt
-rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
-for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
+rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt
+for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
 do
 
-grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups.txt | sed 's/gnl|extdb|//g'| awk -F " " 'BEGIN{OFS="\t"}{print $1,"S_thermophilus_RMK202_"$4}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups.txt | sed 's/gnl|extdb|//g'| awk -F " " 'BEGIN{OFS="\t"}{print $1,"S_thermophilus_RMK202",$2}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01/Orthogroups/OG_names_${species}.txt
+#grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups.txt | sed 's/gnl|extdb|//g'| awk -F " " 'BEGIN{OFS="\t"}{print $1,$2}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01/Orthogroups/OG_names_${species}.txt
 
 
 done #OG
 
-cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
+cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
 
 
 ##=======================================================================================================================
@@ -6416,16 +6505,17 @@ species=Ldel
 
 ##-------extract OG names
 #rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/orthofinder/Results_Jul18/Orthogroups/test.txt
-rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
-for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
+rm /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt
+for OG in $(cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups_SingleCopyOrthologues.txt)
 do
 
-grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/Orthogroups.txt| sed 's/gnl|extdb|//g' |awk -F " " 'BEGIN{OFS="\t"}{print $1,"	L_delbrueckii_RMK202_"$11}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt
+grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups.txt| sed 's/gnl|extdb|//g' |awk -F " " 'BEGIN{OFS="\t"}{print $1,"	L_delbrueckii_RMK202",$11}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt
+#grep "$OG" /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/Orthogroups.txt| sed 's/gnl|extdb|//g' |awk -F " " 'BEGIN{OFS="\t"}{print $1,$2}'  >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt
 
 
 done #OG
 
-cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Oct21/Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
+cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/orthofinder/Results_Dec01//Orthogroups/OG_names_${species}.txt >> /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt
 
 
 
@@ -6435,7 +6525,7 @@ cat /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/${species}/ortho
 
 mkdir -p ~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt  ~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/coreGenes_rmk202_both.txt  ~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt
 
 
 ```
@@ -6449,7 +6539,7 @@ library(stringr)
 ##==================
 ##01-SNPeff
 ##==================
-RMK202_both_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_both_snpEff.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
+RMK202_both_snpEff <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_snpeff_prepforR.vcf",  "\t", escape_double = FALSE, col_names = c("X.CHROM","POS","unknown","REF","ALT","quality","uknown2","snpeff"), trim_ws = TRUE)
 
 RMK202_both_snpEff_02 <- subset(RMK202_both_snpEff, select=-c(unknown,uknown2))
 RMK202_both_snpEff_02$site <- paste(RMK202_both_snpEff_02$X.CHROM,RMK202_both_snpEff_02$POS,RMK202_both_snpEff_02$REF,RMK202_both_snpEff_02$ALT,sep="_")
@@ -6469,11 +6559,11 @@ RMK202_both_SNPeff_final$finalName <- RMK202_both_SNPeff_final$typeName %>% gsub
 RMK202_both_SNPeff_final$finalName <- paste(RMK202_both_SNPeff_final$X.CHROM,RMK202_both_SNPeff_final$finalName,sep = "_")
 # length(grep("pgaptmp_",S_thermophilus_snpEff_03$finalName,invert = TRUE))
 table(RMK202_both_SNPeff_final$X.CHROM)
-
+#table(RMK202_both_SNPeff_final$significance)
 ##==================
 ##02 eggnog
 ##==================
-RMK202_both_eggnog <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/variantCallsfreebayes_all_both_eggnog.vcf",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description"))
+RMK202_both_eggnog <- read_delim("/home/vincent/Desktop/Projects/2019_Pilotplan/assembly_20191129/merged/merged_all_eggnog.annotations",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description"))
 # RMK202_both_eggnog[RMK202_both_eggnog$query_name %in% SNPeff_final$finalName,]
 
 ##==================
@@ -11846,6 +11936,7 @@ mkdir -p /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/faa
 
 
 #cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/PROKKA_singleGenomes/contig_1/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/faa/contig_1_meta.faa
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/sterm/S_thermophilus_RMK202_genes.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/faa/S_thermophilus_RMK202_mag.faa
 cat /archiv/Projects/2018_Culturomics/06_Spades/S72/Prokka/20190203/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/faa/S72.faa
 cat /archiv/Projects/2018_Culturomics/06_Spades/S50/Prokka/20190203/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Sterm/faa/S50.faa
 
@@ -11858,6 +11949,7 @@ mkdir -p /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa
 
 
 #cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/PROKKA_singleGenomes/contig_2/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa/contig_2_meta.faa
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/ldel/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa/L_delbrueckii_RMK202_mag.faa
 cat /archiv/Projects/2018_Culturomics/06_Spades/L104//Prokka/20190203/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa/L104.faa
 cat /archiv/Projects/2018_Culturomics/06_Spades/L108//Prokka/20190203/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa/L108.faa
 cat /archiv/Projects/2018_Culturomics/06_Spades/L35//Prokka/20190203/*.faa > /archiv/Projects/2019_Nano_Meta/05_Orthofinder_withIsolates/Ldel/faa/L35.faa
