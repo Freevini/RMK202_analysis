@@ -4174,7 +4174,7 @@ Ldel_fastANI_nwc <- Ldel_fastANI_nwc[Ldel_fastANI_nwc$new_X2!="L39",]
 Ldel_fastANI_nwc$new_X1 <- revalue(Ldel_fastANI_nwc$new_X1, c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6","Lactobacillus_delbrueckii_RMK202"="RMK202"))
 Ldel_fastANI_nwc$new_X2 <- revalue(Ldel_fastANI_nwc$new_X2, c("L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4", "L104"="mst6","Lactobacillus_delbrueckii_RMK202"="RMK202"))
 
-# not_explained_sterm_plot$sample_renamed = factor(not_explained_sterm_plot$sample_renamed, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+not_explained_sterm_plot$sample_renamed = factor(not_explained_sterm_plot$sample_renamed, levels=c("Lyoampulle\n2012","Lyoampulle\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
 
 ##remove upper triangle and keep only lower ANI score
 names <- levels(as.factor(Ldel_fastANI_nwc$new_X2))
@@ -5531,7 +5531,7 @@ grep "^##" -v ${BaseLocation}/${FREEBAYES_out}/variantCallsfreebayes_minAlt3x_0.
 
 mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT
 
-scp vincent@130.223.51.151:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/freebayesOuput_WithONT_Parallel_default/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/freebayesOuput_WithONT_Parallel_default/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR.vcf /home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/
 
 
 ```
@@ -6570,25 +6570,27 @@ RMK202_both_eggnog <- read_delim("/home/vincent/Desktop/Projects/2019_Pilotplan/
 ##03 repeats
 ##==================
 
-RMK202_both_repeats <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes_both.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("geneNAME","Repeat_identity","Repeat_cluster")) #%>% slice( 1:(n()-3))
+RMK202_both_repeats <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/repeatingGenes/all_repeatingGenes.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("geneNAME","Repeat_identity","Repeat_cluster")) #%>% slice( 1:(n()-3))
 # nrow(RMK202_both_repeats)
 
 ##==================
 ##04_core genes
 ##==================
 library(tidyverse)
-RMK202_both_coreGenes <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("orthogroup","geneName")) %>% add_column(.,core="core")
+RMK202_both_coreGenes <- read_delim("~/Desktop/Projects/2019_Pilotplan/09_annoation/coreGenes/coreGenes_rmk202_both.txt",  "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("orthogroup","species","geneName")) %>% add_column(.,core="core")
 
 ##==================
 ##05_merge
 ##==================
 nrow(RMK202_both_SNPeff_final)
 
-RMK202_snpeff_eggnog <- merge(RMK202_both_SNPeff_final, RMK202_both_eggnog, by.x = "finalName", by.y = "query_name",all.x = TRUE)
-RMK202_snpeff_eggnog_repeats <- merge(RMK202_snpeff_eggnog, RMK202_both_repeats, by.x = "finalName", by.y = "geneNAME",all.x = TRUE)
-RMK202_snpeff_eggnog_repeats_core <- merge(RMK202_snpeff_eggnog_repeats, RMK202_both_coreGenes, by.x = "finalName", by.y = "geneName",all.x = TRUE)
+RMK202_snpeff_eggnog <- merge(RMK202_both_SNPeff_final, RMK202_both_eggnog, by.x = "geneName", by.y = "query_name",all.x = TRUE)
+RMK202_snpeff_eggnog_repeats <- merge(RMK202_snpeff_eggnog, RMK202_both_repeats, by.x = "geneName", by.y = "geneNAME",all.x = TRUE)
+RMK202_snpeff_eggnog_repeats_core <- merge(RMK202_snpeff_eggnog_repeats, RMK202_both_coreGenes, by.x = "geneName", by.y = "geneName",all.x = TRUE)
 nrow(RMK202_snpeff_eggnog_repeats_core)
 
+table(RMK202_snpeff_eggnog_repeats_core$core)
+table(RMK202_snpeff_eggnog_repeats_core$X.CHROM)
 write.csv(RMK202_snpeff_eggnog_repeats_core,"~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/SnpEff/new/RMK202_snpeff_eggnog_repeats_core.txt")
 
 RMK202_snpeff_eggnog_repeats_core[grep("S_thermophilus",RMK202_snpeff_eggnog_repeats_core$finalName),]
@@ -6622,13 +6624,17 @@ library(xlsx)
 ##==================
 ##01_import data
 ##==================
-snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
+#snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
+snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
 
+
+
+# colnames(snps_freebayes)
 # snps_freebayes[snps_freebayes$QUAL<=20,]
 # snps_freebayes <- snps_freebayes[snps_freebayes$QUAL>20,]
 # dim(snps_freebayes_new)
 # dim(snps_freebayes)
-snps_freebayes <- subset(snps_freebayes, select=-c(di_K1_10h,th_K1_8h))
+# snps_freebayes <- subset(snps_freebayes, select=-c(di_K1_10h,th_K1_8h))
 
 
 
@@ -6721,7 +6727,7 @@ sample_relative_wide <- sample_relative_safe_final_tsne[rowSums(sample_relative_
 # nrow(sample_relative_wide)
 sample_relative_wide <- subset(sample_relative_wide, select=-POS)
 sample_relative_wide$species <- sample_relative_wide$X.CHROM
-sample_relative_wide$species <- revalue(sample_relative_wide$species, c("L_delbrueckii_RMK202"="L. delbrueckii","S_thermophilus_RMK202"="S. thermophilus"))
+sample_relative_wide$species <- revalue(sample_relative_wide$species, c("CP046131"="L. delbrueckii","CP046134"="S. thermophilus"))
 sample_relative_wide$culture <- "RMK202"
 
 ##==================
@@ -6738,13 +6744,13 @@ sample_relative_wide_description <- merge(sample_relative_wide,RMK202_snpeff_egg
 
 ##---------------------------------subset for interesting columns
 colnames(sample_relative_wide_description)
-sample_relative_wide_description_interest <- subset(sample_relative_wide_description, select=c(X.CHROM.x,site,species,culture,finalName,Preferred_name,effect,significance,geneName,COG_Functional_Category,Repeat_cluster,core,L104,L108,L35,L44,L70,L71,L80,L99,S50,S72,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202,lyo202_96))
+sample_relative_wide_description_interest <- subset(sample_relative_wide_description, select=c(X.CHROM.x,species.x,site,culture,finalName,Preferred_name,effect,significance,geneName,COG_Functional_Category,Repeat_cluster,core,L104,L108,L35,L44,L70,L71,L80,L99,S50,S72,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202,lyo202_96))
 
 ##==================
 ##07 rename samples
 ##==================
 
-colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_relative_wide_description_interest), c("S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_relative_wide_description_interest), c("species.x"="species","S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
 
 
 ##==================
@@ -6752,7 +6758,8 @@ colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_r
 ##==================
 table(sample_relative_wide_description_interest$X.CHROM.x)
 nrow(sample_relative_wide_description_interest)
-sample_relative_wide_description_interest_subset <- sample_relative_wide_description_interest[which(sample_relative_wide_description_interest$X.CHROM.x %in% c("L_delbrueckii_RMK202","S_thermophilus_RMK202")),]
+# sample_relative_wide_description_interest_subset <- sample_relative_wide_description_interest[which(sample_relative_wide_description_interest$X.CHROM.x %in% c("L_delbrueckii_RMK202","S_thermophilus_RMK202")),]
+sample_relative_wide_description_interest_subset <- sample_relative_wide_description_interest[which(sample_relative_wide_description_interest$X.CHROM.x %in% c("CP046131","CP046134")),]
 nrow(sample_relative_wide_description_interest_subset)
 table(sample_relative_wide_description_interest_subset$X.CHROM.x)
 sample_relative_wide <- sample_relative_wide_description_interest_subset
@@ -6793,7 +6800,7 @@ plotDens
 dN_dS_ratios <- arrange(dN_dS_ratios,desc(dN_dS)) 
 
 ##-------------------------------prep snpeff
-annotation_prep <- RMK202_snpeff_eggnog_repeats_core %>% select(-c(X1,X.CHROM,POS,REF,ALT,quality,site,effect,significance)) %>% distinct()
+annotation_prep <- RMK202_snpeff_eggnog_repeats_core %>% select(-c(X1,X.CHROM,species,POS,REF,ALT,quality,site,effect,significance)) %>% distinct()
 dN_dS_ratios_final <- merge(dN_dS_ratios,annotation_prep,by.x="gene",by.y="finalName",all.x = TRUE)
 dN_dS_ratios_final_02 <- arrange(dN_dS_ratios_final,desc(dN_dS)) 
 
@@ -6828,7 +6835,7 @@ RMK202_snpeff_eggnog_repeats_core_uniuqes_final <- merge(RMK202_snpeff_eggnog_re
 write.csv(RMK202_snpeff_eggnog_repeats_core_uniuqes_final,file="~/Desktop/presenations/my_presentations/20191007_groupmeeting/figures/RMK202_snpeff_eggnog_repeats_core_dNdS_uniqueGenes.txt")
 
 colnames(RMK202_snpeff_eggnog_repeats_core_uniuqes_final)
-RMK202_snpeff_eggnog_repeats_core_uniuqes_final_reduce <- RMK202_snpeff_eggnog_repeats_core %>% select(-c("finalName","Preferred_name","EC","KEGG_ko","KEGG_Reaction","CAZy","BiGG_Reaction","COG_Functional_Category","core free text description")) %>% distinct()
+RMK202_snpeff_eggnog_repeats_core_uniuqes_final_reduce <- RMK202_snpeff_eggnog_repeats_core %>% select(-c("finalName","Preferred_name","EC","KEGG_ko","KEGG_Reaction","CAZy","BiGG_Reaction","COG_Functional_Category","eggNOG free text description")) %>% distinct()
 
 
 
@@ -7135,20 +7142,21 @@ dim(in_isolates)
 ##==================================================================ldel
 
 #----------------------total snps in analysis
-total_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst5<=0.9) %>% filter( mst8<=0.9 & mst10<=0.9) %>% filter("Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
+ # %>% filter(core=="core")
+total_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9) %>% filter( mst5<=0.9) %>% filter( mst8<=0.9 & mst10<=0.9) %>% filter("Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
 #----------------------in isolate
-isolates_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9)%>% nrow()
+isolates_tmp <- sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9)%>% nrow()
 #----------------------in meta
-meta_tmp <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
+meta_tmp <- sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
 ##---------------------in meta or isolate
-shared_tmp <- sample_relative_wide  %>%replace(is.na(.), 0)  %>%replace(is.na(.), 0)%>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
+shared_tmp <- sample_relative_wide  %>%replace(is.na(.), 0)  %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9 | mst4>0.9| mst5>0.9| mst6>0.9| mst7>0.9| mst8>0.9| mst9>0.9| mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05| "starter\nculture\n2018">0.05 ) %>% nrow()
 
 ##----------------
 ##plotting Venn in meta or not
 ##----------------
 plot.new()
-venn.plot <- draw.pairwise.venn(isolates_tmp,meta_tmp, shared_tmp, c("in isolates", "only in metagenome"), lty = rep("blank", 
-    2), fill = c("light blue", "grey"), alpha = rep(0.5, 2), cat.pos = c(0, 
+venn.plot <- draw.pairwise.venn(isolates_tmp,meta_tmp, shared_tmp, c("in isolates", "only in metagenome"), lty = rep("blank",
+    2), fill = c("light blue", "grey"), alpha = rep(0.5, 2), cat.pos = c(0,
     0), cat.dist = rep(0.025, 2))
 grid.draw(venn.plot)
 
@@ -7299,14 +7307,16 @@ group3_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="
 meta_tmp <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
 
 ##-------------group1
-group1_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="L.delbrueckii\ngroup1")
+
+ # %>% filter(core=="core")
+group1_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)   %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="L.delbrueckii\ngroup1")
 ##-------------group2
-group2_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% add_column(.,group="L.delbrueckii\ngroup2")
+group2_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% add_column(.,group="L.delbrueckii\ngroup2")
 ##-------------group3
-group3_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% filter(Frequency>0.0)%>% add_column(.,group="L.delbrueckii\ngroup3")
+group3_only_frequency <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")  %>% filter(Frequency>0.0)%>% add_column(.,group="L.delbrueckii\ngroup3")
 
 ##-------------not explained
-not_explained_frequency_ldel <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="not\nexplained")
+not_explained_frequency_ldel <- sample_relative_wide  %>%replace(is.na(.), 0) %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% gather(.,sample,Frequency,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>% filter(Frequency>0.0) %>% add_column(.,group="not\nexplained")
 
 
 all_ldel_frequency <- rbind(group1_only_frequency,group2_only_frequency,not_explained_frequency_ldel,group3_only_frequency)
@@ -7330,7 +7340,7 @@ ldel_freqeunyPlot <- ggplot(all_ldel_frequency,aes(x=group,y=Frequency))+ geom_v
 ldel_freqeunyPlot
 svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/04_frequeny_ldel.svg",width=6,height=4)
 ldel_freqeunyPlot
-dev.off()
+# dev.off()
 
 ```
 
@@ -7376,15 +7386,16 @@ library(naniar)
 ##---------------------------------
 ##Sample medians calulation per group
 ##---------------------------------
-group1_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 )%>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
+# %>% filter(core=="core")
+group1_Median <- sample_relative_wide  %>%replace(is.na(.), 0)   %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% filter( mst8<=0.9) %>% filter(mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 )%>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
 
 
 ##-------------group2
-group2_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
+group2_Median <- sample_relative_wide  %>%replace(is.na(.), 0)   %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8>0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
 ##-------------group3
-group3_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
+group3_Median <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5>0.9|mst10>0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
 ##-------------not explained
-not_explained_Median_ldel <- sample_relative_wide  %>%replace(is.na(.), 0)  %>% filter(core=="core") %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
+not_explained_Median_ldel <- sample_relative_wide  %>%replace(is.na(.), 0)   %>% filter(species=="L. delbrueckii")  %>% filter(species=="L. delbrueckii")  %>% filter(mst3<=0.9& mst7<=0.9&mst6<=0.9 &  mst9<=0.9&mst4<=0.9)%>% filter( mst8<=0.9) %>% filter( mst5<=0.9&mst10<=0.9) %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% select("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018") %>%  replace_with_na_at(.vars = c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"),condition = ~.x == 0)%>% as.matrix()%>% colMedians(na.rm = TRUE)   %>%replace(is.na(.), 0) 
 
 
 ##---------------------------------
@@ -7649,7 +7660,7 @@ sample_relative_long_newSNPS <- sample_relative_wide %>% filter(.,`Lyo\n1996`==0
   ##============
 ### plot 
    ##============
-
+table(sample_relative_long_newSNPS$geneName)
 
   p3 <- ggplot(sample_relative_long_newSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
 
@@ -7684,9 +7695,9 @@ table(sample_relative_long_newSNPS$finalName)
 
 RMK202_snpeff_eggnog_repeats_core[which(RMK202_snpeff_eggnog_repeats_core$finalName %in% unique(sample_relative_long_newSNPS$finalName)),] 
 RMK202_snpeff_eggnog_repeats_core[which(RMK202_snpeff_eggnog_repeats_core$finalName %in% sample_relative_long_newSNPS$finalName),] %>%  select(Preferred_name) %>% table()
-RMK202_snpeff_eggnog_repeats_core$
+# RMK202_snpeff_eggnog_repeats_core$
   
-  sum(RMK202_snpeff_eggnog_repeats_core$finalName %in% sample_relative_long_newSNPS$finalName)
+  # sum(RMK202_snpeff_eggnog_repeats_core$finalName %in% sample_relative_long_newSNPS$finalName)
 
 ```
 
@@ -7711,14 +7722,13 @@ threshold_02 <- 0.01
 sample_relative_long_lostSNPS <- sample_relative_wide %>% filter(.,`Lyo\n1996`>threshold_01)  %>% filter(.,`starter\nculture\n2018`<=threshold_02) %>%   gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(.,significance!="MODIFIER")  %>% filter(.,significance!="LOW")  %>% filter(.,is.na(Repeat_cluster))
 
 nrow(sample_relative_long_lostSNPS)
-
+sample_relative_long_lostSNPS$geneName
   ##============
 ### plot 
    ##============
 
-
-  p3 <- ggplot(sample_relative_long_lostSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
-
+# p3 <- ggplot(sample_relative_long_lostSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+geom_line(size=0.8, alpha=.5)+ 
+  p3 <- ggplot(sample_relative_long_lostSNPS,aes(x=sample,y=Snps,group=site,color=geneName,fill=geneName, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+geom_line(size=0.8, alpha=.5)+ 
     labs("",
          x="",
          y="Alternative \nallele\n frequency")+
@@ -7817,6 +7827,8 @@ table(sample_relative_long_fixedSNPS$finalName)
 ### prepare file
    ##============
 # sample_relative_alltogether_newSNPS <- rbind(sample_relative_long_newSNPS,sample_relative_long_lostSNPS,sample_relative_long_fixedSNPS)
+sample_relative_long_fixedSNPS$type <- "fixed"
+sample_relative_long_newSNPS$type<- "new"
 sample_relative_alltogether_newSNPS <- rbind(sample_relative_long_newSNPS,sample_relative_long_fixedSNPS)
 
 
@@ -7826,7 +7838,7 @@ sample_relative_alltogether_newSNPS <- rbind(sample_relative_long_newSNPS,sample
 
 
   p3 <- ggplot(sample_relative_alltogether_newSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
-
+  facet_grid(type~.,scales="free_y")+
     labs("",
          x="",
          y="Alternative \nallele\n frequency")+
@@ -7887,348 +7899,6 @@ Finally, we decided to look at following SNPs:
 4. only modifications within genes are used
 5. only non-synomous SNVs (moderate and high impact mutations) are looked at
 6. SNVs that are not present in all samples are not used for phasing
-
-
-```{r}
-###-------------
-##--------merge all
-###-------------
-not_explained_sterm_plot_nonModi <- merge(not_explained_sterm_plot,annotation_all,by="site",all.x = TRUE)
-explained_sterm_both_plot_nonModi <- merge(explained_sterm_both_plot,annotation_all,by="site",all.x = TRUE)
-explained_s50_plot_nonModi <- merge(explained_s50_plot,annotation_all,by="site",all.x = TRUE)
-explained_s72_plot_nonModi <- merge(explained_s72_plot,annotation_all,by="site",all.x = TRUE)
-
-all_sterm_plot_hist <- rbind(explained_sterm_both_plot_nonModi ,explained_s50_plot_nonModi,explained_s72_plot_nonModi,not_explained_sterm_plot_nonModi)
-nrow(all_sterm_plot_hist)
-
-
-###-------------
-##------creat histogramm
-###-------------
-# cbind(all_sterm_plot$site,all_sterm_plot$group)
-table(all_sterm_plot_hist$significance)  
-table(all_sterm_plot_hist$group)  
-
-all_sterm_plot_hist$detection <- ifelse(is.na(all_sterm_plot_hist$allele_frequency),"bellow detection\nlimit",ifelse(all_sterm_plot_hist$allele_frequency>0.05,"used","bellow detection\nlimit"))
-table(all_sterm_plot_hist$detection)
-# readsExplained <- [,c("site","group")]
-
-all_sterm_plot_hist$significance = factor(all_sterm_plot_hist$significance, levels=c('MODIFIER','LOW','MODERATE','HIGH'))
-all_sterm_plot_hist$group = factor(all_sterm_plot_hist$group, levels=c('both','S50','S72','not_explained'))
-all_sterm_plot_hist$group <- revalue(all_sterm_plot_hist$group, c("S50"="mst1", "S72"="mst2"))
-
-
-
-histogramm_SNVs <- ggplot(all_sterm_plot_hist,aes(x=group))+geom_bar(aes(fill = interaction(significance,detection)))+theme_classic()+
-  facet_grid(~significance)+
-  xlab("") + 
-  ylab("variant sites") +
-  scale_fill_manual(values=c("grey89","grey89","grey89","grey89","grey","gold1","orange","red"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
-  theme(legend.position = "right",
-        plot.margin=unit(c(0,0,0,2.5),"cm"),
-        axis.text.x=element_text(angle=45, hjust=1,size=9))
-
-histogramm_SNVs
- svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S09_SNVs_histogramm",width=8,height=4)
-histogramm_SNVs
-
- dev.off()
- 
-#  
-#   library("tidyverse")
-# library("officer")
-# library("rvg")
-
-# read_pptx() %>%
-#     add_slide(layout = "Title and Content", master = "Office Theme") %>%
-#     ph_with_vg(code = print(grid.arrange(p1,p2, p3,p0,ncol=1, nrow=4,heights=c(1.15,1,1,1.55))), type = "body",height = 7, width = 8) %>% 
-#     print(target = "~/Desktop/presenations/my_presentations/20190919_VUA/slides_03.pptx")
-
- 
-##================
-###-------------
-##----------subsett only dominant non-synomous mutations
-###-------------
-##================
-
-
-###---------------------
-# ---------------------subset data1: low abundance reads
-###---------------------
- # table(not_explained_sterm_plot_nonModi$group)
-not_explained_sterm_plot_nonModi <- not_explained_sterm_plot_nonModi[which(not_explained_sterm_plot_nonModi$allele_frequency>0.05),]
-explained_sterm_both_plot_nonModi <- explained_sterm_both_plot_nonModi[which(explained_sterm_both_plot_nonModi$allele_frequency>0.05),]
-explained_s50_plot_nonModi$group <- revalue(explained_s50_plot_nonModi$group, c("S50"="mst1"))
-explained_s50_plot_nonModi <- explained_s50_plot_nonModi[which(explained_s50_plot_nonModi$allele_frequency>0.05),]
-explained_s72_plot_nonModi$group <- revalue(explained_s72_plot_nonModi$group, c( "S72"="mst2"))
-explained_s72_plot_nonModi <- explained_s72_plot_nonModi[which(explained_s72_plot_nonModi$allele_frequency>0.05),]
-
-
-all_sterm_plot <- rbind(explained_sterm_both_plot_nonModi ,explained_s50_plot_nonModi,explained_s72_plot_nonModi,not_explained_sterm_plot_nonModi)
-nrow(all_sterm_plot)
-all_sterm_plot$group = factor(all_sterm_plot$group, levels=c("both","mst1","mst2","not_explained"))
-
-
- 
- ##----plooting without modification
-
-  pall_sterm_withModi <- ggplot(all_sterm_plot,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group))+ geom_line(size=0.1, alpha=.1)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-
-pall_sterm_withModi
-#  library(plotly)
-# ggp <- ggplotly(pall_sterm_withModi)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split.html")
-
-
-
-###---------------------
-# ---------------------subset data2: non-complete snps
-###---------------------
-
-all_sterm_plot_wide <- spread(all_sterm_plot, sample, allele_frequency)
-dim(all_sterm_plot_wide)
-all_sterm_plot_wide_woNA <- all_sterm_plot_wide[!is.na(rowSums(all_sterm_plot_wide[,41:45])),]
-dim(all_sterm_plot_wide_woNA)
-all_sterm_plot_wide_onlyNA <- all_sterm_plot_wide[is.na(rowSums(all_sterm_plot_wide[,41:45])),]
-dim(all_sterm_plot_wide_onlyNA)
-all_sterm_plot_wide_onlyNA_long <- gather(all_sterm_plot_wide_onlyNA, sample, allele_frequency, colnames(all_sterm_plot_wide_onlyNA)[41:45], factor_key=TRUE,na.rm = TRUE) 
-
-all_sterm_plot_wide_onlyNA_long_nonMOD <- all_sterm_plot_wide_onlyNA_long[all_sterm_plot_wide_onlyNA_long$significance!="MODIFIER",]
-all_sterm_plot_wide_onlyNA_long_nonMOD_LOW <- all_sterm_plot_wide_onlyNA_long_nonMOD[all_sterm_plot_wide_onlyNA_long_nonMOD$significance!="LOW",]
-
- ##----plooting without modification
-
-  pall_sterm_withModi_onlyNA <- ggplot(all_sterm_plot_wide_onlyNA_long_nonMOD_LOW,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category))) + geom_line(size=0.1, alpha=.1)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-
-pall_sterm_withModi_onlyNA
-
-
- library(plotly)
-ggp <- ggplotly(pall_sterm_withModi_onlyNA)
-htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi_snps that go away.html")
-
-
-
-###-------------
-##remove modifier muations
-###-------------
-table(all_sterm_plot$significance)
-all_sterm_plot_woModi <- all_sterm_plot[all_sterm_plot$significance!="MODIFIER",]
-(table(all_sterm_plot_woModi$group)/5)/(nrow(all_sterm_plot_woModi)/5)
-
-
-
-  pall_sterm_woModi <- ggplot(all_sterm_plot_woModi,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-pall_sterm_woModi
-#  library(plotly)
-# ggp <- ggplotly(pall_sterm_woModi)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
-
-
-###-------------
-##remove Low effect muations
-###-------------
-table(all_sterm_plot$significance)
-all_sterm_plot_woModi_LOW <- all_sterm_plot_woModi[all_sterm_plot_woModi$significance!="LOW",]
-(table(all_sterm_plot_woModi_LOW$group)/5)/(nrow(all_sterm_plot_woModi_LOW)/5)
-
-
-
-  pall_sterm_woModi_LOW <- ggplot(all_sterm_plot_woModi_LOW,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-pall_sterm_woModi_LOW
-#  library(plotly)
-# ggp <- ggplotly(pall_sterm_woModi)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
-
-
-###-------------
-##only copre
-###-------------
-
-coreGeneNames_rmk202 <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_FINAL.txt", "\t", escape_double = FALSE, col_names = c("site","core"), trim_ws = TRUE)
-dim(all_sterm_plot)
-all_sterm_plot_core <- merge(all_sterm_plot,coreGeneNames_rmk202,by="site",all.x = TRUE,all.y = FALSE)
-dim(all_sterm_plot_core)
-
-table(all_sterm_plot_core$core)
-all_sterm_plot_core <- all_sterm_plot_core[all_sterm_plot_core$core=="core",]
-table(all_sterm_plot_core$core)
-(table(all_sterm_plot_core$group)/5)/(nrow(all_sterm_plot_core)/5)
-
-
-
-  pall_sterm_CORE <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-pall_sterm_CORE
-#  library(plotly)
-# ggp <- ggplotly(pall_sterm_woModi)
-# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
-
-###---------
-##boxplot
-###---------
-
-  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,color=group,fill=group))+ geom_boxplot()+
-       # facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="right",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-pall_sterm_CORE_box
-
-
-  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=group,y=allele_frequency,color=sample,fill=sample))+ geom_boxplot()+
-       # facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="all")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="right",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-pall_sterm_CORE_box
-
-pall_sterm_CORE_box_median <- aggregate(.~sample+group, data=all_sterm_plot_core[,c("allele_frequency","sample","group")], median, na.rm=TRUE)
-pall_sterm_CORE_box_median
-
-pall_sterm_CORE_box_median_wide <- spread(pall_sterm_CORE_box_median, group, allele_frequency)
-pall_sterm_CORE_box_median_wide
-
-Final_Abundance_Sterm_wide <- pall_sterm_CORE_box_median_wide %>% select(sample,mst1,mst2,not_explained)
-
-Final_Abundance_Sterm_wide$MAG_rmk202 <- 1-pall_sterm_CORE_box_median_wide$both
-Final_Abundance_Sterm_wide$mst1 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst1
-Final_Abundance_Sterm_wide$mst2 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst2
-Final_Abundance_Sterm_wide$not_explained <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$not_explained
-Final_Abundance_Sterm_wide
-Final_Abundance_Sterm_long <- gather(Final_Abundance_Sterm_wide,Identity, Population, "mst1":"MAG_rmk202", factor_key=TRUE,na.rm = TRUE) 
-colnames(Final_Abundance_Sterm_long)[1] <- "Generation"
-Final_Abundance_Sterm_long$Generation <- revalue(Final_Abundance_Sterm_long$Generation, c("Lyoampulle\n2012"=as.double(1) ,"Lyoampulle\n2014"=as.double(2),"working\nstock"=as.double(3), "starter\nculture\n2012"=as.double(4), "starter\nculture\n2018"=as.double(5)))
-
-Final_Abundance_Sterm_long
-
-```
-
-
 
 
 
@@ -8983,122 +8653,6 @@ grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm
 
 
 
-
-```{r}
-
-##--------colors
-
-library("RColorBrewer")
-display.brewer.all()
-display.brewer.pal(n = 5, name = 'RdYlBu')
-# colors_substrains <- c(brewer.pal(n = 5, name = 'RdYlBu'),"grey60")
-colors_substrains <- c(colorsTSNE[1:5],"grey")
-library(wesanderson)
-# colors_substrains <- c(wes_palette(n=5, name="FantasticFox1"),"grey60")
-##----------merge
-explained_all_plot_nonModi_CLUSTERED <- rbind(explained_S72_plot_nonModi_CLUSTERED,
-explained_S50_plot_nonModi_CLUSTERED,
-explained_both_plot_nonModi_CLUSTERED,
-explained_not_plot_nonModi_CLUSTERED)
-nrow(explained_all_plot_nonModi_CLUSTERED)
-##----------plot line
-
-(table(explained_all_plot_nonModi_CLUSTERED$group)/5)/(nrow(explained_all_plot_nonModi_CLUSTERED)/5)*100
-
-unique(explained_all_plot_nonModi_CLUSTERED$group)
-unique(explained_all_plot_nonModi_CLUSTERED$final_clust)
-
-explained_all_plot_nonModi_CLUSTERED$group = factor(explained_all_plot_nonModi_CLUSTERED$group, levels=c("both","mst1","mst2","not_explained"))
-explained_all_plot_nonModi_CLUSTERED$final_clust = factor(explained_all_plot_nonModi_CLUSTERED$final_clust, levels=rev(c("1","2","3","4","5","not clustered")))
-
-  p_S72_sterm_woModi_clustered <- ggplot(explained_all_plot_nonModi_CLUSTERED,aes(x=sample,y=allele_frequency,group=site,color=final_clust,fill=final_clust, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category,"\nCluster:",final_clust)))+ geom_line(size=0.1, alpha=.5)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="alternative allele frequency")+
-        scale_fill_manual(values=rev(colors_substrains))+
-        scale_color_manual(values=rev(colors_substrains))+
-       scale_x_discrete( expand = c(0, 0)) +
-  # scale_y_continuous(breaks =c(0,0.25,0.5,0.75,1),labels=c(0,0.25,0.5,0.75,1), expand = c(0, 0)) +
-  theme_classic()+
-          ylim(c(0,1))+
- theme(axis.text.x = element_text(angle = 75, hjust = 1,size=6),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-           legend.position="top",
-       legend.title = element_blank(),
-       axis.text.y = element_text(size=6),
-       axis.title.y = element_text(size=9),
-            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm"),legend.direction = "horizontal"
-       )
-
-p_S72_sterm_woModi_clustered
-svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_CLUSTERED_02.svg",width=3,height=4.2)
-# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
-
-
-p_S72_sterm_woModi_clustered
-
-dev.off()
-
-ggp <- ggplotly(p_S72_sterm_woModi_clustered)
-htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_all_clustered_woModi.html")
-
-
-
-
-##----------plot box
-
-# explained_s72_plot_nonModi_CLUSTERED$final_clust = factor(explained_s72_plot_nonModi_CLUSTERED$final_clust, levels=c("1","2","3","NA"))
-
-  p_S72_sterm_woModi_clustered_box <- ggplot(explained_all_plot_nonModi_CLUSTERED,aes(x=final_clust,y=allele_frequency,color=final_clust,fill=final_clust))+ geom_boxplot(alpha=.5)+ 
-       facet_grid(group~.)+
-   labs("",
-         x="",
-         # y="",
-          y="allele frequency")+
-       # scale_fill_manual(values="gray41")+
-      # scale_color_manual(values="gray41")+
-       scale_x_discrete( expand = c(0, 0)) +
-  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
-  theme_classic()+
-          # ylim(c(0,1))+
- theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=8),
-       #axis.text.x=element_blank(),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none",
-       axis.text.y = element_text(size=8),
-       axis.title.y = element_text(size=9),
-            # plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
-       )
-
-p_S72_sterm_woModi_clustered_box
-
-
-ggp <- ggplotly(p_S72_sterm_woModi_clustered_box)
-htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_all_clustered_woModi.html")
-
-
-###-----------------
-##Tsne plots
-###-----------------
-
-p1 <- Sterm_both_suplementaryTsne+labs(title = "explained by both strains")
-p2 <- Sterm_S50_suplementaryTsne+labs(title = "explained by mst1")
-p3 <- Sterm_S72_suplementaryTsne+labs(title = "explained by mst2")
-p4 <- Sterm_notExplained_suplementaryTsne+labs(title = "not-explained")
-
-grid.arrange(p1,p2,p3,p4, ncol=1)
-
-library(grid)
-library(gridExtra)
- svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all.svg",width=2.5,height=10)
-
-   grid.arrange(p1,p2,p3,p4, ncol=1)
-
-dev.off()
-```
 
 
 ```{r}
