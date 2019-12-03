@@ -3254,16 +3254,26 @@ First we however do PROKKA for all the genomes indiviually.
 ```{bash}
 
 
+###================
+##description file
+###================
 
-##===============
-##shorten contigs name
-##===============
+Outputlocation=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/03_PROKKA_annotation_polishedGenome
+Assembly_sterm=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_sterm/final/S_thermophilus_mag_rmk202.fasta
+Assembly_ldel=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta
+BaseFILNAME_ldel=L_delbrueckii_mag_rmk202
+BaseFILNAME_sterm=S_thermophilus_mag_rmk202
+locusTagSterm=Sterm_202
+locusTagLdel=Ldel_202
+Genus_Sterm=Streptococcus
+Genus_Ldel=Lactobacillus
+threads=37
 
-for id in $(ls /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/)
-do
-sed -i 's/NODE_//g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/${id} 
-sed -i 's/+.*//g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/${id} 
-done
+
+###================
+##script
+###================
+
 
 
 ##===============
@@ -3273,33 +3283,34 @@ done
 
 ##====================================================================================-Streptococcus_thermophilus================
 
-threads=5
-names=S_thermophilus_mag_rmk202
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/PROKKA_annotation_polishedGenome/${names}
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}
+rm -r ${Outputlocation}/${BaseFILNAME_sterm}
+    mkdir -p ${Outputlocation}/${BaseFILNAME_sterm}
     
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/ --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/02_secondRacon_graphmap/assembly/secondRacon_NWC_2Assembly.fasta
-#prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/ --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/08_fourthFreebayes/splitContigs/${names}.fasta
-    
-    
-grep "dnaa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.gff
-###-----------------local
-  
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_RMK202/annotated/{CDS,eggnog}  
+prokka --outdir ${Outputlocation}/${BaseFILNAME_sterm}/ --force --usegenus --genus ${Genus_Sterm} --locustag ${locusTagSterm} --proteins proteins.faa --evalue 0.001 --addgenes ${Assembly_sterm}
 
-names=S_thermophilus_mag_rmk202
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_RMK202/annotated/CDS/${names}.faa
 
+#grep "dnaa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.gff
 
 
 ##====================================================================================-Lactobacillus delbrueckii================
 
-threads=5
-names=L_delbrueckii_mag_rmk202
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/PROKKA_annotation_polishedGenome/${names}
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}
+rm -r ${Outputlocation}/${BaseFILNAME_ldel}
+    mkdir -p ${Outputlocation}/${BaseFILNAME_ldel}
     
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/ --force --usegenus --genus Lactobacillus --locustag Ldel_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/08_fourthFreebayes/splitContigs/${names}.fasta
+prokka --outdir ${Outputlocation}/${BaseFILNAME_ldel}/ --force --usegenus --genus ${Genus_Ldel} --locustag ${locusTagLdel} --proteins proteins.faa --evalue 0.001 --addgenes ${Assembly_ldel}
+
+
+#grep "dnaa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.gff
+
+###-----------scp-------------------------------------------------------------------------------
+
+###-----------------local
+  
+mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_RMK202/annotated/{CDS,eggnog}  
+
+names=S_thermophilus_mag_rmk202
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_RMK202/annotated/CDS/${names}.faa
+
 
 ###-----------------local
   
@@ -3308,119 +3319,6 @@ mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_against
 names=L_delbrueckii_mag_rmk202
 scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/${names}/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_RMK202/annotated/CDS/${names}.faa
     
-        
-
-##-----------
-###Bos_taurus_mito.fasta
-##-----------
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Bos_taurus_mito/
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Bos_taurus_mito/
-    
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Bos_taurus_mito/ --force --usegenus --genus Bos --locustag bt_mito --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Bos_taurus_mito.fasta
-    
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Bos_taurus_mito/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/CDS/Bos_taurus_mito.faa
-
-
-##-----------
-###Lactobacillus_delbrueckii_plasmid.fasta
-##-----------
-
-#sed -i 's/Lactobacillus/L/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_delbrueckii_plasmid.fasta
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_plasmid/
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_plasmid/
-    
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_plasmid/ --force --usegenus --genus Lactobacillus --locustag ld_plasmid --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Lactobacillus_delbrueckii_plasmid.fasta
-    
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_plasmid/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/CDS/Lactobacillus_delbrueckii_plasmid.faa
-
-
-    
-##-----------
-###Lactobacillus_delbrueckii_RMK202.fasta
-##-----------
-
-#sed -i 's/Lactobacillus/L/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_delbrueckii_RMK202.fasta
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_RMK202/
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_RMK202/
-    
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_RMK202/ --force --usegenus --genus Lactobacillus --locustag ld_rmk202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Lactobacillus_delbrueckii_RMK202.fasta
-  
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/{CDS,eggnog}  
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_delbrueckii_RMK202/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/CDS/Lactobacillus_delbrueckii_RMK202.faa
-
-
-##-----------
-###Streptococcus_thermophilus_RMK202.fasta
-##-----------
-
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Streptococcus_thermophilus_RMK202/
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Streptococcus_thermophilus_RMK202/
-    
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Streptococcus_thermophilus_RMK202/ --force --usegenus --genus Streptococcus --locustag st_rmk202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Streptococcus_thermophilus_RMK202.fasta
-    
-    
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Streptococcus_thermophilus_RMK202/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/CDS/Streptococcus_thermophilus_RMK202.faa
-
-
-##-----------
-###Lactobacillus_plasmid.fasta
-##-----------
-sed -i 's/Lactobacillus/L/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_plasmid.fasta
-
-rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_plasmid/
-    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_plasmid/
-    
-prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_plasmid/ --force --usegenus --genus Lactobacillus --locustag ld_plasmid --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_plasmid.fasta
-    
-
-    
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/01_PROKKA/Lactobacillus_plasmid/*.faa /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/annotated/CDS/Lactobacillus_plasmid.faa
-
-
-##==========0
-##shorten Names
-##==========
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_01.fasta
-sed -i 's/Lactobacillus/L/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_01.fasta
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_01.fasta
-
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_phage.fasta
-sed -i 's/Streptococcus/S/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_phage.fasta
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_phage.fasta
-
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_thermophilus_potenial_prophage.fasta
-sed -i 's/Streptococcus_thermohilus/S_ther/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_thermophilus_potenial_prophage.fasta
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Streptococcus_thermophilus_potenial_prophage.fasta
-
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_02.fasta
-sed -i 's/Lactobacillus/L/g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_02.fasta
-grep "^>" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_phage_RMK202_02.fasta
- 
-
- 
-##=================
-##merge Ldel
-##=================
-
-cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Lactobacillus_delbrueckii_RMK202.fasta  \
-/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Lactobacillus_delbrueckii_plasmid.fasta \
-/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/fasta/single_contigs/Lactobacillus_plasmid.fasta      > \
-/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/merged/Ldel_RMK202.fasta
-
-###-----------scp
-rm -r/home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/single_contigs_final
-
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/single_contigs_final
-
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/merged/Ldel_RMK202.fasta /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/single_contigs_final
-
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/08_eightFreebayes/freebayesOuput/splitFasta/finalWithIllumina/Streptococcus_thermophilus_RMK202.fasta /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/AssemblyGraphs/newGenomestich/single_contigs_final
-
-
 ```
 
 looking into Prokka annoation
@@ -4387,22 +4285,33 @@ awk '{print $3-$2}' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_unde
 
 ```{bash}
 
+###================
+##description file
+###================
+
+Outputlocation=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/03_PROKKA_annotation_polishedGenome
+Assembly_sterm=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_sterm/final/S_thermophilus_mag_rmk202.fasta
+Assembly_ldel=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta
+BaseFILNAME_ldel=L_delbrueckii_mag_rmk202
+BaseFILNAME_sterm=S_thermophilus_mag_rmk202
+locusTagSterm=Sterm_202
+locusTagLdel=Ldel_202
+Genus_Sterm=Streptococcus
+Genus_Ldel=Lactobacillus
+threads=37
+
+
+###================
+##script
+###================
+
+
 mkdir -p /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/{Sterm,Ldel}
 ##-----------------
 ###01_annotate Sterm rmk202 with prokka
 ##-----------------
 
-
-scp /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/ST_singu/Ster_rmk202_mag.fasta  vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Sterm/
-scp /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/LD_singu/Ldel_RMK202.fasta  vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Ldel/
-
-
-##sterm
-/home/vincent/miniconda2/pkgs/prokka-1.12-1/bin/prokka --outdir /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Sterm/roary --force --usegenus --genus streptococcus --locustag Sterm_rmk202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Sterm/Ster_rmk202_mag.fasta
-
-
-##Ldel 
-prokka --outdir /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Ldel/roary/ --force --usegenus --genus lactobacillus --locustag Ldel_K1 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Ldel/Ldel_RMK202.fasta
+##Already done in PROKKA chunk
 
 ##-----------------
 ###02_roary
@@ -4412,18 +4321,20 @@ prokka --outdir /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrain
 rm -r /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm
 mkdir -p /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains
 
-cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Sterm/roary/PROKKA_10222019.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/Streptococcus_thermophilus_RMK202.gff
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/S_thermophilus_mag_rmk202/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/Streptococcus_thermophilus_RMK202.gff
 cat /archiv/Projects/2018_Culturomics/06_Spades/S72/Prokka/20190203/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/S72.gff
 cat /archiv/Projects/2018_Culturomics/06_Spades/S50/Prokka/20190203/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/S50.gff
 
-sudo roary -f /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/ -p 5 -e -n -v /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/*.gff
+roary -f /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/ -p 5 -e -n -v /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/*.gff
 
-awk -F '","' '{print $4}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv |sort |uniq -c
+dateName=$(ls /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/|grep "^_")
+
+awk -F '","' '{print $4}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/${dateName}/gene_presence_absence.csv |sort |uniq -c
 
 #awk -F '","' '{print $17}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv |head
 mkdir -p /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes
-sudo chmod 777 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv
-awk -F '","' '{if ($4=="3") print $17}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv |sed 's/"//g' |sed 's/^ *//'|sed 's/* $//'  > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.txt
+#sudo chmod 777 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv
+awk -F '","' '{if ($4=="3") print $17}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/${dateName}/gene_presence_absence.csv |sed 's/"//g' |sed 's/^ *//'|sed 's/* $//'  > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.txt
 
 
 ###--------
@@ -4434,30 +4345,31 @@ for ids in $(cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrai
   do
   
   echo "${ids}---"
-  grep "Parent=${ids}_gene" /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Sterm/roary/PROKKA_10222019.gff >> /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.vcf
+  grep "Parent=${ids}_gene" /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/strains/Streptococcus_thermophilus_RMK202.gff >> /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.vcf
 echo "------------"
 
   done
   
   
-##-----BRING local
+  
+###--------
+##change contig name
+###--------  
 
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/
-
-sed 's/"//g' /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence.csv > /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence_woQuotes.csv
-
-
+  
+    sed 's/^S_thermophilus_mag_rmk202/CP046134/g'   /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_renamed.vcf
+  
+  
 ##=====================
 ##-----Ldel
 ##=====================
 
 
-sudo rm -r /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/
+rm -r /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/
 mkdir -p /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/
 
 
-cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Prokka/Ldel/roary/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/Lactobacillus_delbrueckii_RMK202.gff
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/03_PROKKA_annotation_polishedGenome/L_delbrueckii_mag_rmk202/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/Lactobacillus_delbrueckii_RMK202.gff
 cat /archiv/Projects/2018_Culturomics/06_Spades/L104//Prokka/20190203/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/L104.gff
 cat /archiv/Projects/2018_Culturomics/06_Spades/L108//Prokka/20190203/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/L108.gff
 cat /archiv/Projects/2018_Culturomics/06_Spades/L35//Prokka/20190203/*.gff > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/L35.gff
@@ -4472,19 +4384,16 @@ cat /archiv/Projects/2018_Culturomics/06_Spades/L80//Prokka/20190203/*.gff > /ar
 sudo roary -f /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/ -p 25 -e -n -v /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/*.gff
 
 
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Ldel
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571722318/gene_presence_absence.csv /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Ldel/
-
-  sed 's/"//g' /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Ldel/gene_presence_absence.csv > /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Ldel/gene_presence_absence_woQuotes.csv
 
 
-awk -F '","' '{print $4}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727325/gene_presence_absence.csv |sort |uniq -c
+dateName=$(ls /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/|grep "^_")
 
-#awk -F '","' '{print $17}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/_1571727203/gene_presence_absence.csv |head
+awk -F '","' '{print $4}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/${dateName}/gene_presence_absence.csv |sort |uniq -c
+
+#awk -F '","' '{print $17}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727203/gene_presence_absence.csv |head
 mkdir -p /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes
-sudo chmod 777 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727325//gene_presence_absence.csv
-awk -F '","' '{if ($4=="10") print $24}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727325//gene_presence_absence.csv |sed 's/"//g' |sed 's/^ *//'|sed 's/* $//'  > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.txt
-
+#sudo chmod 777 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727203/gene_presence_absence.csv
+awk -F '","' '{if ($4=="10") print $24}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/${dateName}/gene_presence_absence.csv |sed 's/"//g' |sed 's/^ *//'|sed 's/* $//'  > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.txt
 
 
 ###--------
@@ -4495,59 +4404,35 @@ for ids in $(cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrai
   do
   
   echo "${ids}---"
-  grep "Parent=${ids}_gene" /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/Lactobacillus_delbrueckii_RMK202.gff  >> /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.vcf
+  grep "Parent=${ids}_gene" /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/strains/Lactobacillus_delbrueckii_RMK202.gff >> /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.vcf
 echo "------------"
 
   done
-  
-  
-  
+
 ###--------
-##intersect with SNP and find core SNPs
-###--------
+##change contig name
+###--------  
 
-cut -f 1 /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf |sort|uniq -c
-cut -f 1 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.vcf |sort|uniq -c
+  
+    sed 's/^L_delbrueckii_mag_rmk202/CP046131/g'  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202_renamed.vcf
+  
+##=====================
+##-----merge species
+##=====================
+  
 
-cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202.vcf \
-  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202.vcf > \
-  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_bothLdelSterm.vcf
+cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_renamed.vcf  \
+  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/CoreGenes/coreGeneNames_rmk202_renamed.vcf |awk -F "\t" '{OFS="\t"}{print $1,$2,$3,$4,$5}'> \
+  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/coreGeneNames_rmk202_renamed_all.vcf
 
-bedtools intersect -a /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf  \
-  -b /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_bothLdelSterm.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps.vcf
-
-bedtools intersect -v -a /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf  \
-  -b /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_bothLdelSterm.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps.vcf
-
-
-grep -v "^#" /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata/freebayesOuput_WithONT/variantCallsfreebayes_all_f_005_min_20x.vcf |wc -l
-wc -l /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps.vcf
-wc -l /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps.vcf
-
-
-cut -f 1 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps.vcf |sort|uniq -c
-cut -f 1 /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps.vcf |sort|uniq -c
-
-awk -F "\t" '{OFS="\t"}{print $1"_"$2"_"$4"_"$5,"core"}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps_cleaned.vcf 
-
-awk -F "\t" '{OFS="\t"}{print $1"_"$2"_"$4"_"$5,"not"}' /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps.vcf > /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps_cleaned.vcf 
-
-cat /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_snps_cleaned.vcf  \
-  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_nonCore_snps_cleaned.vcf > \
-  /archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_FINAL.txt
-
-##-----BRING local
+##=====================
+##-----bring local
+##=====================
 
 mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/Ldel/_1571727325//gene_presence_absence.csv /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/coreGeneNames_rmk202_renamed_all.vcf /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/
 
-sed 's/"//g' /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence.csv > /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence_woQuotes.csv
-
-##core and non-core SNPs
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_FINAL.txt /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/
-
-##core genes
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/08_StrainAnalysis/01_roaryStrains/sterm/CoreGenes/coreGeneNames_rmk202_bothLdelSterm.vcf /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/
+#sed 's/"//g' /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence.csv > /home/vincent/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/gene_presence_absence_woQuotes.csv
 
 ```
 
@@ -5800,50 +5685,56 @@ scp -r vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2
 ##### phage mapping
 
 ```{bash}
-##get RAST annotation to bigmachine
-mkdir -p /archiv/Projects/2019_pilotplant/02_annotation 
-scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/rastServer vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/02_annotation 
 
-sed -i 's/S_phage_RMK202_08/L_phage_RMK202_b/g' /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_delbrueckii_ViSo-RMK202_b.gbk
+
+###================
+##description file
+###================
+threads=37
+BaseAnnotation=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt  ##the file with all sample names
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+
+###================
+##Script
+###================
 
 ##----------------------------------------------
-##convert RAST annotation to gff
+##convert RAST annotation to bed
 ##----------------------------------------------
-cd /archiv/Projects/2019_pilotplant/02_annotation/rastServer/
-/home/vincent/miniconda2/bin/bp_genbank2gff3.pl /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.fasta.gbk
-/home/vincent/miniconda2/bin/bp_genbank2gff3.pl --split /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk
-/home/vincent/miniconda2/bin/bp_genbank2gff3.pl /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.fasta.gbk
-
-convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.bed
-convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.bed
-convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.bed
+mkdir -p ${BaseAnnotation}/merged_all_ForCoverage/
+rm ${BaseAnnotation}/merged_all_ForCoverage/all_phages.bed
+for phageNAMES in $(echo "phage_ldel phage_sterm")
+do
+convert2bed --input=gff < ${BaseAnnotation}/${phageNAMES}/*.gff > ${BaseAnnotation}/${phageNAMES}/${phageNAMES}.bed
+#convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.bed
+#convert2bed --input=gff < /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.fasta.gbk.gff > /archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.bed
 
 cat \
-/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_01.bed \
-/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Streptococcus_phage.bed \
-/archiv/Projects/2019_pilotplant/02_annotation/rastServer/Lactobacillus_phage_RMK202_02.bed > \
-/archiv/Projects/2019_pilotplant/02_annotation/rastServer/all_phages.bed
-  
-  
+${BaseAnnotation}/${phageNAMES}/${phageNAMES}.bed  >> \
+${BaseAnnotation}/merged_all_ForCoverage/all_phages.bed
+done #phageNAMES
+
+
 ##----------------------------------------------
 ##Phage coverage
 ##----------------------------------------------
 
-rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202/
+rm -r ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/
 
  # rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
   num=1
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
+  for names in $(cat ${samplesss})
     do
-echo ${num}"/16  :" ${names}
+echo ${num}"/8  :" ${names}
     num=$((num+1))
-    rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202/${names}
+    rm -r ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202//${names}
   
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202/${names}
+    mkdir -p ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202//${names}
     
 
-bedtools coverage -bed -a /archiv/Projects/2019_pilotplant/02_annotation/rastServer/all_phages.bed -b /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
-  /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202/${names}/${names}2phageDB.bed 
+bedtools coverage -bed -a ${BaseAnnotation}/merged_all_ForCoverage/all_phages.bed -b ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
+  ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202//${names}/${names}2phageDB.bed 
   
 done
 
@@ -5852,27 +5743,34 @@ done
 ###----------------change name of bed file
 ##----------------------------------------------
 names=Konserve_202
- #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202
- mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping_rmk202/finalmapping/
-for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
+ 
+ rm -r ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping/
+ mkdir -p ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping/
+   num=1
+for names in $(cat ${samplesss})
     do
     
-echo $names
+echo ${num}"/8  :" ${names}
+    num=$((num+1))
   
-    cat /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/phageDBmapping_rmk202/${names}/${names}2phageDB.bed | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping_rmk202/finalmapping/${names}_finalPhages_forR.bed
+    cat ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202//${names}/${names}2phageDB.bed  | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping/${names}_finalPhages_forR.bed
     
 
     done
-cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping_rmk202/finalmapping/*.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping_rmk202/finalmapping/all_Phages_allSamples.txt
+cat ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping//*.bed > ${BaseAnnotation}/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping//all_Phages_allSamples.txt
+
+
 
 ##----------------------------------------------
 ###-------------on local machine
 ##----------------------------------------------
 
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/phageDBmapping_rmk202/finalmapping/all_Phages_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Phages_allSamples_rmk202.txt
+
+echo "transfer local with the following command:"
+echo " "
+echo -e "\nscp vincent@130.223.51.116:"${BaseAnnotation}"/merged_all_ForCoverage/phageDBmapping_rmk202/finalmapping//all_Phages_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Phages_allSamples_rmk202.txt"
 
 
-#cat /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/finalmapping/*.bed > /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/finalmapping/all_Phages_allSamples.txt
 
 ```
 
@@ -5898,9 +5796,7 @@ library(viridis) ##colour palette
 
 table(read_count$chr)
 
-read_count$species <- ifelse(read_count$chr=="L_phage_RMK202_01","L_phage_RMK202_01",ifelse(
-    read_count$chr=="L_phage_RMK202_02","L_phage_RMK202_02","S_phage_RMK202"
-))
+read_count$species <- ifelse(read_count$chr=="L_del_phage_01","L_del_phage_01","S_term_phage_01")
 
 table(read_count$species)
 
@@ -5922,65 +5818,100 @@ phage_final <- read_count %>%
 Currently, I am leaving out the bam file filtering (CIGAR.filtering) and going straight to the gene coverage
 
 ```{bash}
+
+
+###================
+##description file
+###================
+
+BaseLocation_Ldel=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/
+gb_file_ldel=L_delbrueckii_RMK202.current.gb
+BaseFILNAME_ldel=L_delbrueckii_RMK202
+
+BaseLocation_Sterm=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/sterm/
+gb_file_sterm=S_thermophilus_RMK202.current.gb
+BaseFILNAME_sterm=S_thermophilus_RMK202
+
+threads=37
+BaseAnnotation=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/annotation_eggnog_rast/assembly_20191129/
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt  ##the file with all sample names
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+
+
+###================
+##script
+###================
+
 ##-------------------------------------
 ###----------------prep gffs
 ##-------------------------------------
-mkdir -p /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance
 
-grep -v "^#" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/ST_singu/Streptococcus_thermophilus_RMK202_pgap.gff | awk -F "\t" 'BEGIN{OFS="\t"} {if($3=="CDS") print $0}' > /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Streptococcus_thermophilus_RMK202_pgap_forAbundance.gff
+cat ${BaseLocation_Sterm}/${BaseFILNAME_sterm}_gene.gff \
+${BaseLocation_Ldel}/${BaseFILNAME_ldel}_gene.gff > \
+${BaseAnnotation}/merged_all_ForCoverage/all_bacteria.gff
 
-grep -v "^#" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/LD_singu/Lactobacillus_delbrueckii_RMK202_pgap.gff | awk -F "\t" 'BEGIN{OFS="\t"} {if($3=="CDS") print $0}' > /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Lactobacillus_delbrueckii_RMK202_pgap_forAbundance.gff
 
-cat /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Streptococcus_thermophilus_RMK202_pgap_forAbundance.gff \
-/archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Lactobacillus_delbrueckii_RMK202_pgap_forAbundance.gff > \
-/archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff
-
-cut -f 1 /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff|sort|uniq -c
+cut -f 1 ${BaseAnnotation}/merged_all_ForCoverage/all_bacteria.gff|sort|uniq -c
 
 ##-------------------------------------
 ###----------------extract coverage
 ##-------------------------------------
-rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202/
+
+
+
+rm -r ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/
 
  # rm  /home/vincent/Projects/2019_pilotplant/05_mapping2DB//log/multiqc_logfile.txt
   num=1
-  for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
+  for names in $(cat ${samplesss})
     do
-echo ${num}"/16  :" ${names}
+echo ${num}"/8  :" ${names}
     num=$((num+1))
+    rm -r ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202//${names}
   
-    rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202/${names}
-    mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202/${names}
+    mkdir -p ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202//${names}
     
 
-bedtools coverage -bed -a /archiv/Projects/2019_pilotplant/02_annotation/PGAP_for_Abundance/Bacteria_pgap_forAbundance.gff -b /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_K1_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
-  /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202/${names}/${names}2bacteriaDB.bed 
+bedtools coverage -bed -a ${BaseAnnotation}/merged_all_ForCoverage/all_bacteria.gff -b ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam  > \
+  ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202//${names}/${names}2bacteriaDB.bed 
   
 done
+
+
 
 
 ##-------------------------------------
 ###----------------change name of bed file
 ##-------------------------------------
+
 names=Konserve_202
- #rm -r /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202
- mkdir -p /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/
-for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
+ 
+ rm -r ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping/
+ mkdir -p ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping/
+   num=1
+for names in $(cat ${samplesss})
     do
     
-echo $names
+echo ${num}"/8  :" ${names}
+    num=$((num+1))
   
-    cat /home/vincent/Projects/2019_pilotplant/05_mapping2RefAssembly/bacteriaDBmapping_rmk202/${names}/${names}2bacteriaDB.bed | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/${names}_finalBacteria_forR.bed
+    cat ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202//${names}/${names}2bacteriaDB.bed  | sed -e 's/ID=.*;OG=/OG=/g'|awk -F "[\t]" -v namess="$names"  'BEGIN{OFS="\t"}{print $0,namess}'  > ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping/${names}_finalBacteria_forR.bed
     
 
     done
-cat /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/*.bed > /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/all_Bacteria_allSamples.txt
+cat ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping/*.bed > ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping//all_Bacteria_allSamples.txt
 
- cut -f 1 /home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/all_Bacteria_allSamples.txt | sort|uniq -c
+ cut -f 1 ${BaseAnnotation}/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping//all_Bacteria_allSamples.txt | sort|uniq -c
  
-###-------------on local machine
 
-scp vincent@130.223.51.151:/home/vincent/Projects/2019_pilotplant/05_mapping2DB/bacteriaDBmapping_rmk202/finalmapping/all_Bacteria_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Bacteria_allSamples_rmk202.txt
+##----------------------------------------------
+###-------------on local machine
+##----------------------------------------------
+
+
+echo "transfer local with the following command:"
+echo " "
+echo -e "\nscp vincent@130.223.51.116:"${BaseAnnotation}"/merged_all_ForCoverage/bacteriaDBmapping_rmk202/finalmapping//all_Bacteria_allSamples.txt /home/vincent/Desktop/Projects/2019_Pilotplan/09_annoation/all_Bacteria_allSamples_rmk202.txt"
 
 
 ```
@@ -6011,11 +5942,9 @@ library(dplyr)
 
 table(read_count_bac$chr)
 
-read_count_bac$species <- ifelse(read_count_bac$chr=="L_delbrueckii_plasmid_RMK202_01","L_delbrueckii_plasmid_RMK202_01",ifelse(
-    read_count_bac$chr=="L_delbrueckii_RMK202","L_delbrueckii_RMK202",ifelse(
-      read_count_bac$chr=="S_thermophilus_RMK202","S_thermophilus_RMK202","L_plasmid_RMK202"
-    )
-))
+read_count_bac$species <- revalue(read_count_bac$chr, c("CP046131"="L_delbrueckii_RMK202","CP046132"="L_del_plasmid_01","CP046133"="L_del_plasmid_02","CP046134"="S_thermophilus_RMK202","CP046135"="S_term_plasmid_01"))
+
+
 
 table(read_count_bac$species)
 
@@ -6040,14 +5969,15 @@ bac_final_02$percent_coverage <- 100*(bac_final_02$median/bac_final_02$total_cov
 bac_final_02$species <- as.factor(bac_final_02$species)
 bac_final_02$species <- factor(bac_final_02$species, levels=rev(c("S_thermophilus_RMK202","L_delbrueckii_RMK202")))
 bac_final_02$sample <- as.factor(bac_final_02$sample)
-bac_final_02$sample <- revalue(bac_final_02$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
-bac_final_02$sample <- factor(bac_final_02$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")))
+table(bac_final_02$sample)
+bac_final_02$sample <- revalue(bac_final_02$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
+bac_final_02$sample <- factor(bac_final_02$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
 
 
 
 ##----------------change name
 
-bac_final_02$sample <- revalue(bac_final_02$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+#bac_final_02$sample <- revalue(bac_final_02$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
 # all_final$sample <- sample_relative_wide %>% select(site,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
 
 ##----------------plot
@@ -6097,23 +6027,28 @@ all_final$species <- as.factor(all_final$species)
 
 levels(all_final$species)
 
-all_final$species <- factor(all_final$species, levels=rev(c("S_thermophilus_RMK202","S_phage_RMK202","L_delbrueckii_RMK202","L_delbrueckii_plasmid_RMK202_01","L_plasmid_RMK202","L_phage_RMK202_01","L_phage_RMK202_02")))
+
+all_final$species <- factor(all_final$species, levels=rev(c("S_thermophilus_RMK202","S_term_plasmid_01","S_term_phage_01","L_delbrueckii_RMK202","L_del_plasmid_01","L_plasmid_RMK202","L_del_plasmid_02","L_del_phage_01")))
+# all_final$species <- factor(all_final$species, levels=rev(c("S_thermophilus_RMK202","S_phage_RMK202","L_delbrueckii_RMK202","L_delbrueckii_plasmid_RMK202_01","L_plasmid_RMK202","L_phage_RMK202_01","L_phage_RMK202_02")))
 
 all_final$sample <- as.factor(all_final$sample)
 
 levels(all_final$sample)
 
-all_final$sample <- factor(all_final$sample, levels=(c("lyo202_96","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202")))
+all_final$sample <- factor(all_final$sample, levels=(c("lyo202_96","Lyo_202_2012","Lyo_202_2014","Konserve_202","RMK202","Versand_202","di_K2_6h","th_K2_8h")))
+# bac_final_02$sample <- revalue(bac_final_02$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
+# bac_final_02$sample <- factor(bac_final_02$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+
 
 
 # table(total_samples$phage) %>% length()
 
 write.table(all_final,"/home/vincent/Desktop/Projects/2019_Pilotplan/coverage_rmk202.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
 
+ all_colours <-c("#C5F6FA" ,"#6CF5A3" ,"#36E37B" ,"#10B552", "darkorange",  "#FAA0A0","#EB4D4D")
 
-#Sterm_colours <- c("#FAA0A0","#FAA0A0")
-all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA","#99E9F2") ) 
-# 
+
 # mito_colours <- c("#AFBACC","#BE99AB") # sequential_hcl(5,palette="Grays")[c(4,3)]
 # Sterm_colours <- c("#FCC2C2","#EB4D4D")# c("#FAA0A0","#EB4D4D") #c("#FF7D87","#E71D32")    
 # Ldel_colours <- c("#6CF5A3","#10B552")  # c("#8CD211","#4C8400")   # c("#5AA700","#2D660A") #brewer.pal(9,name="YlGnBu")[c(4,6)] #sequential_hcl(5,palette="Purples 3")[c(3,2)]
@@ -6125,9 +6060,7 @@ all_colours <- rev(c("#EB4D4D","#FAA0A0","#10B552","#36E37B","#6CF5A3","#C5F6FA"
 ##----------------change name
 library(plyr)
 library(dplyr)
-all_final$sample <- revalue(all_final$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
-# all_final$sample <- sample_relative_wide %>% select(site,"Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
-
+all_final$sample <- revalue(all_final$sample, c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
 ##----------------plot
 
 PrelAbundance <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample, group=interaction(species),fill = species))+ geom_bar( stat="identity")+
@@ -7566,10 +7499,10 @@ Here, we calculate nucleotide diversity within genes
 ##--------------
 ##get length of core genome
 ##-------------
-coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_bothLdelSterm.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
-# table(coreGeneNames_sterm_ldel$contig)
-coreGeneNames_sterm <- coreGeneNames_sterm_ldel %>% filter(contig=="S_thermophilus_RMK202") %>% summarize(GeneLength = end-start) %>% colSums()
-coreGeneNames_ldel <- coreGeneNames_sterm_ldel %>% filter(contig=="L_delbrueckii_RMK202") %>% summarize(GeneLength = end-start) %>% colSums() 
+coreGeneNames_sterm_ldel <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_renamed_all.vcf", "\t", escape_double = FALSE, col_names = c("contig","method","annotation","start","end"), trim_ws = TRUE)
+table(coreGeneNames_sterm_ldel$contig)
+coreGeneNames_sterm <- coreGeneNames_sterm_ldel %>% filter(contig=="CP046134") %>% summarize(GeneLength = end-start) %>% colSums()
+coreGeneNames_ldel <- coreGeneNames_sterm_ldel %>% filter(contig=="CP046131") %>% summarize(GeneLength = end-start) %>% colSums() 
 
 ##--------------
 ##Snp count per sample and species
@@ -7901,6 +7834,348 @@ Finally, we decided to look at following SNPs:
 6. SNVs that are not present in all samples are not used for phasing
 
 
+```{r}
+###-------------
+##--------merge all
+###-------------
+not_explained_sterm_plot_nonModi <- merge(not_explained_sterm_plot,annotation_all,by="site",all.x = TRUE)
+explained_sterm_both_plot_nonModi <- merge(explained_sterm_both_plot,annotation_all,by="site",all.x = TRUE)
+explained_s50_plot_nonModi <- merge(explained_s50_plot,annotation_all,by="site",all.x = TRUE)
+explained_s72_plot_nonModi <- merge(explained_s72_plot,annotation_all,by="site",all.x = TRUE)
+
+all_sterm_plot_hist <- rbind(explained_sterm_both_plot_nonModi ,explained_s50_plot_nonModi,explained_s72_plot_nonModi,not_explained_sterm_plot_nonModi)
+nrow(all_sterm_plot_hist)
+
+
+###-------------
+##------creat histogramm
+###-------------
+# cbind(all_sterm_plot$site,all_sterm_plot$group)
+table(all_sterm_plot_hist$significance)  
+table(all_sterm_plot_hist$group)  
+
+all_sterm_plot_hist$detection <- ifelse(is.na(all_sterm_plot_hist$allele_frequency),"bellow detection\nlimit",ifelse(all_sterm_plot_hist$allele_frequency>0.05,"used","bellow detection\nlimit"))
+table(all_sterm_plot_hist$detection)
+# readsExplained <- [,c("site","group")]
+
+all_sterm_plot_hist$significance = factor(all_sterm_plot_hist$significance, levels=c('MODIFIER','LOW','MODERATE','HIGH'))
+all_sterm_plot_hist$group = factor(all_sterm_plot_hist$group, levels=c('both','S50','S72','not_explained'))
+all_sterm_plot_hist$group <- revalue(all_sterm_plot_hist$group, c("S50"="mst1", "S72"="mst2"))
+
+
+
+histogramm_SNVs <- ggplot(all_sterm_plot_hist,aes(x=group))+geom_bar(aes(fill = interaction(significance,detection)))+theme_classic()+
+  facet_grid(~significance)+
+  xlab("") + 
+  ylab("variant sites") +
+  scale_fill_manual(values=c("grey89","grey89","grey89","grey89","grey","gold1","orange","red"))+   #wes_palette(n=3, name="Moonrise3")[1:3]))+
+  theme(legend.position = "right",
+        plot.margin=unit(c(0,0,0,2.5),"cm"),
+        axis.text.x=element_text(angle=45, hjust=1,size=9))
+
+histogramm_SNVs
+ svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S09_SNVs_histogramm",width=8,height=4)
+histogramm_SNVs
+
+ dev.off()
+ 
+#  
+#   library("tidyverse")
+# library("officer")
+# library("rvg")
+
+# read_pptx() %>%
+#     add_slide(layout = "Title and Content", master = "Office Theme") %>%
+#     ph_with_vg(code = print(grid.arrange(p1,p2, p3,p0,ncol=1, nrow=4,heights=c(1.15,1,1,1.55))), type = "body",height = 7, width = 8) %>% 
+#     print(target = "~/Desktop/presenations/my_presentations/20190919_VUA/slides_03.pptx")
+
+ 
+##================
+###-------------
+##----------subsett only dominant non-synomous mutations
+###-------------
+##================
+
+
+###---------------------
+# ---------------------subset data1: low abundance reads
+###---------------------
+ # table(not_explained_sterm_plot_nonModi$group)
+not_explained_sterm_plot_nonModi <- not_explained_sterm_plot_nonModi[which(not_explained_sterm_plot_nonModi$allele_frequency>0.05),]
+explained_sterm_both_plot_nonModi <- explained_sterm_both_plot_nonModi[which(explained_sterm_both_plot_nonModi$allele_frequency>0.05),]
+explained_s50_plot_nonModi$group <- revalue(explained_s50_plot_nonModi$group, c("S50"="mst1"))
+explained_s50_plot_nonModi <- explained_s50_plot_nonModi[which(explained_s50_plot_nonModi$allele_frequency>0.05),]
+explained_s72_plot_nonModi$group <- revalue(explained_s72_plot_nonModi$group, c( "S72"="mst2"))
+explained_s72_plot_nonModi <- explained_s72_plot_nonModi[which(explained_s72_plot_nonModi$allele_frequency>0.05),]
+
+
+all_sterm_plot <- rbind(explained_sterm_both_plot_nonModi ,explained_s50_plot_nonModi,explained_s72_plot_nonModi,not_explained_sterm_plot_nonModi)
+nrow(all_sterm_plot)
+all_sterm_plot$group = factor(all_sterm_plot$group, levels=c("both","mst1","mst2","not_explained"))
+
+
+ 
+ ##----plooting without modification
+
+  pall_sterm_withModi <- ggplot(all_sterm_plot,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group))+ geom_line(size=0.1, alpha=.1)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+pall_sterm_withModi
+#  library(plotly)
+# ggp <- ggplotly(pall_sterm_withModi)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split.html")
+
+
+
+###---------------------
+# ---------------------subset data2: non-complete snps
+###---------------------
+
+all_sterm_plot_wide <- spread(all_sterm_plot, sample, allele_frequency)
+dim(all_sterm_plot_wide)
+all_sterm_plot_wide_woNA <- all_sterm_plot_wide[!is.na(rowSums(all_sterm_plot_wide[,41:45])),]
+dim(all_sterm_plot_wide_woNA)
+all_sterm_plot_wide_onlyNA <- all_sterm_plot_wide[is.na(rowSums(all_sterm_plot_wide[,41:45])),]
+dim(all_sterm_plot_wide_onlyNA)
+all_sterm_plot_wide_onlyNA_long <- gather(all_sterm_plot_wide_onlyNA, sample, allele_frequency, colnames(all_sterm_plot_wide_onlyNA)[41:45], factor_key=TRUE,na.rm = TRUE) 
+
+all_sterm_plot_wide_onlyNA_long_nonMOD <- all_sterm_plot_wide_onlyNA_long[all_sterm_plot_wide_onlyNA_long$significance!="MODIFIER",]
+all_sterm_plot_wide_onlyNA_long_nonMOD_LOW <- all_sterm_plot_wide_onlyNA_long_nonMOD[all_sterm_plot_wide_onlyNA_long_nonMOD$significance!="LOW",]
+
+ ##----plooting without modification
+
+  pall_sterm_withModi_onlyNA <- ggplot(all_sterm_plot_wide_onlyNA_long_nonMOD_LOW,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category))) + geom_line(size=0.1, alpha=.1)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+pall_sterm_withModi_onlyNA
+
+
+ library(plotly)
+ggp <- ggplotly(pall_sterm_withModi_onlyNA)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi_snps that go away.html")
+
+
+
+###-------------
+##remove modifier muations
+###-------------
+table(all_sterm_plot$significance)
+all_sterm_plot_woModi <- all_sterm_plot[all_sterm_plot$significance!="MODIFIER",]
+(table(all_sterm_plot_woModi$group)/5)/(nrow(all_sterm_plot_woModi)/5)
+
+
+
+  pall_sterm_woModi <- ggplot(all_sterm_plot_woModi,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_woModi
+#  library(plotly)
+# ggp <- ggplotly(pall_sterm_woModi)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
+
+
+###-------------
+##remove Low effect muations
+###-------------
+table(all_sterm_plot$significance)
+all_sterm_plot_woModi_LOW <- all_sterm_plot_woModi[all_sterm_plot_woModi$significance!="LOW",]
+(table(all_sterm_plot_woModi_LOW$group)/5)/(nrow(all_sterm_plot_woModi_LOW)/5)
+
+
+
+  pall_sterm_woModi_LOW <- ggplot(all_sterm_plot_woModi_LOW,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_woModi_LOW
+#  library(plotly)
+# ggp <- ggplotly(pall_sterm_woModi)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
+
+
+###-------------
+##only copre
+###-------------
+
+coreGeneNames_rmk202 <- read_delim("~/Desktop/Projects/2019_Pilotplan/10_roary/Sterm/coreGeneNames_rmk202_FINAL.txt", "\t", escape_double = FALSE, col_names = c("site","core"), trim_ws = TRUE)
+dim(all_sterm_plot)
+all_sterm_plot_core <- merge(all_sterm_plot,coreGeneNames_rmk202,by="site",all.x = TRUE,all.y = FALSE)
+dim(all_sterm_plot_core)
+
+table(all_sterm_plot_core$core)
+all_sterm_plot_core <- all_sterm_plot_core[all_sterm_plot_core$core=="core",]
+table(all_sterm_plot_core$core)
+(table(all_sterm_plot_core$group)/5)/(nrow(all_sterm_plot_core)/5)
+
+
+
+  pall_sterm_CORE <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,group=site,color=group,fill=group, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE
+#  library(plotly)
+# ggp <- ggplotly(pall_sterm_woModi)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all_split_woModi.html")
+
+###---------
+##boxplot
+###---------
+
+  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=sample,y=allele_frequency,color=group,fill=group))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+
+  pall_sterm_CORE_box <- ggplot(all_sterm_plot_core,aes(x=group,y=allele_frequency,color=sample,fill=sample))+ geom_boxplot()+
+       # facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="all")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+pall_sterm_CORE_box
+
+pall_sterm_CORE_box_median <- aggregate(.~sample+group, data=all_sterm_plot_core[,c("allele_frequency","sample","group")], median, na.rm=TRUE)
+pall_sterm_CORE_box_median
+
+pall_sterm_CORE_box_median_wide <- spread(pall_sterm_CORE_box_median, group, allele_frequency)
+pall_sterm_CORE_box_median_wide
+
+Final_Abundance_Sterm_wide <- pall_sterm_CORE_box_median_wide %>% select(sample,mst1,mst2,not_explained)
+
+Final_Abundance_Sterm_wide$MAG_rmk202 <- 1-pall_sterm_CORE_box_median_wide$both
+Final_Abundance_Sterm_wide$mst1 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst1
+Final_Abundance_Sterm_wide$mst2 <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$mst2
+Final_Abundance_Sterm_wide$not_explained <- pall_sterm_CORE_box_median_wide$both*pall_sterm_CORE_box_median_wide$not_explained
+Final_Abundance_Sterm_wide
+Final_Abundance_Sterm_long <- gather(Final_Abundance_Sterm_wide,Identity, Population, "mst1":"MAG_rmk202", factor_key=TRUE,na.rm = TRUE) 
+colnames(Final_Abundance_Sterm_long)[1] <- "Generation"
+Final_Abundance_Sterm_long$Generation <- revalue(Final_Abundance_Sterm_long$Generation, c("Lyoampulle\n2012"=as.double(1) ,"Lyoampulle\n2014"=as.double(2),"working\nstock"=as.double(3), "starter\nculture\n2012"=as.double(4), "starter\nculture\n2018"=as.double(5)))
+
+Final_Abundance_Sterm_long
+
+```
+
+
+
+
 
 ######mst1 substrains
 
@@ -7953,7 +8228,7 @@ tsne_plot$species <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split
 
 
 set.seed(123456)
-ds.real = dbscan(tsne_plot[,c(1,2)], 4)
+ds.real = dbscan(tsne_plot[,c(1,2)], 3)
 tsne_plot$density = factor(ds.real$cluster)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
@@ -7972,6 +8247,8 @@ ds.cent = tsne_plot %>% group_by(density) %>% select(V1,
 #  tsne_plot <- tsne_plot %>% mutate(final_clust = ifelse(density==3,2,
 #                                                                     ifelse(density==2,3,1)))
 # table(tsne_plot_final_clust$final_clust)
+# tsne_plot$density <- revalue(tsne_plot$density, c("4"="1"))
+
 tsne_plot <- tsne_plot %>% mutate(final_clust=density)
 tsne_plot_final_clust <- tsne_plot %>% select(site,  final_clust)
 
@@ -8054,8 +8331,8 @@ tsne_plot_mst1 <- tsne_plot
 ###------------------------------------
 ##density plot
 ###------------------------------------
+explained_mst1_plot_nonModi_CLUSTERED$location <- as.numeric(str_split_fixed(explained_mst1_plot_nonModi_CLUSTERED$site, "_", 5)[,2])
 
-explained_mst1_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_mst1_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
 forDensityPlot <- explained_mst1_plot_nonModi_CLUSTERED %>% select(.,site,location,final_clust) %>% distinct()
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
@@ -8064,11 +8341,13 @@ plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
 
 
 Sterm_mst1_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
+  facet_wrap(~final_clust,scale = "free_y")+
   scale_fill_manual(values = colors_substrains)+
   scale_color_manual(values = colors_substrains)+
-  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_mst1_density
 
+# theme(strip.text.x = element_blank())
 ```
 
 
@@ -8221,8 +8500,9 @@ tsne_plot_mst2 <- tsne_plot
 ###------------------------------------
 ##density plot
 ###------------------------------------
+explained_mst2_plot_nonModi_CLUSTERED$location <- as.numeric(str_split_fixed(explained_mst2_plot_nonModi_CLUSTERED$site, "_", 5)[,2])
 
-explained_mst2_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_mst2_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
+# explained_mst2_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_mst2_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
 forDensityPlot <- explained_mst2_plot_nonModi_CLUSTERED %>% select(.,site,location,final_clust) %>% distinct()
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
@@ -8232,9 +8512,10 @@ plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
 
 
 Sterm_mst2_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
+  facet_wrap(~final_clust,scale = "free_y")+
   scale_fill_manual(values = colors_substrains)+
   scale_color_manual(values = colors_substrains)+
-  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 
 Sterm_mst2_density
 
@@ -8351,11 +8632,13 @@ explained_both_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_both_p
 ##plotting
 ###------------------------------------
 # explained_both_plot_nonModi_CLUSTERED
-explained_both_plot_nonModi_CLUSTERED$final_clust = factor(explained_both_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",4:1))
+explained_both_plot_nonModi_CLUSTERED$final_clust = factor(explained_both_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",2:1))
+# explained_both_plot_nonModi_CLUSTERED$final_clust = factor(explained_both_plot_nonModi_CLUSTERED$final_clust, levels=(sort(unique(explained_both_plot_nonModi_CLUSTERED$final_clust),decreasing = TRUE)))
 
 # levels(explained_both_plot_nonModi_CLUSTERED$final_clust)
 # plotColors <- c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))],"grey")
-plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
+# plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
+plotColors <- c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
 
 # explained_both_plot_nonModi_CLUSTERED <- explained_both_plot_nonModi_CLUSTERED %>% filter(.,final_clust=="2")
 
@@ -8395,8 +8678,9 @@ tsne_plot_both <- tsne_plot
 ###------------------------------------
 ##density plot
 ###------------------------------------
+explained_both_plot_nonModi_CLUSTERED$location <- as.numeric(str_split_fixed(explained_both_plot_nonModi_CLUSTERED$site, "_", 5)[,2])
 
-explained_both_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_both_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
+# explained_both_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_both_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
 forDensityPlot <- explained_both_plot_nonModi_CLUSTERED %>% select(.,site,location,final_clust) %>% distinct()
 
 # forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
@@ -8405,14 +8689,14 @@ forDensityPlot <- explained_both_plot_nonModi_CLUSTERED %>% select(.,site,locati
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
 forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not clustered",4:1))
-plotColors <- c("grey",colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))[2:5]])
-
+plotColors <-  c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
 
 
 Sterm_both_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
+  facet_wrap(~final_clust,scale = "free_y")+
   scale_fill_manual(values = plotColors)+
   scale_color_manual(values = plotColors)+
-  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_both_density
 
 
@@ -8579,7 +8863,7 @@ tsne_plot_none <- tsne_plot
 ##density plot
 ###------------------------------------
 
-explained_none_plot_nonModi_CLUSTERED$location <- str_split_fixed(explained_none_plot_nonModi_CLUSTERED$site, "_", 5)[,4]
+explained_none_plot_nonModi_CLUSTERED$location <- as.numeric(str_split_fixed(explained_none_plot_nonModi_CLUSTERED$site, "_", 5)[,2])
 forDensityPlot <- explained_none_plot_nonModi_CLUSTERED %>% select(.,site,location,final_clust) %>% distinct()
 
 # forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
@@ -8591,12 +8875,24 @@ forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not cl
 plotColors <- c("grey",colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))[2:5]])
 
 
+forDensityPlot$location
+# sum(is.na(forDensityPlot$location))
+table(forDensityPlot$final_clust)
+
 
 Sterm_none_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
+    facet_wrap(~final_clust,scale = "free_y")+
   scale_fill_manual(values = colors_substrains)+
   scale_color_manual(values = colors_substrains)+
-  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_none_density
+
+# Sterm_none_histo <- ggplot(forDensityPlot,aes(location,group=final_clust,color=final_clust,fill=final_clust))+geom_histogram(alpha=0.2)+theme_classic()+
+#   scale_fill_manual(values = colors_substrains)+
+#   scale_color_manual(values = colors_substrains)+
+#   labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+# Sterm_none_histo
+# forDensityPlot$site
 
 ```
 
@@ -8638,21 +8934,137 @@ grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm
 
 
 
-#  svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all.svg",width=12,height=8)
-# 
-# grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_both_suplementaryTsne,Sterm_both_suplementarybarPlot,Sterm_both_density,
-#              p_mst1_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_mst1_suplementaryTsne,Sterm_mst1_suplementarybarPlot,Sterm_mst1_density, 
-#              p_mst2_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_mst2_suplementaryTsne,Sterm_mst2_suplementarybarPlot,Sterm_mst2_density, 
-#              p_none_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_none_suplementaryTsne,Sterm_none_suplementarybarPlot,Sterm_none_density, 
-#              legend_1,legend_2,legend_both,blank,
-#              ncol=4,heights=c(1,1,1,1,1),widths=c(4,1,1,1))
-# 
-# 
-# dev.off()
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all.svg",width=12,height=8)
+
+grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_both_suplementaryTsne,Sterm_both_suplementarybarPlot,Sterm_both_density,
+             p_mst1_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_mst1_suplementaryTsne,Sterm_mst1_suplementarybarPlot,Sterm_mst1_density,
+             p_mst2_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_mst2_suplementaryTsne,Sterm_mst2_suplementarybarPlot,Sterm_mst2_density,
+             p_none_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_none_suplementaryTsne,Sterm_none_suplementarybarPlot,Sterm_none_density,
+             legend_1,legend_2,legend_both,blank,
+             ncol=4,heights=c(1,1,1,1,1),widths=c(4,1,1,1))
+
+
+dev.off()
 ```
 
 
 
+
+```{r}
+
+##--------colors
+
+library("RColorBrewer")
+display.brewer.all()
+display.brewer.pal(n = 5, name = 'RdYlBu')
+# colors_substrains <- c(brewer.pal(n = 5, name = 'RdYlBu'),"grey60")
+colors_substrains <- c(colorsTSNE[1:5],"grey")
+library(wesanderson)
+# colors_substrains <- c(wes_palette(n=5, name="FantasticFox1"),"grey60")
+##----------merge
+explained_all_plot_nonModi_CLUSTERED <- rbind(explained_S72_plot_nonModi_CLUSTERED,
+explained_S50_plot_nonModi_CLUSTERED,
+explained_both_plot_nonModi_CLUSTERED,
+explained_not_plot_nonModi_CLUSTERED)
+nrow(explained_all_plot_nonModi_CLUSTERED)
+##----------plot line
+
+(table(explained_all_plot_nonModi_CLUSTERED$group)/5)/(nrow(explained_all_plot_nonModi_CLUSTERED)/5)*100
+
+unique(explained_all_plot_nonModi_CLUSTERED$group)
+unique(explained_all_plot_nonModi_CLUSTERED$final_clust)
+
+explained_all_plot_nonModi_CLUSTERED$group = factor(explained_all_plot_nonModi_CLUSTERED$group, levels=c("both","mst1","mst2","not_explained"))
+explained_all_plot_nonModi_CLUSTERED$final_clust = factor(explained_all_plot_nonModi_CLUSTERED$final_clust, levels=rev(c("1","2","3","4","5","not clustered")))
+
+  p_S72_sterm_woModi_clustered <- ggplot(explained_all_plot_nonModi_CLUSTERED,aes(x=sample,y=allele_frequency,group=site,color=final_clust,fill=final_clust, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nEC:",EC,"\nKEGG_ko:",KEGG_ko,"\nCAZy:",CAZy,"\nCOG:",COG_Functional_Category,"\nCluster:",final_clust)))+ geom_line(size=0.1, alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="alternative allele frequency")+
+        scale_fill_manual(values=rev(colors_substrains))+
+        scale_color_manual(values=rev(colors_substrains))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.25,0.5,0.75,1),labels=c(0,0.25,0.5,0.75,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=6),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+           legend.position="top",
+       legend.title = element_blank(),
+       axis.text.y = element_text(size=6),
+       axis.title.y = element_text(size=9),
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm"),legend.direction = "horizontal"
+       )
+
+p_S72_sterm_woModi_clustered
+svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_CLUSTERED_02.svg",width=3,height=4.2)
+# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
+
+
+p_S72_sterm_woModi_clustered
+
+dev.off()
+
+ggp <- ggplotly(p_S72_sterm_woModi_clustered)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_all_clustered_woModi.html")
+
+
+
+
+##----------plot box
+
+# explained_s72_plot_nonModi_CLUSTERED$final_clust = factor(explained_s72_plot_nonModi_CLUSTERED$final_clust, levels=c("1","2","3","NA"))
+
+  p_S72_sterm_woModi_clustered_box <- ggplot(explained_all_plot_nonModi_CLUSTERED,aes(x=final_clust,y=allele_frequency,color=final_clust,fill=final_clust))+ geom_boxplot(alpha=.5)+ 
+       facet_grid(group~.)+
+   labs("",
+         x="",
+         # y="",
+          y="allele frequency")+
+       # scale_fill_manual(values="gray41")+
+      # scale_color_manual(values="gray41")+
+       scale_x_discrete( expand = c(0, 0)) +
+  scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          # ylim(c(0,1))+
+ theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="none",
+       axis.text.y = element_text(size=8),
+       axis.title.y = element_text(size=9),
+            # plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+p_S72_sterm_woModi_clustered_box
+
+
+ggp <- ggplotly(p_S72_sterm_woModi_clustered_box)
+htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_all_clustered_woModi.html")
+
+
+###-----------------
+##Tsne plots
+###-----------------
+
+p1 <- Sterm_both_suplementaryTsne+labs(title = "explained by both strains")
+p2 <- Sterm_S50_suplementaryTsne+labs(title = "explained by mst1")
+p3 <- Sterm_S72_suplementaryTsne+labs(title = "explained by mst2")
+p4 <- Sterm_notExplained_suplementaryTsne+labs(title = "not-explained")
+
+grid.arrange(p1,p2,p3,p4, ncol=1)
+
+library(grid)
+library(gridExtra)
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all.svg",width=2.5,height=10)
+
+   grid.arrange(p1,p2,p3,p4, ncol=1)
+
+dev.off()
+```
 
 
 ```{r}
@@ -10010,18 +10422,18 @@ add hierachial clustering and order accordingly. This is trivial in the heatmap2
 ##--------------
 ##snps
 ##-------------
-
+annotation_sterm_snps_01 <- sample_relative_wide ##I had to add this to run
 colnames(annotation_sterm_snps_01)
 sterm_snps_core <- annotation_sterm_snps_01
 table(sterm_snps_core$X.CHROM.x)
-sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="S_thermophilus_RMK202",]
+sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="CP046134",]
 table(sterm_snps_core$X.CHROM.x)
 
 sterm_snps_core$Sterm_rmk202 <- TRUE
-sterm_snps_core$mst1 <- sterm_snps_core$S50<0.9
-sterm_snps_core$mst2 <- sterm_snps_core$S72<0.9
+sterm_snps_core$mst1 <- sterm_snps_core$mst1<0.9
+sterm_snps_core$mst2 <- sterm_snps_core$mst2<0.9
 
-sterm_snps_core <- sterm_snps_core %>% select(site,core,Sterm_rmk202,mst1,mst2)
+sterm_snps_core <- sterm_snps_core %>% dplyr::select(site,core,Sterm_rmk202,mst1,mst2)
 sterm_snps_core[c("mst1", "mst2")][is.na(sterm_snps_core[c("mst1", "mst2")])] <- TRUE
 
 ##--------------
@@ -10101,13 +10513,13 @@ otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
 # Create dendro
 dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
 # Preview the plot
-print(dendro.plot)
-
-labels(otter.dendro)
-
-svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-print(dendro.plot)
-dev.off()
+# print(dendro.plot)
+# 
+# labels(otter.dendro)
+# 
+# svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+# print(dendro.plot)
+# dev.off()
 
 sterm_curated_rev_names
 ##reorder according to dendro
@@ -10240,20 +10652,29 @@ library(plyr)
 colnames(annotation_sterm_snps_01)
 sterm_snps_core <- annotation_sterm_snps_01
 table(sterm_snps_core$X.CHROM.x)
-sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="L_delbrueckii_RMK202",]
+sterm_snps_core <- sterm_snps_core[sterm_snps_core$X.CHROM.x=="CP046131",]
 table(sterm_snps_core$X.CHROM.x)
 
 sterm_snps_core$Ldel_rmk202 <- TRUE
-sterm_snps_core$mst3 <- sterm_snps_core$L70<0.9
-sterm_snps_core$mst10 <- sterm_snps_core$L44<0.9
-sterm_snps_core$mst7 <- sterm_snps_core$L108<0.9
-sterm_snps_core$mst8 <- sterm_snps_core$L99<0.9
-sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
-sterm_snps_core$mst5 <- sterm_snps_core$L80<0.9
-sterm_snps_core$mst9 <- sterm_snps_core$L35<0.9
-sterm_snps_core$mst4 <- sterm_snps_core$L71<0.9
-sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
+sterm_snps_core$mst3 <- sterm_snps_core$mst3<0.9
+sterm_snps_core$mst10 <- sterm_snps_core$mst10<0.9
+sterm_snps_core$mst7 <- sterm_snps_core$mst7<0.9
+sterm_snps_core$mst8 <- sterm_snps_core$mst8<0.9
+sterm_snps_core$mst6 <- sterm_snps_core$mst6<0.9
+sterm_snps_core$mst5 <- sterm_snps_core$mst5<0.9
+sterm_snps_core$mst9 <- sterm_snps_core$mst9<0.9
+sterm_snps_core$mst4 <- sterm_snps_core$mst4<0.9
+sterm_snps_core$mst6 <- sterm_snps_core$mst6<0.9
 
+# sterm_snps_core$mst3 <- sterm_snps_core$L70<0.9
+# sterm_snps_core$mst10 <- sterm_snps_core$L44<0.9
+# sterm_snps_core$mst7 <- sterm_snps_core$L108<0.9
+# sterm_snps_core$mst8 <- sterm_snps_core$L99<0.9
+# sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
+# sterm_snps_core$mst5 <- sterm_snps_core$L80<0.9
+# sterm_snps_core$mst9 <- sterm_snps_core$L35<0.9
+# sterm_snps_core$mst4 <- sterm_snps_core$L71<0.9
+# sterm_snps_core$mst6 <- sterm_snps_core$L104<0.9
 sterm_snps_core <- sterm_snps_core %>% select(site,core,Ldel_rmk202,mst3, mst4,mst5, mst6,mst7, mst8,mst9, mst10)
 sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")][is.na(sterm_snps_core[c("mst3", "mst4","mst5", "mst6","mst7", "mst8","mst9", "mst10")])] <- TRUE
 
@@ -10328,22 +10749,22 @@ sterm_curated_rev_names
 
 
 library(ggdendro)
-
-sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
-rownames(sterm_matrix) <- names_normal
-otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
-
-
-# Create dendro
-dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
-# Preview the plot
-print(dendro.plot)
-
-labels(otter.dendro)
-
-svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-print(dendro.plot)
-dev.off()
+# 
+# sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
+# rownames(sterm_matrix) <- names_normal
+# otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
+# 
+# 
+# # Create dendro
+# dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
+# # Preview the plot
+# print(dendro.plot)
+# 
+# labels(otter.dendro)
+# 
+# svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+# print(dendro.plot)
+# dev.off()
 
 sterm_curated_rev_names
 ##reorder according to dendro
