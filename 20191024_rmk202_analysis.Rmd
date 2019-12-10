@@ -6079,7 +6079,7 @@ PrelAbundance <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample,
           )
 
   PrelAbundance
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.svg",width=5,height=3)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.svg",width=4.5,height=3)
    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 
 PrelAbundance
@@ -6677,13 +6677,13 @@ sample_relative_wide_description <- merge(sample_relative_wide,RMK202_snpeff_egg
 
 ##---------------------------------subset for interesting columns
 colnames(sample_relative_wide_description)
-sample_relative_wide_description_interest <- subset(sample_relative_wide_description, select=c(X.CHROM.x,species.x,site,culture,finalName,Preferred_name,effect,significance,geneName,COG_Functional_Category,Repeat_cluster,core,L104,L108,L35,L44,L70,L71,L80,L99,S50,S72,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202,lyo202_96))
+sample_relative_wide_description_interest <- subset(sample_relative_wide_description, select=c(X.CHROM.x,species.x,site,culture,finalName,Preferred_name,effect,significance,geneName,COG_Functional_Category,Repeat_cluster,core,L104,L108,L35,L44,L70,L71,L80,L99,S50,S72,Lyo_202_2012,Lyo_202_2014,Konserve_202,RMK202,Versand_202,lyo202_96,di_K2_6h,th_K2_8h))
 
 ##==================
 ##07 rename samples
 ##==================
 
-colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_relative_wide_description_interest), c("species.x"="species","S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018"))
+colnames(sample_relative_wide_description_interest) <- revalue(colnames(sample_relative_wide_description_interest), c("species.x"="species","S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
 
 
 ##==================
@@ -6752,7 +6752,7 @@ sample_relative_wide <- merge(sample_relative_wide,dN_dS_ratios_prep,by.y="gene"
 ##11_make long
 ##==================
 colnames(sample_relative_wide)
-sample_relative_long <- gather(sample_relative_wide, sample, Snps, "mst6":"Lyo\n1996", factor_key=TRUE,na.rm = TRUE) 
+sample_relative_long <- gather(sample_relative_wide, sample, Snps, "mst6":"cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) 
 nrow(sample_relative_long)
 table(sample_relative_long$X.CHROM)
 
@@ -6769,6 +6769,58 @@ write.csv(RMK202_snpeff_eggnog_repeats_core_uniuqes_final,file="~/Desktop/presen
 
 colnames(RMK202_snpeff_eggnog_repeats_core_uniuqes_final)
 RMK202_snpeff_eggnog_repeats_core_uniuqes_final_reduce <- RMK202_snpeff_eggnog_repeats_core %>% select(-c("finalName","Preferred_name","EC","KEGG_ko","KEGG_Reaction","CAZy","BiGG_Reaction","COG_Functional_Category","eggNOG free text description")) %>% distinct()
+
+
+
+```
+
+######rarefaction
+
+```{r}
+library(vegan)
+
+data(BCI)
+S <- specnumber(BCI) # observed number of species
+(raremax <- min(rowSums(BCI)))
+Srare <- rarefy(BCI, raremax)
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+rarecurve(BCI, step = 20, sample = raremax, col = "blue", cex = 0.6)
+
+
+##-----------------------------------------------------------------------own samples------------------------
+library(tidyverse) 
+library(lubridate)
+
+sample_relative_safe_final_prep_rarefy <- sample_relative_temp_cleaned[,c("X.CHROM","POS","site","RO","sample")]
+#nrow(sample_relative_safe_final_prep[grep("S_thermophilus_RMK202",sample_relative_safe_final_prep$site),])
+sample_relative_safe_final_prep_rarefy_wide <- spread(sample_relative_safe_final_prep_rarefy, sample, RO) %>%replace(is.na(.), 0) %>% select(site,Konserve_202,RMK202,Versand_202,lyo202_96,di_K2_6h,th_K2_8h)
+
+
+colnames(sample_relative_safe_final_prep_rarefy_wide) <- revalue(colnames(sample_relative_safe_final_prep_rarefy_wide), c("lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
+row.names(sample_relative_safe_final_prep_rarefy_wide) <- sample_relative_safe_final_prep_rarefy_wide$site
+sample_relative_safe_final_prep_rarefy_wide <- sample_relative_safe_final_prep_rarefy_wide %>% select(-site) #%>% as.matrix() %>% t()
+View(sample_relative_safe_final_prep_rarefy_wide_new)
+
+sample_relative_safe_final_prep_rarefy_wide_new <- sample_relative_safe_final_prep_rarefy_wide %>%
+    mutate_all(type.convert)  %>% as.matrix() %>% t()
+    # mutate_if(as.character,as.numeric)
+
+S <- specnumber(sample_relative_safe_final_prep_rarefy_wide_new) # observed number of species
+(raremax <- min(rowSums(sample_relative_safe_final_prep_rarefy_wide_new)))
+
+Srare <- rarefy(sample_relative_safe_final_prep_rarefy_wide_new,961678)
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+
+
+svg("~/Desktop/Manuscripts/2019_RMK202/Figures/rarefaction.svg",width=6,height=5)
+# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
+
+p1 <- rarecurve(sample_relative_safe_final_prep_rarefy_wide_new, step = 1000, sample = raremax, col = "blue", cex = 0.6,xlab="Sampling size","number of SNPs")
+
+dev.off()
+
 
 
 
@@ -6924,7 +6976,7 @@ sample_relative_safe_woSTRAINS$sample <- droplevels(sample_relative_safe_woSTRAI
 
 ##reorder samples
 
-sample_relative_safe_woSTRAINS$sample = factor(sample_relative_safe_woSTRAINS$sample, levels=c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018"))
+sample_relative_safe_woSTRAINS$sample = factor(sample_relative_safe_woSTRAINS$sample, levels=c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2"))
 levels(sample_relative_safe_woSTRAINS$sample)
 
 
@@ -6944,8 +6996,8 @@ colnames(sample_relative_safe_woSTRAINS)
     # facet_grid(treatment~species)+
     # facet_grid(treatment~species)+
     labs("",
-         x="time [h]",
-         y="Alternative \nallele\n frequency")+
+         x=" ",
+         y="Alternative allele frequency")+
     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
     #scale_y_continuous(limits = c(0,0.3))+
     theme_classic()+
@@ -6972,6 +7024,12 @@ dev.off()
 # ggp <- ggplotly(p2)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_bacteria_all.html")
 
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps.svg",width=5,height=4.5)
+   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+
+p2
+
+dev.off()
 
   ##============
 ### subset :
@@ -6981,8 +7039,10 @@ dev.off()
    ##============
 
 nrow(sample_relative_safe_woSTRAINS)
-sample_relative_safe_woSTRAINS_sub01 <- sample_relative_safe_woSTRAINS[which(sample_relative_safe_woSTRAINS$significance!="MODIFIER"),]
+sample_relative_safe_woSTRAINS_sub01 <- sample_relative_safe_woSTRAINS
+# sample_relative_safe_woSTRAINS_sub01 <- sample_relative_safe_woSTRAINS[which(sample_relative_safe_woSTRAINS$significance!="MODIFIER"),]
 nrow(sample_relative_safe_woSTRAINS_sub01)
+sample_relative_safe_woSTRAINS_sub02 <- sample_relative_safe_woSTRAINS_sub01
 sample_relative_safe_woSTRAINS_sub02 <- sample_relative_safe_woSTRAINS_sub01[which(sample_relative_safe_woSTRAINS_sub01$core=="core"),]
 nrow(sample_relative_safe_woSTRAINS_sub02)
 sample_relative_safe_woSTRAINS_sub03 <- sample_relative_safe_woSTRAINS_sub02[which(sample_relative_safe_woSTRAINS_sub02$Snps>0.05),]
@@ -6990,13 +7050,13 @@ nrow(sample_relative_safe_woSTRAINS_sub03)
 table(sample_relative_safe_woSTRAINS_sub03$species)
 
   ##============
-### plot 
+### plot Streptococcus thermophius
    ##============
 
 
   p3 <- ggplot(sample_relative_safe_woSTRAINS_sub03,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
     # facet_grid(day~kessel~species)+
-    facet_grid(species~.)+
+    # facet_grid(species~.)+
     # facet_grid(treatment~species)+
     # facet_grid(treatment~species)+
     labs("",
@@ -7005,8 +7065,8 @@ table(sample_relative_safe_woSTRAINS_sub03$species)
     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
     #scale_y_continuous(limits = c(0,0.3))+
     theme_classic()+
-   scale_fill_manual(values=all_colours)+
-   scale_color_manual(values=all_colours)+
+   scale_fill_manual(values=all_colours[2])+
+   scale_color_manual(values=all_colours[2])+
     scale_x_discrete( expand = c(0, 0)) +
     theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
@@ -7018,14 +7078,60 @@ table(sample_relative_safe_woSTRAINS_sub03$species)
   
 #   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
 # # 
-# p3
+p3
 # # 
 # dev.off()
-
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps.svg",width=5,height=5)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_sterm.svg",width=4,height=1.8)
    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 
-p3
+p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
+
+dev.off()
+
+
+
+
+  ##============
+### plot Lactobacillus delbrueckii
+   ##============
+sample_relative_safe_woSTRAINS_sub_ldel <- sample_relative_safe_woSTRAINS %>% filter(X.CHROM.x=="CP046131") %>% filter(Snps>0.05)
+
+
+  p4 <- ggplot(sample_relative_safe_woSTRAINS_sub_ldel,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=0.8)+ 
+    # facet_grid(day~kessel~species)+
+    # facet_grid(species~.)+
+    # facet_grid(treatment~species)+
+    # facet_grid(treatment~species)+
+    labs("",
+         x="time [h]",
+         y="Alternative allele frequency")+
+    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    #scale_y_continuous(limits = c(0,0.3))+
+    theme_classic()+
+   scale_fill_manual(values=all_colours[1])+
+   scale_color_manual(values=all_colours[1])+
+    scale_x_discrete( expand = c(0, 0)) +
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+      # axis.text.x = element_blank(),
+          legend.position="none",
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          # axis.title = element_blank()
+          )
+  
+#   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
+# # 
+  p4
+ svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_ldel.svg",width=4,height=1.8)
+   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+
+p4+theme(axis.title = element_blank(),axis.text.x = element_blank())
+
+dev.off()
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_title.svg",width=4,height=3)
+   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+
+p4
 
 dev.off()
 
@@ -7504,6 +7610,14 @@ table(coreGeneNames_sterm_ldel$contig)
 coreGeneNames_sterm <- coreGeneNames_sterm_ldel %>% filter(contig=="CP046134") %>% summarize(GeneLength = end-start) %>% colSums()
 coreGeneNames_ldel <- coreGeneNames_sterm_ldel %>% filter(contig=="CP046131") %>% summarize(GeneLength = end-start) %>% colSums() 
 
+
+
+genome_stats <- read_delim("~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/genomeAnalysi/all_assembly_analysis.txt", "\t", escape_double = FALSE, col_names = c("strain","contigNumber","genomeSize"),  trim_ws = TRUE)
+coreGenome_sterm <- genome_stats %>% filter(strain=="S_thermophilus_mag_rmk202") %>% select(.,genomeSize) %>% as.double()
+coreGenome_ldel <- genome_stats %>% filter(strain=="L_delbrueckii_mag_rmk202") %>% select(.,genomeSize) %>% as.double()
+
+
+
 ##--------------
 ##Snp count per sample and species
 ##-------------
@@ -7512,8 +7626,9 @@ sample_relative_long_Core <- sample_relative_long %>% filter(core=="core" & Snps
 table(sample_relative_long_Core$sample)
 
 
-sample_relative_long_Core <-  gather(sample_relative_wide, sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(core=="core" & Snps>0.05)  %>% group_by(sample,species) %>% tally()
-sample_relative_long_Core$coreGenomeSize <- if_else(sample_relative_long_Core$species=="S. thermophilus",coreGeneNames_sterm,coreGeneNames_ldel) 
+sample_relative_long_Core <-  gather(sample_relative_wide, sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(Snps>0.05)   %>% group_by(sample,species) %>% tally()# %>% filter(core=="core" & Snps>0.05) 
+# sample_relative_long_Core$coreGenomeSize <- if_else(sample_relative_long_Core$species=="S. thermophilus",coreGeneNames_sterm,coreGeneNames_ldel) 
+sample_relative_long_Core$coreGenomeSize <- if_else(sample_relative_long_Core$species=="S. thermophilus",coreGenome_sterm,coreGenome_ldel) 
 CoreGenome_nucleotide_div <- sample_relative_long_Core %>% mutate(.,nucleotide_diversity=100*(n/coreGenomeSize))
 
 
@@ -7522,13 +7637,16 @@ CoreGenome_nucleotide_div <- sample_relative_long_Core %>% mutate(.,nucleotide_d
 ##-------------
 
 library(readr)
-coverage_rmk202_setForMerge <- read_delim("~/Desktop/Projects/2019_Pilotplan/coverage_rmk202.tsv","\t", escape_double = FALSE, col_names = c("rowNumber","sample","species","Median_Coverage","total_coverage","percent_coverage"),trim_ws = TRUE)%>% select(sample,species,Median_Coverage) %>% filter(species %in% c("S_thermophilus_RMK202","L_delbrueckii_RMK202")) %>% mutate(species=recode(species, S_thermophilus_RMK202="S. thermophilus",L_delbrueckii_RMK202="L. delbrueckii")) %>% mutate(sample=recode(sample, lyo202_96="Lyo\n1996",Lyo_202_2012="Lyo\n2012", Lyo_202_2014="Lyo\n2014", Konserve_202="working\nstock", RMK202="starter\nculture\n2012", Versand_202="starter\nculture\n2018"))
+coverage_rmk202_setForMerge <- read_delim("~/Desktop/Projects/2019_Pilotplan/coverage_rmk202.tsv","\t", escape_double = FALSE, col_names = c("rowNumber","sample","species","Median_Coverage","total_coverage","percent_coverage"),trim_ws = TRUE)%>% select(sample,species,Median_Coverage) %>% filter(species %in% c("S_thermophilus_RMK202","L_delbrueckii_RMK202")) %>% mutate(species=recode(species, S_thermophilus_RMK202="S. thermophilus",L_delbrueckii_RMK202="L. delbrueckii")) %>% mutate(sample=recode(sample, lyo202_96="Lyo\n1996",Lyo_202_2012="Lyo\n2012", Lyo_202_2014="Lyo\n2014", Konserve_202="working\nstock", RMK202="starter\nculture\n2012", Versand_202="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
 
 
 
 table(coverage_rmk202_setForMerge$species)
 
 CoreGenome_nucleotide_div <- merge(CoreGenome_nucleotide_div,coverage_rmk202_setForMerge,by=c("sample","species"),all.x = TRUE)
+range(CoreGenome_nucleotide_div$Median_Coverage)
+
+median(CoreGenome_nucleotide_div$Median_Coverage)
 
 ##--------------
 ##plot
@@ -7544,7 +7662,7 @@ CoreGenome_nucleotide_div <- merge(CoreGenome_nucleotide_div,coverage_rmk202_set
   ylim.temp <- c(min(nucleotid_div_ldel$nucleotide_diversity),max(nucleotid_div_ldel$nucleotide_diversity))  # in this example, temperature
 
   b <- diff(ylim.pH)/diff(ylim.temp)
-  a <- 0.73
+  a <- -0.3
 
    pall <- ggplot()+ #stat_summary(fun.y=sum, geom="line")+
      geom_point(data = nucleotid_div_sterm,aes(y = nucleotide_diversity, x = sample,size=Median_Coverage),fill="#EB4D4D",color="#EB4D4D")+
@@ -8197,7 +8315,7 @@ colorsTSNE <- c("#E69F00", "#56B4E9", "#009E73",
 ###--------------------------------------------------------------------
 
 mst1_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1>0.9 & mst2 <=0.9) %>% add_column(group="mst1") %>%replace(is.na(.), 0)
-mst1_metagenomicMutations_long <-  mst1_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst1_metagenomicMutations_long <-  mst1_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
 
 mst1_metagenomicMutations_tsne <- spread(mst1_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8208,7 +8326,7 @@ mst1_metagenomicMutations_tsne <- spread(mst1_metagenomicMutations_long, sample,
 
 
 
-fortsne <- mst1_metagenomicMutations %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
+fortsne <- mst1_metagenomicMutations %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")
 fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
 
@@ -8226,15 +8344,20 @@ tsne_plot$species <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split
 
 ##------------clusters
 
+# set.seed(123456)
 
-set.seed(123456)
+set.seed(1234567)
 ds.real = dbscan(tsne_plot[,c(1,2)], 3)
-tsne_plot$density = factor(ds.real$cluster)
+decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
+change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
+clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
+clusterNames<- revalue(clusterNames,c("6"="5","5"="1","7"="2","8"="1","9"="1"))##add certain clusters to others
+tsne_plot$density = factor(clusterNames)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
-# ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) + 
-#     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density), 
-#     data = ds.cent) + guides(colour = FALSE)
+ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
+    geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density),
+    data = ds.cent) + guides(colour = FALSE)
 
 
 ##-----------make clustering manual
@@ -8337,7 +8460,7 @@ forDensityPlot <- explained_mst1_plot_nonModi_CLUSTERED %>% select(.,site,locati
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
 forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=(sort(unique(forDensityPlot$final_clust),decreasing = TRUE)))
-plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
+# plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
 
 
 Sterm_mst1_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
@@ -8346,6 +8469,29 @@ Sterm_mst1_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,col
   scale_color_manual(values = colors_substrains)+
   labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_mst1_density
+
+Sterm_mst1_frequency <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_freqpoly()+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank())
+Sterm_mst1_frequency
+
+
+Sterm_mst1_histo <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_histogram(position="dodge2")+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank())
+Sterm_mst1_histo
+
+
+Sterm_mst1_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=final_clust,color=final_clust,fill=final_clust))+geom_jitter(width = 0.0, height = 0.4,alpha=0.3 ,size = 0.35)+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
+Sterm_mst1_point
 
 # theme(strip.text.x = element_blank())
 ```
@@ -8361,7 +8507,7 @@ Sterm_mst1_density
 ###--------------------------------------------------------------------
 
 mst2_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1<=0.9 & mst2>0.9) %>% add_column(group="mst2")%>%replace(is.na(.), 0)
-mst2_metagenomicMutations_long <-  mst2_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst2_metagenomicMutations_long <-  mst2_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
 
 mst2_metagenomicMutations_tsne <- spread(mst2_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8372,7 +8518,7 @@ mst2_metagenomicMutations_tsne <- spread(mst2_metagenomicMutations_long, sample,
 
 
 
-fortsne <- mst2_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
+fortsne <- mst2_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")
 fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
 
@@ -8393,7 +8539,11 @@ ggplot(tsne_plot,aes(x=V1,y=V2))+geom_point()
 
 set.seed(123456)
 ds.real = dbscan(tsne_plot[,c(1,2)], 6)
-tsne_plot$density = factor(ds.real$cluster)
+decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
+change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
+clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
+# clusterNames<- revalue(clusterNames,c("6"="5","5"="1","7"="2","8"="1","9"="1"))##add certain clusters to others
+tsne_plot$density = factor(clusterNames)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
 ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
@@ -8417,10 +8567,17 @@ tsne_plot_final_clust <- tsne_plot %>% select(site,  final_clust)
 ###------------------------------------
 ##-------sumplementary plot tsne
 ###------------------------------------
+# tsne_plot$final_clust = factor(tsne_plot$final_clust, levels=1:length(unique(tsne_plot_final_clust$final_clust)))
+# ds.cent = tsne_plot %>% group_by(final_clust) %>% select(V1, 
+#     V2) %>% summarize_all(mean)
+# colors_substrains <- c(colorsTSNE[1:length(unique(tsne_plot_final_clust$final_clust))])
+
+
 tsne_plot$final_clust = factor(tsne_plot$final_clust, levels=1:length(unique(tsne_plot_final_clust$final_clust)))
 ds.cent = tsne_plot %>% group_by(final_clust) %>% select(V1, 
     V2) %>% summarize_all(mean)
 colors_substrains <- c(colorsTSNE[1:length(unique(tsne_plot_final_clust$final_clust))])
+
 
 # Sterm_mst2_suplementaryTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, colour = final_clust)) + 
 #     geom_point(alpha = 0.3) + theme_classic() + geom_label_repel(aes(label =final_clust), 
@@ -8433,6 +8590,10 @@ Sterm_mst2_suplementaryTsne <- ggplot(tsne_plot, aes(x = V1, y = V2, colour = fi
 
 
 Sterm_mst2_suplementaryTsne
+
+
+
+
 
 ###------------------------------------
 ##-------sumplementary histogramm
@@ -8519,6 +8680,14 @@ Sterm_mst2_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,col
 
 Sterm_mst2_density
 
+
+Sterm_mst2_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=final_clust,color=final_clust,fill=final_clust))+geom_jitter(width = 0.0, height = 0.4,alpha=0.7 ,size = 1)+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
+Sterm_mst2_point
+
 ```
 
 
@@ -8533,7 +8702,7 @@ Sterm_mst2_density
 ###--------------------------------------------------------------------
 
 mst_both_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1>0.9 & mst2>0.9) %>% add_column(group="both")%>%replace(is.na(.), 0)
-mst_both_metagenomicMutations_long <-  mst_both_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst_both_metagenomicMutations_long <-  mst_both_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
 
 mst_both_metagenomicMutations_tsne <- spread(mst_both_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8542,7 +8711,7 @@ mst_both_metagenomicMutations_tsne <- spread(mst_both_metagenomicMutations_long,
 ##prep for tSNE
 ###--------------------------------------------------------------------
 
-fortsne <- mst_both_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
+fortsne <- mst_both_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")
 fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
 
@@ -8567,7 +8736,11 @@ set.seed(123456)
 # set.seed(2)
 
 ds.real = dbscan(tsne_plot[,c(1,2)], 8)
-tsne_plot$density = factor(ds.real$cluster)
+decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
+change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
+clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
+# clusterNames<- revalue(clusterNames,c("6"="5","5"="1","7"="2","8"="1","9"="1"))##add certain clusters to others
+tsne_plot$density = factor(clusterNames)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
 ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
@@ -8688,18 +8861,30 @@ forDensityPlot <- explained_both_plot_nonModi_CLUSTERED %>% select(.,site,locati
 # plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
-forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not clustered",4:1))
-plotColors <-  c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
+# forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=(sort(unique(forDensityPlot$final_clust),decreasing = TRUE)))
+
+# forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not clustered",4:1),decreasing = TRUE)))
+# plotColors <-  c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTERED$final_clust))[2:5]])
+
+forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=(sort(unique(forDensityPlot$final_clust),decreasing = TRUE)))
+# colors_substrains <- c(colorsTSNE[1:length(unique(tsne_plot_final_clust$final_clust))])
 
 
 Sterm_both_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
   facet_wrap(~final_clust,scale = "free_y")+
-  scale_fill_manual(values = plotColors)+
-  scale_color_manual(values = plotColors)+
-  labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  # labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_both_density
 
 
+Sterm_both_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=final_clust,color=final_clust,fill=final_clust))+geom_jitter(width = 0.0, height = 0.4,alpha=0.7 ,size = 1)+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
+Sterm_both_point
 
 ```
 
@@ -8715,7 +8900,7 @@ Sterm_both_density
 ###--------------------------------------------------------------------
 
 mst_none_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1<=0.9 & mst2<=0.9) %>% add_column(group="not explained")%>%replace(is.na(.), 0)
-mst_none_metagenomicMutations_long <-  mst_none_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst_none_metagenomicMutations_long <-  mst_none_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
 
 
 mst_none_metagenomicMutations_tsne <- spread(mst_none_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
@@ -8728,7 +8913,7 @@ mst_none_metagenomicMutations_tsne <- spread(mst_none_metagenomicMutations_long,
 
 
 
-fortsne <- mst_none_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018")
+fortsne <- mst_none_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")
 fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
 
@@ -8752,8 +8937,12 @@ tsne_plot$species <- paste(str_split_fixed(tsne_plot$site, "_", 5)[,1],str_split
 set.seed(123456)
 # set.seed(2)
 
-ds.real = dbscan(tsne_plot[,c(1,2)], 8)
-tsne_plot$density = factor(ds.real$cluster)
+ds.real = dbscan(tsne_plot[,c(1,2)], 5)
+decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
+change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
+clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
+clusterNames<- revalue(clusterNames,c("7"="3"))##add certain clusters to others
+tsne_plot$density = factor(clusterNames)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
 ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
@@ -8817,14 +9006,14 @@ explained_none_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_none_p
 ###------------------------------------
 ##plotting
 ###------------------------------------
-# explained_none_plot_nonModi_CLUSTERED
-explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",4:1))
+table(explained_none_plot_nonModi_CLUSTERED$final_clust)
+explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",6:1))
 
 # levels(explained_none_plot_nonModi_CLUSTERED$final_clust)
 # plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))],"grey")
-plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[2:5]])
+# plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[2:6]])
+plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[2:7]])
 
-# explained_none_plot_nonModi_CLUSTERED <- explained_none_plot_nonModi_CLUSTERED %>% filter(.,final_clust=="2")
 
 
     p_none_sterm_woModi_clustered <- ggplot(explained_none_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
@@ -8839,12 +9028,12 @@ plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_
   # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
   theme_classic()+
           ylim(c(0,1))+
- theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
        #axis.text.x=element_blank(),
           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
           legend.position="bottom",
        legend.title = element_blank(),
-       axis.text.x = element_blank(),
+       # axis.text.x = element_blank(),
        axis.text.y = element_text(size=8),
        # axis.title = element_text(size=9),
        axis.title = element_blank(),
@@ -8871,13 +9060,8 @@ forDensityPlot <- explained_none_plot_nonModi_CLUSTERED %>% select(.,site,locati
 # plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
 
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
-forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not clustered",4:1))
-plotColors <- c("grey",colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))[2:5]])
-
-
-forDensityPlot$location
-# sum(is.na(forDensityPlot$location))
-table(forDensityPlot$final_clust)
+# forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=c("not clustered",6:1))
+forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=(sort(unique(forDensityPlot$final_clust),decreasing = TRUE)))
 
 
 Sterm_none_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
@@ -8885,15 +9069,16 @@ Sterm_none_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,col
   scale_fill_manual(values = colors_substrains)+
   scale_color_manual(values = colors_substrains)+
   labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+  # labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
+
 Sterm_none_density
 
-# Sterm_none_histo <- ggplot(forDensityPlot,aes(location,group=final_clust,color=final_clust,fill=final_clust))+geom_histogram(alpha=0.2)+theme_classic()+
-#   scale_fill_manual(values = colors_substrains)+
-#   scale_color_manual(values = colors_substrains)+
-#   labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
-# Sterm_none_histo
-# forDensityPlot$site
-
+Sterm_none_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=final_clust,color=final_clust,fill=final_clust))+geom_jitter(width = 0.0, height = 0.4,alpha=0.7 ,size = 1)+theme_classic()+
+  # facet_wrap(~final_clust,scale = "free_y")+
+  scale_fill_manual(values = colors_substrains)+
+  scale_color_manual(values = colors_substrains)+
+  labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
+Sterm_none_point
 ```
 
 
@@ -8908,8 +9093,6 @@ among the most mutate genes are:
 
 
 #####bring all together and plot with tsne cluster
-
-
 
 
 ```{r}
@@ -8933,7 +9116,6 @@ grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm
 
 
 
-
  svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all.svg",width=12,height=8)
 
 grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_both_suplementaryTsne,Sterm_both_suplementarybarPlot,Sterm_both_density,
@@ -8942,6 +9124,22 @@ grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none"),Sterm
              p_none_sterm_woModi_clustered+theme(legend.position = "none"),Sterm_none_suplementaryTsne,Sterm_none_suplementarybarPlot,Sterm_none_density,
              legend_1,legend_2,legend_both,blank,
              ncol=4,heights=c(1,1,1,1,1),widths=c(4,1,1,1))
+
+
+dev.off()
+
+
+
+
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all_02.svg",width=12,height=8)
+
+grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "both strains", x = 5, y = 0.25, size = 7),Sterm_both_suplementarybarPlot,Sterm_both_density,Sterm_both_point,
+             p_mst1_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "mst1", x = 5, y = 0.25, size = 7),Sterm_mst1_suplementarybarPlot,Sterm_mst1_density,Sterm_mst1_point,
+             p_mst2_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "mst2", x = 5, y = 0.75, size = 7),Sterm_mst2_suplementarybarPlot,Sterm_mst2_density,Sterm_mst2_point,
+             p_none_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "not explained", x = 5, y = 0.85, size = 7),Sterm_none_suplementarybarPlot,Sterm_none_density,Sterm_none_point,
+             
+         
+             ncol=4,heights=c(1,1,1,1.2),widths=c(4,1,1,1))
 
 
 dev.off()
@@ -15092,9 +15290,23 @@ merged_medians <- rbind(cluster_1_wMag,cluster2_wo_mag,unexplained)
 
 ```{r}
 library(vegan)
+
+
+
+
+
+
+
+
+##test old
+
+
 library(diveRsity)
 install.packages("hierfstat")
 library(hierfstat)
+
+
+
 
 data(gtrunchier)
 result<- allelic.richness(gtrunchier[,-1])
