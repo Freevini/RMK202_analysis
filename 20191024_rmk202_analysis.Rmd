@@ -2886,9 +2886,9 @@ snakemake
 
 ###________________________move local
 
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/IDEEL/ideel/hists/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/IDEEL/ideel/hists/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
 
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL/IDEEL/ideel/lengths/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/IDEEL/ideel/lengths/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
 
 
 ```
@@ -2917,9 +2917,9 @@ pseudoPlotData <- data.frame(pseudo=c(100-(sum((assembly_01$length/assembly_01$e
 100-(sum((assembly_06$length/assembly_06$expected)>0.9)/nrow(assembly_06)*100),
 100-(sum((assembly_07$length/assembly_07$expected)>0.9)/nrow(assembly_07)*100),
 100-(sum((assembly_08$length/assembly_08$expected)>0.9)/nrow(assembly_08)*100),
-100-(sum((assembly_09$length/assembly_09$expected)>0.9)/nrow(assembly_09)*100)),names=c("FlyeAssembly","firstONTracon","secondONTracon","thirdONTracon","fourthFreebayes","fiftFreebayes","sixthFreebayes","seventhFreebayes","eigthFreeebayes"))
+100-(sum((assembly_09$length/assembly_09$expected)>0.9)/nrow(assembly_09)*100)),names=c("FlyeAssembly","firstONTracon","secondONTracon","thirdONTracon","fourthONTracon","firstFreebayes","secondFreebayes","thirdFreebayes","fourthFreebayes"))
 
-pseudoPlotData$nameSample_f = factor(pseudoPlotData$names, levels=c("FlyeAssembly","firstONTracon","secondONTracon","thirdONTracon","fourthFreebayes","fiftFreebayes","sixthFreebayes","seventhFreebayes","eigthFreeebayes"))
+pseudoPlotData$nameSample_f = factor(pseudoPlotData$names, levels=c("FlyeAssembly","firstONTracon","secondONTracon","thirdONTracon","fourthONTracon","firstFreebayes","secondFreebayes","thirdFreebayes","fourthFreebayes"))
 
 
 p5 <- ggplot(pseudoPlotData,aes(x=nameSample_f,y=pseudo,group=1))+geom_point(size=2)+geom_line()+
@@ -3047,6 +3047,37 @@ mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/d
 names=di_K2_6h
 mkdir -p ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/
 scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly/assembly_graph_with_scaffolds.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/${names}_graph.gfa
+
+
+###======================================single sample unmapped assembly
+
+for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt|grep "_K")
+do
+echo ${names}
+##--------------plasmid spades
+rm - r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_plasmid/${names}/
+mkdir -p  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_plasmid/${names}/
+/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py --plasmid -t 37 -m 100 \
+  -s /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq \
+  -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_plasmid/${names}/
+
+##--------------meta  
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_meta/${names}/
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_meta/${names}/
+/home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py --plasmid -t 37 -m 100 \
+  -s /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted_unmapped.fq \
+  -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_meta/${names}/
+
+
+done
+
+
+###--------------------------------move local
+
+
+names=di_K2_6h
+mkdir -p ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/
+scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_everySample_indiviually_plasmid/di_K2_6h/contigs.fasta ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/${names}_constig.fasta
 
 ```
 
@@ -3210,6 +3241,8 @@ The final annoation will be done with:
 - preliminary prokka
 
 ##### PGAP
+
+make PGAP annotation by submitting in the [submission portal](https://submit.ncbi.nlm.nih.gov/).
 
 ```{bash}
 
@@ -3892,7 +3925,7 @@ fastANI -t 5 --ql /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undepl
   --rl /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt \
   -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt
 
-sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/circlaring_ldel\/final\///g'  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/L[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
+sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/L[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/\/circlaring_ldel\/final\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
 
 
 #scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Lactobacillus_delbrueckii/Lactobacillus_delbrueckii_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
@@ -3923,12 +3956,12 @@ echo "/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K
 
 ##FASTANI
 
-fastANI -t 5 --ql /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt \
+fastANI -t 37 --ql /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt \
   --rl /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_GenomePath.txt \
   -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt
   
 
-sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/circlaring_sterm\/final\///g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/S[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
+sed 's/\/archiv\/Projects\/2019_Nano_Meta\/02_flye_Assembly\/02_raw_demultiplexed\/di_K2_6h\/Polishing_FINAL\/circlatorAfter\/\/circlaring_sterm\/final\///g' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani.txt |sed 's/\/archiv\/Projects\/2018_Culturomics\/06_Spades\/S[0-9]\+\/assembly\/assemblyMetaSpades_20190121.fasta\///g' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/${species}/${species}_fastani_forR.txt
 
 #cp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/fastANI/Streptococcus_thermophilus/Streptococcus_thermophilus_fastani_forR.txt ~/Desktop/Projects/2018_culturomics/fastani/
 
@@ -4857,6 +4890,23 @@ tmp <- merge(BUSCO_stats,genome_stats,by="strain")
 tmp <- merge(tmp,Genes_stats,by="strain")
 GenomeAssemblyStats <- merge(tmp,mapping_stats,by="strain")
 
+##----------------------cleaning--------------------------------
+table(GenomeAssemblyStats$strain)
+GenomeAssemblyStats$species <- revalue(GenomeAssemblyStats$species, c("Sterm"="S.thermophilus","Ldel"="L.delbrueckii"))
+
+GenomeAssemblyStats$strain <- revalue(GenomeAssemblyStats$strain, c("S50"="mst1","S72"="mst2","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","L_delbrueckii_mag_rmk202"="Ldel_mag_202","S_thermophilus_mag_rmk202"="Sterm_mag_202"))
+
+GenomeAssemblyStats <- GenomeAssemblyStats[-which(GenomeAssemblyStats$strain=="L39"),]
+colnames(GenomeAssemblyStats)
+
+GenomeAssemblyStats_final <- GenomeAssemblyStats %>% select(species,strain,contigNumber,genomeSize,GC,IlluminaCoverage,ONTcoverage,genes,tRNA,rRNA,completness)
+
+##----------------------write table--------------------------------
+
+write.csv(GenomeAssemblyStats_final,file="~/Desktop/presenations/my_presentations/20191007_groupmeeting/figures/genomeAssemblyStats.csv")
+# 
+# write.xlsx(GenomeAssemblyStats_final,file="Users//Desktop/presenations/my_presentations/20191007_groupmeeting/figures/genomeAssemblyStats.xls", sheetName = "Sheet1",
+#   col.names = TRUE, row.names = FALSE, append = FALSE)
 ```
 
 
@@ -4937,14 +4987,14 @@ names=Konserve_202
 
 
 num=1
-rm ${BaseLocation}/log/mappings.txt
+rm -r ${BaseLocation}/log/mappings.txt
 
 #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
   do
 mapped=$(grep "     number of mapped reads = " ${BaseLocation}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
 
-mkdir -p ${BaseLocation}/log/mappings.txt
+mkdir -p ${BaseLocation}/log
 echo -e ${names}"\tonlyMeta\t"${mapped} >> ${BaseLocation}/log/mappings.txt
 
 done
@@ -4953,7 +5003,14 @@ done
 ##move local
 ##-------------------------------------------------  
 
-#scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
+##bring together 
+
+cat /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/log/mappings.txt \
+/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_allRMKs202/log/mappings.txt > \
+/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/log/mappings_final.txt
+
+
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/log/mappings_final.txt /Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
 ```
 
 ###### unmapped assembly
@@ -5098,25 +5155,59 @@ spades_contig_graph.py -l  /home/vincent/Projects/2019_pilotplant/04_mapping2Nan
 ```{r}
 library(ggplot2)
 library(readr)
-mappings <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/mappings_02.txt",  "\t", escape_double = FALSE, col_names = c("sample","type","mapping"),  trim_ws = TRUE)
+
+mappings <- read_delim("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/mappings_final.txt",  "\t", escape_double = FALSE, col_names = c("sample","type","mapping"),  trim_ws = TRUE)
 
 median(mappings$mapping)
 
-ggplot(mappings,aes(x=sample,y=mapping))+geom_bar(stat = "identity")+theme_classic() #+lims(y=c(90,100))
+##------------------------treamtents
+mappings$sample <- revalue(mappings$sample, c("L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2"))
 
- mappings$type <- factor( mappings$type, levels=c("onlyMeta","allisolates"))
+mappings$sample <- factor(mappings$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+mappings$type <- factor(mappings$type, levels=(c("onlyMeta","allisolates")))
+
+
+##------------------------plotting
+
+ # coloursplotting <-  c(rep("cadetblue3",5),rep("azure4",16),rep("#EB4D4D",2),rep("#10B552",9))
+coloursplotting <-  c("cadetblue3","azure4")
+
+ rawREad <-  ggplot(mappings,aes(x=sample,y=mapping,fill=type))+geom_bar( stat="identity", position="dodge")+
+    labs(y="Percent\nraw reads mapping",
+        x="")+
+         coord_cartesian(ylim=c(95,100))+
+   scale_fill_manual(values=coloursplotting)+
+       theme_classic()+
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=8),
+          # # axis.text.y.left = element_text(color = "blue"),
+          # axis.text.y.right = element_text(color="red"),
+          # axis.title.y.left = element_text(color="blue"),
+          # axis.title.y.right = element_text(color="red"),
+          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="right",
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          legend.title = element_blank()
+          )
+ rawREad
+  # svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/04_rawReadMapping.svg",width=5,height=3)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.svg",width=6,height=4)
+    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/20191114_draft_02/PNGs_for_manuscript/S05_rawReadMapping.png", width = 1000, height = 800,res=300)
+
+
+rawREad
+ dev.off()
+ 
 
 
 p1 <- ggplot(mappings,aes(x=type,y=mapping))+geom_boxplot()+theme_classic()+scale_y_continuous(breaks =c(97.5,98,98.5,99,99.5,100),labels=c(97.5,98,98.5,99,99.5,100),limits = c(97.5,100))+labs(x="",y="mapping [%]") #+lims(y=c(90,100))
 p1
 
-svg("~/Desktop/Manuscripts/2019_RMK202/Figures/20191114_draft_01/S03_mapping.svg",width=2,height=4)
+svg("~/Desktop/Manuscripts/2019_RMK202/Figures/20191114_draft_02/S03_mapping.svg",width=2,height=4)
 #    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 p1
  dev.off()
 
 ```
-
 
 
 #####mapping to all genomes
@@ -5216,14 +5307,14 @@ echo ${BaseLocation}"/"${names}"/bwaMapping2DB/bamqc" >> ${BaseLocation}/log/mul
 
 
 num=1
-#rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/${name_folder}/log/mappings.txt
+rm -r ${BaseLocation}/log/mappings.txt
 #for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt)
 for names in $(cat /archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt)
   do
 mapped=$(grep "     number of mapped reads = " ${BaseLocation}/${names}/bwaMapping2DB//bamqc/genome_results.txt  |cut -d '(' -f 2 | sed 's/%)//g')
 
-mkdir -p ${BaseLocation}/log/mappings.txt
-echo -e ${names}"\tonlyMeta\t"${mapped} >> ${BaseLocation}/log/mappings.txt
+mkdir -p ${BaseLocation}/log/
+echo -e ${names}"\tallisolates\t"${mapped} >> ${BaseLocation}/log/mappings.txt
 
 done
 
@@ -5232,7 +5323,7 @@ done
 ##move local
 ##-------------------------------------------------  
 
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
+#scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/log/mappings.txt Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/
 
 ```
 
@@ -5254,7 +5345,7 @@ GL	Genotype Likelihood, log10-scaled likelihoods of the data given the called ge
 
 Very nice [blog](http://www.ddocent.com/filtering/) illustrating good filtering practices.
 
-```{bash}
+```{bash,eval=FALSE,echo=FALSE}
 
 
 ###================
@@ -5278,7 +5369,7 @@ FREEBAYES_out=freebayesOuput_WithONT_Parallel_default
 ##--------------------------------------------------------------------------------------------------------------------------------------
 
 #name_folder=02_againstpolished_single_rmk202_final_kneaddata_withStrains 
-#names=Lyo_202_2014
+names=Lyo_202_2014
 ###------------------adding readgroup to bam
 rm ${BaseLocation}/log/multiqc_logfile_bams.txt
 mkdir -p  ${BaseLocation}/log/
@@ -5287,14 +5378,14 @@ mkdir -p  ${BaseLocation}/log/
 do
 echo ${names}
 
-#java -jar /home/vincent/apps/picard/picard.jar AddOrReplaceReadGroups \
-#       I=${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
-#       O=${BaseLocation}/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
-#       RGID=${names} \
-#       RGLB=lib1 \
-#       RGPL=illumina \
-#       RGPU=unit1 \
-#       RGSM=${names}
+java -jar /home/vincent/apps/picard/picard.jar AddOrReplaceReadGroups \
+       I=${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam \
+       O=${BaseLocation}/${names}/bwaMapping2DB/${names}_mapping2ref.bam \
+       RGID=${names} \
+       RGLB=lib1 \
+       RGPL=illumina \
+       RGPU=unit1 \
+       RGSM=${names}
 
 #rm /archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam
 
@@ -5573,77 +5664,6 @@ p2 <-  ggplot( data = mappingcoverage_reduced_final,aes(y = percent_coverage, x 
 
 ```
 
-mappping stats
-
-```{r}
-library(readr)
-library(stringr)
-library(ggplot2)
-mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mappingStat_forR.csv", "\t", escape_double = FALSE, col_names = c("name","empty1","empty2","empty3","percent","Mio.reads"),trim_ws = TRUE)
-
-
-mappingStat <- read_delim("~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/mappingQC/mapping_after_kneaddata_cleaned.csv", "\t", escape_double = FALSE, col_names = c("name","percent","Mio.reads"),trim_ws = TRUE)
-
-
-
-
-  mappingStat$day <- str_split_fixed(mappingStat$name, "_", 3)[,1]
-  mappingStat$kessel <- str_split_fixed(mappingStat$name, "_", 3)[,2]
-  mappingStat$time <- str_split_fixed(mappingStat$name, "_", 3)[,3]
-  mappingStat$treatment <- paste0(mappingStat$day,"_",mappingStat$kessel)
- 
-  mappingStat$treatment_f = factor(mappingStat$treatment, levels=c('di_K1','th_K1','di_K2','th_K2'))
-  mappingStat$time_f = factor(mappingStat$time, levels=c("0h","2h","4h","6h","8h","10h","12h","24h"))
-
-mappingStat$name <- as.factor(mappingStat$name)
-  mappingStat$name_f = factor(mappingStat$name, levels=c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202","di_K1_0h","th_K1_0h","di_K1_2h","th_K1_2h","di_K1_4h","th_K1_4h","di_K1_6h","th_K1_6h","di_K1_8h","th_K1_8h","di_K1_10h","th_K1_10h","di_K1_12h","th_K1_12h","di_K1_24h","th_K1_24h","S72","S50","L104","L108","L35","L39","L44","L70","L71","L80","L99"))
-
-  
-  mappingStat <- mappingStat[mappingStat$name %in% c("Lyo_202_2012","Lyo_202_2014","RMK202","Konserve_202","Versand_202"),]
-  
-  levels(mappingStat$name)
-  min(mappingStat$percent)
-  coloursplotting <-  c(rep("cadetblue3",5),rep("azure4",16),rep("#EB4D4D",2),rep("#10B552",9))
-  
- rawREad <-  ggplot(mappingStat,aes(x=name_f,y=percent,fill=name_f))+geom_bar( stat="identity", position="dodge")+
-    labs(y="Percent\nraw reads mapping",
-        x="")+
-         coord_cartesian(ylim=c(90,100))+
-   scale_fill_manual(values=coloursplotting)+
-       theme_classic()+
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          # # axis.text.y.left = element_text(color = "blue"),
-          # axis.text.y.right = element_text(color="red"),
-          # axis.title.y.left = element_text(color="blue"),
-          # axis.title.y.right = element_text(color="red"),
-          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
- rawREad
- 
-   # svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/04_rawReadMapping.svg",width=5,height=3)
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.svg",width=5,height=3)
-    png("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.png", width = 1000, height = 800,res=300)
-
-
-rawREad
- dev.off()
- 
- 
- mappingStat$newReads <- (mappingStat$percent/100)*mappingStat$Mio.reads
-  
- Mio_reads <- ggplot(mappingStat,aes(x=time_f,y=newReads,group=treatment,color=kessel,fill=kessel))+geom_bar( stat="identity", position="dodge")+
-    labs(y="Mio. reads mapping",
-        y="")
- 
-    svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/rawReadMapping_mio.svg",width=5,height=3)
-Mio_reads
- dev.off()
- 
- 
-```
 
 
 ###CIGAR parsing
@@ -6779,14 +6799,6 @@ RMK202_snpeff_eggnog_repeats_core_uniuqes_final_reduce <- RMK202_snpeff_eggnog_r
 ```{r}
 library(vegan)
 
-data(BCI)
-S <- specnumber(BCI) # observed number of species
-(raremax <- min(rowSums(BCI)))
-Srare <- rarefy(BCI, raremax)
-plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
-abline(0, 1)
-rarecurve(BCI, step = 20, sample = raremax, col = "blue", cex = 0.6)
-
 
 ##-----------------------------------------------------------------------own samples------------------------
 library(tidyverse) 
@@ -6813,13 +6825,14 @@ Srare <- rarefy(sample_relative_safe_final_prep_rarefy_wide_new,961678)
 plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
 abline(0, 1)
 
+ rarecurve(sample_relative_safe_final_prep_rarefy_wide_new, step = 100000, sample = raremax, col = "blue", cex = 0.6,xlab="Sampling size","number of SNPs")
 
-svg("~/Desktop/Manuscripts/2019_RMK202/Figures/rarefaction.svg",width=6,height=5)
-# png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
-
-p1 <- rarecurve(sample_relative_safe_final_prep_rarefy_wide_new, step = 1000, sample = raremax, col = "blue", cex = 0.6,xlab="Sampling size","number of SNPs")
-
-dev.off()
+# svg("~/Desktop/Manuscripts/2019_RMK202/Figures/rarefaction.svg",width=6,height=5)
+# # png("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_freebayes_colored_explained_sterm.png",width=1800,height=1600,res=300)
+# 
+# p1 <- rarecurve(sample_relative_safe_final_prep_rarefy_wide_new, step = 1000, sample = raremax, col = "blue", cex = 0.6,xlab="Sampling size","number of SNPs")
+# 
+# dev.off()
 
 
 
@@ -7337,13 +7350,35 @@ dev.off()
 
 ##==================================================Lactobacillus delbrueckii===================================================================
 ##-------------group1
-group1_count <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter(mst3>0.9| mst7>0.9| mst6>0.9 |  mst9>0.9|mst4>0.9)%>% nrow()
+group1_count_snps <- sample_relative_wide %>%replace(is.na(.), 0) %>% filter(species=="L. delbrueckii")  %>% filter(mst6>0.9) %>% filter(mst7<0.9& mst4<0.9&mst3<0.9 & mst9<0.9&mst8<0.9& mst5<0.9&mst10<0.9)
+group1_count <- group1_count_snps %>% nrow()
+
 ##-------------group2
-group2_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst8>0.9) %>% nrow()
+group2_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(species=="L. delbrueckii")  %>% filter(mst7>0.9| mst4>0.9|mst3>0.9 | mst9>0.9) %>%filter(mst6<0.9&mst8<0.9& mst5<0.9&mst10<0.9)
+group2_count <- group2_count_snps %>% nrow()
+
 ##-------------group3
-group3_count <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( mst5>0.9|mst10>0.9) %>% nrow()
+group3_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter(mst7<0.9& mst4<0.9&mst3<0.9 & mst9<0.9&mst6<0.9 ) %>%filter(mst8>0.9|mst5>0.9|mst10>0.9) 
+group3_count <- group3_count_snps %>% nrow()
+
+##-------------explained by multiple
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter(((mst6>0.9)+(mst7>0.9| mst4>0.9|mst3>0.9 | mst9>0.9)+(mst8>0.9|mst5>0.9|mst10>0.9))>1)
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6>0.9)&(mst7>0.9| mst4>0.9|mst3>0.9|mst9>0.9))
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6>0.9)&(mst8>0.9|mst5>0.9|mst10>0.9))
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst7>0.9| mst4>0.9|mst3>0.9|mst9>0.9)&(mst8>0.9|mst5>0.9|mst10>0.9))
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6>0.9)&(mst7>0.9| mst4>0.9|mst3>0.9|mst9>0.9)&(mst8>0.9|mst5>0.9|mst10>0.9))
+###non at all
+
+
+##-------------explained by none
+none_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6<0.9)&(mst7<0.9&mst4<0.9&mst3<0.9&mst9<0.9)&(mst8<0.9&mst5<0.9&mst10<0.9))
+ 
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6>0.9)&(mst7>0.9| mst4>0.9|mst3>0.9))
+allGroups_count_snps <-  sample_relative_wide %>%replace(is.na(.), 0)%>% filter(species=="L. delbrueckii")  %>%  filter((mst6>0.9)&(mst8>0.9|mst5>0.9|mst10>0.9))
+
+
 #----------------------in meta
-meta_tmp <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(core=="core")%>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
+meta_tmp <-  sample_relative_wide %>%replace(is.na(.), 0) %>% filter(species=="L. delbrueckii")  %>% filter( "Lyo\n1996">0.05| "Lyo\n2012">0.05| "Lyo\n2014">0.05| "working\nstock">0.05 | "starter\nculture\n2012">0.05 | "starter\nculture\n2018">0.05 ) %>% nrow()
 
 ##-------------group1
 
@@ -7711,32 +7746,51 @@ sample_relative_long_newSNPS <- sample_relative_wide %>% filter(.,`Lyo\n1996`==0
   ##============
 ### plot 
    ##============
-table(sample_relative_long_newSNPS$geneName)
 
-  p3 <- ggplot(sample_relative_long_newSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
+
+ sample_relative_long_newSNPS$LABELS <- ifelse(is.na(sample_relative_long_newSNPS$Preferred_name),sample_relative_long_newSNPS$geneName,sample_relative_long_newSNPS$Preferred_name)
+
+table(sample_relative_long_newSNPS$LABELS)
+sample_relative_long_newSNPS$LABELS = factor(sample_relative_long_newSNPS$LABELS, levels=c("GKC13_08910",'GKC13_05765','GKC13_04170','GKC13_06155','amiA'))
+
+
+colors <- c("grey","grey","grey","grey","red")
+
+  p3 <- ggplot(sample_relative_long_newSNPS,aes(x=sample,y=Snps,group=site,color=LABELS,fill=LABELS, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
 
     labs("",
          x="",
-         y="Alternative \nallele\n frequency")+
+         y="Alternative allele frequency")+
     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    scale_y_continuous(limits = c(0,1))+
+    scale_y_continuous(limits = c(0,0.68))+
     theme_classic()+
-   # scale_fill_manual(values=all_colours)+
-   # scale_color_manual(values=all_colours)+
+   scale_fill_manual(values=colors)+
+   scale_color_manual(values=colors)+
     scale_x_discrete( expand = c(0, 0)) +
     theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
       #axis.text.x = element_blank(),
-          legend.position="right"
+          legend.position="right",
           #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
+          legend.title = element_blank()
           )
   
+   svg("~/Desktop/Manuscripts/2019_RMK202/Figures//F1_new_mutations.svg",width=7,height=3)
+
+#   png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
+# 
+p3+theme(axis.text.x = element_blank())# 
+dev.off()
+
+
+ 
+   svg("~/Desktop/Manuscripts/2019_RMK202/Figures//F1_new_mutations_names.svg",width=7,height=3)
+
 #   png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
 # 
 p3
 # 
-# dev.off()
+dev.off()
 
   ##============
 ### genes of interest 
@@ -7836,32 +7890,38 @@ nrow(sample_relative_long_fixedSNPS)
   ##============
 ### plot 
    ##============
+sample_relative_long_fixedSNPS$LABELS <- ifelse(is.na(sample_relative_long_fixedSNPS$Preferred_name),sample_relative_long_fixedSNPS$geneName,sample_relative_long_fixedSNPS$Preferred_name)
 
+colors <- c("grey","grey","grey","gold")
 
-  p3 <- ggplot(sample_relative_long_fixedSNPS,aes(x=sample,y=Snps,group=site,color=Preferred_name,fill=Preferred_name, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
+  p3 <- ggplot(sample_relative_long_fixedSNPS,aes(x=sample,y=Snps,group=site,color=LABELS,fill=LABELS, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.8, alpha=.5)+ 
 
     labs("",
          x="",
-         y="Alternative \nallele\n frequency")+
+         y="Alternative allele frequency")+
     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    scale_y_continuous(limits = c(0,1))+
+    scale_y_continuous(limits = c(0.68,1))+
     theme_classic()+
-   # scale_fill_manual(values=all_colours)+
-   # scale_color_manual(values=all_colours)+
+   scale_fill_manual(values=colors)+
+   scale_color_manual(values=colors)+
     scale_x_discrete( expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+    theme(#axis.text.x = element_text(angle = 75, hjust = 1,size=9),
           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="right"
+      axis.text.x = element_blank(),
+          legend.position="right",
           #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
+          legend.title = element_blank()
           )
   
+  p3
+ svg("~/Desktop/Manuscripts/2019_RMK202/Figures//F1_fixed_mutations.svg",width=7,height=3)
+ 
 #   png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
 # 
 p3
 # 
-# dev.off()
+dev.off()
+
 
   ##============
 ### genes of interest 
@@ -8315,7 +8375,7 @@ colorsTSNE <- c("#E69F00", "#56B4E9", "#009E73",
 ###--------------------------------------------------------------------
 
 mst1_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1>0.9 & mst2 <=0.9) %>% add_column(group="mst1") %>%replace(is.na(.), 0)
-mst1_metagenomicMutations_long <-  mst1_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst1_metagenomicMutations_long <-  mst1_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE)# %>% filter(.,Snps>0.005)
 
 mst1_metagenomicMutations_tsne <- spread(mst1_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8331,6 +8391,8 @@ fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
 
 set.seed(1234567)
+# set.seed(12314567)
+
 tsne <- Rtsne(fortsne[,-1], dims = 2, perplexity=10, verbose=TRUE, max_iter = 500)
 # tsne <- Rtsne(fortsne[,41:45], dims = 2, perplexity=10, verbose=TRUE, max_iter = 500)
 tsne_plot <- as.data.frame(tsne$Y)
@@ -8351,13 +8413,14 @@ ds.real = dbscan(tsne_plot[,c(1,2)], 3)
 decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
 change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
 clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
-clusterNames<- revalue(clusterNames,c("6"="5","5"="1","7"="2","8"="1","9"="1"))##add certain clusters to others
+clusterNames<- revalue(clusterNames,c("6"="4","5"="1","7"="2","8"="1","9"="1","4"="3"))##add certain clusters to others
 tsne_plot$density = factor(clusterNames)
-ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
+ds.cent = tsne_plot %>% group_by(density) %>% select(V1,
     V2) %>% summarize_all(mean)
 ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density),
     data = ds.cent) + guides(colour = FALSE)
+
 
 
 ##-----------make clustering manual
@@ -8405,6 +8468,8 @@ Sterm_mst1_suplementarybarPlot
 explained_mst1_plot_nonModi_CLUSTERED <- merge(mst1_metagenomicMutations_long,tsne_plot_final_clust,by = "site",all.x = TRUE)
 # table(explained_mst1_plot_nonModi_CLUSTERED$final_clust)
 # unique(explained_mst1_plot_nonModi_CLUSTERED$final_clust)
+# explained_mst1_plot_nonModi_CLUSTERED[which(is.na(explained_mst1_plot_nonModi_CLUSTERED$final_clust)),]
+explained_mst1_plot_nonModi_CLUSTERED <- explained_mst1_plot_nonModi_CLUSTERED[which(!is.na(explained_mst1_plot_nonModi_CLUSTERED$final_clust)),]
 explained_mst1_plot_nonModi_CLUSTERED$final_clust <- fct_explicit_na(as.character(explained_mst1_plot_nonModi_CLUSTERED$final_clust), na_level = "not clustered")
 # unique(explained_mst1_plot_nonModi_CLUSTERED$final_clust)
 explained_mst1_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_mst1_plot_nonModi_CLUSTERED$final_clust)
@@ -8445,6 +8510,42 @@ plotColors <- colorsTSNE[as.numeric(levels(explained_mst1_plot_nonModi_CLUSTERED
 
 p_mst1_sterm_woModi_clustered
 
+
+##===========================================
+##-------------------------------------plotting withou clustering
+##===========================================
+
+    p_mst1_sterm_woModi_NOT_clustered <- ggplot(explained_mst1_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       # facet_grid(final_clust~.)+
+   # labs("",
+         # x="",
+         # y="",
+          # y="all")+
+       # scale_fill_manual(values=(plotColors))+
+      # scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+p_mst1_sterm_woModi_NOT_clustered
+
+# library(plotly)
+# ggp <- ggplotly(p_mst1_sterm_woModi_clustered)
+# htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_mst1_clustered_woModi.html")
+
+
 # library(plotly)
 # ggp <- ggplotly(p_mst1_sterm_woModi_clustered)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_mst1_clustered_woModi.html")
@@ -8461,39 +8562,106 @@ forDensityPlot <- explained_mst1_plot_nonModi_CLUSTERED %>% select(.,site,locati
 forDensityPlot$final_clust <- droplevels(forDensityPlot$final_clust)
 forDensityPlot$final_clust = factor(forDensityPlot$final_clust, levels=(sort(unique(forDensityPlot$final_clust),decreasing = TRUE)))
 # plotColors <- colorsTSNE[as.numeric(levels(forDensityPlot$final_clust))]
-
+unique(forDensityPlot$final_clust)
 
 Sterm_mst1_density <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_density(alpha=0.2)+theme_classic()+
   facet_wrap(~final_clust,scale = "free_y")+
-  scale_fill_manual(values = colors_substrains)+
-  scale_color_manual(values = colors_substrains)+
+  scale_fill_manual(values = c(colors_substrains,"grey"))+
+  scale_color_manual(values = c(colors_substrains,"grey"))+
   labs(x="genomic location",y="density")+theme(strip.text.x = element_blank(),legend.position = "none",legend.title = element_blank(),axis.text = element_blank(),axis.ticks = element_blank())
 Sterm_mst1_density
 
 Sterm_mst1_frequency <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_freqpoly()+theme_classic()+
   # facet_wrap(~final_clust,scale = "free_y")+
-  scale_fill_manual(values = colors_substrains)+
-  scale_color_manual(values = colors_substrains)+
+  scale_fill_manual(values = c(colors_substrains,"grey"))+
+  scale_color_manual(values = c(colors_substrains,"grey"))+
   labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank())
 Sterm_mst1_frequency
 
 
 Sterm_mst1_histo <- ggplot(forDensityPlot,aes(x=location,group=final_clust,color=final_clust,fill=final_clust))+geom_histogram(position="dodge2")+theme_classic()+
   # facet_wrap(~final_clust,scale = "free_y")+
-  scale_fill_manual(values = colors_substrains)+
-  scale_color_manual(values = colors_substrains)+
+  scale_fill_manual(values = c(colors_substrains,"grey"))+
+  scale_color_manual(values = c(colors_substrains,"grey"))+
   labs(x="genomic location",y="density")+theme(legend.position = "none",legend.title = element_blank())
 Sterm_mst1_histo
 
 
 Sterm_mst1_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=final_clust,color=final_clust,fill=final_clust))+geom_jitter(width = 0.0, height = 0.4,alpha=0.3 ,size = 0.35)+theme_classic()+
   # facet_wrap(~final_clust,scale = "free_y")+
-  scale_fill_manual(values = colors_substrains)+
-  scale_color_manual(values = colors_substrains)+
+  scale_fill_manual(values = c(colors_substrains,"grey"))+
+  scale_color_manual(values = c(colors_substrains,"grey"))+
   labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
 Sterm_mst1_point
 
 # theme(strip.text.x = element_blank())
+
+
+
+##====================================================
+###------RIBBON of interquartile range
+##====================================================
+
+##=====================here I apply a hack!!
+##in order to recreat eh labels from ggplot_build I color the samples and final_clust according to a known color scale
+
+colorSamples <- c("gray1","gray2","gray3","gray4","gray5","gray6","gray7","gray8","gray9","gray10","gray11")
+ # explained_mst1_plot_nonModi_CLUSTERED$final_clust = factor(explained_mst1_plot_nonModi_CLUSTERED$final_clust, levels=c(6:1))
+explained_mst1_plot_nonModi_CLUSTERED$final_clust = factor(explained_mst1_plot_nonModi_CLUSTERED$final_clust, levels=(sort(unique(explained_mst1_plot_nonModi_CLUSTERED$final_clust),decreasing = TRUE)))
+
+ explained_mst1_plot_nonModi_CLUSTERED$sample = factor(explained_mst1_plot_nonModi_CLUSTERED$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+##----------------------prepare table
+
+p <- ggplot(explained_mst1_plot_nonModi_CLUSTERED, aes(x=sample, y=Snps,color=sample,fill=final_clust)) + geom_boxplot() +scale_fill_manual(values = colorSamples)+scale_color_manual(values = colorSamples)
+p
+non_phase_qunatiles <- ggplot_build(p)$data[[1]] %>% as.tibble() %>%  rename(sample=colour)  %>%  rename(final_clust=fill) %>% mutate(final_clust = revalue(final_clust, c("gray1"="1", "gray2"="2", "gray3"="3", "gray4"="4", "gray5"="5", "gray6"="6", "gray7"="7", "gray8"="8")))%>% mutate(sample = revalue(sample, c("gray1"="Lyo\n1996", "gray2"="Lyo\n2012", "gray3"="Lyo\n2014", "gray4"="working\nstock", "gray5"="starter\nculture\n2012", "gray6"="starter\nculture\n2018", "gray7"="cheesemaking\nday1", "gray8"="cheesemaking\nday2")))
+ table( non_phase_qunatiles$final_clust)
+str(non_phase_qunatiles$final_clust)
+
+
+# non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c(6:1))
+# plotColors <- colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))]
+
+non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=(sort(unique(non_phase_qunatiles$final_clust),decreasing = TRUE)))
+plotColors <- colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))]
+
+
+ non_phase_qunatiles$sample = factor(non_phase_qunatiles$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+
+mst1_phased_ribbon <- ggplot()+
+    geom_ribbon(aes(x=sample,ymin = ymin, ymax = ymax,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.4)+
+    # geom_ribbon(aes(x=sample,ymin = X1st.Qu., ymax = X3rd.Qu.,group=final_clust,fill=final_clust),data = both_phase_qunatiles, alpha=.5)+
+    # geom_ribbon(aes(x=sample,ymin = Min., ymax = Max.,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.5)+
+    # geom_line(data=explained_mst1_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust),size=0.1, alpha=.1)+ 
+    # geom_line(data = mappingcoverage,aes(y = coverage, x = time_f_02,group=contig))+
+      # facet_grid(contig~treatment )+
+      # scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    scale_fill_manual(values=(plotColors))+
+      scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+
+  mst1_phased_ribbon
+  
+  
 ```
 
 
@@ -8507,7 +8675,7 @@ Sterm_mst1_point
 ###--------------------------------------------------------------------
 
 mst2_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1<=0.9 & mst2>0.9) %>% add_column(group="mst2")%>%replace(is.na(.), 0)
-mst2_metagenomicMutations_long <-  mst2_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst2_metagenomicMutations_long <-  mst2_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) #%>% filter(.,Snps>0.005)
 
 mst2_metagenomicMutations_tsne <- spread(mst2_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8517,11 +8685,11 @@ mst2_metagenomicMutations_tsne <- spread(mst2_metagenomicMutations_long, sample,
 ###--------------------------------------------------------------------
 
 
-
+# 
 fortsne <- mst2_metagenomicMutations_tsne %>% select(.,"site","Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")
 fortsne <- fortsne[!duplicated(fortsne[,-1]), ]
 # fortsne[duplicated(fortsne), ] %>% nrow()
-
+# 
 set.seed(1234567)
 tsne <- Rtsne(fortsne[,-1], dims = 2, perplexity=10, verbose=TRUE, max_iter = 500)
 # tsne <- Rtsne(fortsne[,41:45], dims = 2, perplexity=10, verbose=TRUE, max_iter = 500)
@@ -8542,7 +8710,7 @@ ds.real = dbscan(tsne_plot[,c(1,2)], 6)
 decreasing_clusternames <- (names(sort(table(ds.real$cluster),decreasing = TRUE)))
 change_name <- setNames(1:length(decreasing_clusternames),decreasing_clusternames)
 clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
-# clusterNames<- revalue(clusterNames,c("6"="5","5"="1","7"="2","8"="1","9"="1"))##add certain clusters to others
+clusterNames<- revalue(clusterNames,c("4"="1","5"="4"))##add certain clusters to others
 tsne_plot$density = factor(clusterNames)
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
@@ -8611,6 +8779,7 @@ Sterm_mst2_suplementarybarPlot
 explained_mst2_plot_nonModi_CLUSTERED <- merge(mst2_metagenomicMutations_long,tsne_plot_final_clust,by = "site",all.x = TRUE)
 # table(explained_mst2_plot_nonModi_CLUSTERED$final_clust)
 # unique(explained_mst2_plot_nonModi_CLUSTERED$final_clust)
+explained_mst2_plot_nonModi_CLUSTERED <- explained_mst2_plot_nonModi_CLUSTERED[which(!is.na(explained_mst2_plot_nonModi_CLUSTERED$final_clust)),]
 explained_mst2_plot_nonModi_CLUSTERED$final_clust <- fct_explicit_na(as.character(explained_mst2_plot_nonModi_CLUSTERED$final_clust), na_level = "not clustered")
 # unique(explained_mst2_plot_nonModi_CLUSTERED$final_clust)
 explained_mst2_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_mst2_plot_nonModi_CLUSTERED$final_clust)
@@ -8652,12 +8821,42 @@ plotColors <- colorsTSNE[as.numeric(levels(explained_mst2_plot_nonModi_CLUSTERED
 
 p_mst2_sterm_woModi_clustered
 
+
+##===========================================
+##-------------------------------------plotting withou clustering
+##===========================================
+
+    p_mst2_sterm_woModi_NOT_clustered <- ggplot(explained_mst2_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       # facet_grid(final_clust~.)+
+   # labs("",
+         # x="",
+         # y="",
+          # y="all")+
+       # scale_fill_manual(values=(plotColors))+
+      # scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+p_mst2_sterm_woModi_NOT_clustered
+
 # library(plotly)
 # ggp <- ggplotly(p_mst2_sterm_woModi_clustered)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_mst2_clustered_woModi.html")
 
 tsne_plot_mst2 <- tsne_plot
-
 ###------------------------------------
 ##density plot
 ###------------------------------------
@@ -8687,7 +8886,66 @@ Sterm_mst2_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=fin
   scale_color_manual(values = colors_substrains)+
   labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
 Sterm_mst2_point
+##====================================================
+###------RIBBON of interquartile range
+##====================================================
 
+##=====================here I apply a hack!!
+##in order to recreat eh labels from ggplot_build I color the samples and final_clust according to a known color scale
+
+colorSamples <- c("gray1","gray2","gray3","gray4","gray5","gray6","gray7","gray8","gray9","gray10","gray11")
+ # explained_mst2_plot_nonModi_CLUSTERED$final_clust = factor(explained_mst2_plot_nonModi_CLUSTERED$final_clust, levels=c(6:1))
+explained_mst2_plot_nonModi_CLUSTERED$final_clust = factor(explained_mst2_plot_nonModi_CLUSTERED$final_clust, levels=(sort(unique(explained_mst2_plot_nonModi_CLUSTERED$final_clust),decreasing = TRUE)))
+ explained_mst2_plot_nonModi_CLUSTERED$sample = factor(explained_mst2_plot_nonModi_CLUSTERED$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+##----------------------prepare table
+
+p <- ggplot(explained_mst2_plot_nonModi_CLUSTERED, aes(x=sample, y=Snps,color=sample,fill=final_clust)) + geom_boxplot() +scale_fill_manual(values = colorSamples)+scale_color_manual(values = colorSamples)
+p
+non_phase_qunatiles <- ggplot_build(p)$data[[1]] %>% as.tibble() %>%  rename(sample=colour)  %>%  rename(final_clust=fill) %>% mutate(final_clust = revalue(final_clust, c("gray1"="1", "gray2"="2", "gray3"="3", "gray4"="4", "gray5"="5", "gray6"="6", "gray7"="7", "gray8"="8")))%>% mutate(sample = revalue(sample, c("gray1"="Lyo\n1996", "gray2"="Lyo\n2012", "gray3"="Lyo\n2014", "gray4"="working\nstock", "gray5"="starter\nculture\n2012", "gray6"="starter\nculture\n2018", "gray7"="cheesemaking\nday1", "gray8"="cheesemaking\nday2")))
+ table( non_phase_qunatiles$final_clust)
+str(non_phase_qunatiles$final_clust)
+
+
+# non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c(6:1))
+non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=(sort(unique(non_phase_qunatiles$final_clust),decreasing = TRUE)))
+
+plotColors <- colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))]
+
+
+ non_phase_qunatiles$sample = factor(non_phase_qunatiles$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+
+mst2_phased_ribbon <- ggplot()+
+    geom_ribbon(aes(x=sample,ymin = ymin, ymax = ymax,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.4)+
+    # geom_ribbon(aes(x=sample,ymin = X1st.Qu., ymax = X3rd.Qu.,group=final_clust,fill=final_clust),data = both_phase_qunatiles, alpha=.5)+
+    # geom_ribbon(aes(x=sample,ymin = Min., ymax = Max.,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.5)+
+    # geom_line(data=explained_mst2_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust),size=0.1, alpha=.1)+ 
+    # geom_line(data = mappingcoverage,aes(y = coverage, x = time_f_02,group=contig))+
+      # facet_grid(contig~treatment )+
+      # scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    scale_fill_manual(values=(plotColors))+
+      scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+
+  mst2_phased_ribbon
 ```
 
 
@@ -8702,7 +8960,7 @@ Sterm_mst2_point
 ###--------------------------------------------------------------------
 
 mst_both_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1>0.9 & mst2>0.9) %>% add_column(group="both")%>%replace(is.na(.), 0)
-mst_both_metagenomicMutations_long <-  mst_both_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst_both_metagenomicMutations_long <-  mst_both_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) #%>% filter(.,Snps>0.005)
 
 mst_both_metagenomicMutations_tsne <- spread(mst_both_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
 
@@ -8797,6 +9055,8 @@ Sterm_both_suplementarybarPlot
 explained_both_plot_nonModi_CLUSTERED <- merge(mst_both_metagenomicMutations_long,tsne_plot_final_clust,by = "site",all.x = TRUE)
 # table(explained_both_plot_nonModi_CLUSTERED$final_clust)
 # unique(explained_both_plot_nonModi_CLUSTERED$final_clust)
+explained_both_plot_nonModi_CLUSTERED <- explained_both_plot_nonModi_CLUSTERED[which(!is.na(explained_both_plot_nonModi_CLUSTERED$final_clust)),]
+
 explained_both_plot_nonModi_CLUSTERED$final_clust <- fct_explicit_na(as.character(explained_both_plot_nonModi_CLUSTERED$final_clust), na_level = "not clustered")
 # unique(explained_both_plot_nonModi_CLUSTERED$final_clust)
 explained_both_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_both_plot_nonModi_CLUSTERED$final_clust)
@@ -8842,11 +9102,43 @@ plotColors <- c(colorsTSNE[as.numeric(levels(explained_both_plot_nonModi_CLUSTER
        )
 p_both_sterm_woModi_clustered
 
+
+##===========================================
+##-------------------------------------plotting withou clustering
+##===========================================
+
+    p_both_sterm_woModi_NOT_clustered <- ggplot(explained_both_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       # facet_grid(final_clust~.)+
+   # labs("",
+         # x="",
+         # y="",
+          # y="all")+
+       # scale_fill_manual(values=(plotColors))+
+      # scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+p_both_sterm_woModi_NOT_clustered
+
 # library(plotly)
 # ggp <- ggplotly(p_both_sterm_woModi_clustered)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_both_clustered_woModi.html")
 
 tsne_plot_both <- tsne_plot
+
 
 ###------------------------------------
 ##density plot
@@ -8886,6 +9178,63 @@ Sterm_both_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=fin
   labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
 Sterm_both_point
 
+##====================================================
+###------RIBBON of interquartile range
+##====================================================
+
+##=====================here I apply a hack!!
+##in order to recreat eh labels from ggplot_build I color the samples and final_clust according to a known color scale
+
+colorSamples <- c("gray1","gray2","gray3","gray4","gray5","gray6","gray7","gray8","gray9","gray10","gray11")
+# explained_both_plot_nonModi_CLUSTERED$final_clust = factor(explained_both_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",2:1))
+ explained_both_plot_nonModi_CLUSTERED$sample = factor(explained_both_plot_nonModi_CLUSTERED$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+##----------------------prepare table
+
+p <- ggplot(explained_both_plot_nonModi_CLUSTERED, aes(x=sample, y=Snps,color=sample,fill=final_clust)) + geom_boxplot() +scale_fill_manual(values = colorSamples)+scale_color_manual(values = colorSamples)
+p
+non_phase_qunatiles <- ggplot_build(p)$data[[1]] %>% as.tibble() %>%  rename(sample=colour)  %>%  rename(final_clust=fill) %>% mutate(final_clust = revalue(final_clust, c("gray1"="1", "gray2"="2", "gray3"="3", "gray4"="4", "gray5"="5", "gray6"="6", "gray7"="7", "gray8"="8")))%>% mutate(sample = revalue(sample, c("gray1"="Lyo\n1996", "gray2"="Lyo\n2012", "gray3"="Lyo\n2014", "gray4"="working\nstock", "gray5"="starter\nculture\n2012", "gray6"="starter\nculture\n2018", "gray7"="cheesemaking\nday1", "gray8"="cheesemaking\nday2")))
+ table( non_phase_qunatiles$final_clust)
+str(non_phase_qunatiles$final_clust)
+
+
+# non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c(2:1))
+# plotColors <- colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))]
+
+
+ non_phase_qunatiles$sample = factor(non_phase_qunatiles$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+
+both_phased_ribbon <- ggplot()+
+    geom_ribbon(aes(x=sample,ymin = ymin, ymax = ymax,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.4)+
+    # geom_ribbon(aes(x=sample,ymin = X1st.Qu., ymax = X3rd.Qu.,group=final_clust,fill=final_clust),data = both_phase_qunatiles, alpha=.5)+
+    # geom_ribbon(aes(x=sample,ymin = Min., ymax = Max.,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.5)+
+    # geom_line(data=explained_both_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust),size=0.1, alpha=.1)+ 
+    # geom_line(data = mappingcoverage,aes(y = coverage, x = time_f_02,group=contig))+
+      # facet_grid(contig~treatment )+
+      # scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    scale_fill_manual(values=(plotColors))+
+      scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+
+  both_phased_ribbon
 ```
 
 
@@ -8893,17 +9242,17 @@ Sterm_both_point
 ######not explained
 
 ```{r}
-
-
 ###--------------------------------------------------------------------
 ##subset
 ###--------------------------------------------------------------------
 
 mst_none_metagenomicMutations <- sample_relative_wide %>% filter(.,species=="S. thermophilus") %>% filter(.,significance %in% c("MODERATE","HIGH")) %>% filter(.,mst1<=0.9 & mst2<=0.9) %>% add_column(group="not explained")%>%replace(is.na(.), 0)
-mst_none_metagenomicMutations_long <-  mst_none_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE) %>% filter(.,Snps>0.06)
+mst_none_metagenomicMutations_long <-  mst_none_metagenomicMutations %>% gather(., sample, Snps, "Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2", factor_key=TRUE,na.rm = TRUE)# %>% filter(.,Snps>0.005)
 
 
 mst_none_metagenomicMutations_tsne <- spread(mst_none_metagenomicMutations_long, sample, Snps)%>%replace(is.na(.), 0)
+
+
 
 
 ###--------------------------------------------------------------------
@@ -8943,13 +9292,12 @@ change_name <- setNames(1:length(decreasing_clusternames),decreasing_clustername
 clusterNames <- revalue(as.factor(ds.real$cluster),change_name)
 clusterNames<- revalue(clusterNames,c("7"="3"))##add certain clusters to others
 tsne_plot$density = factor(clusterNames)
+tsne_plot$density <- revalue(tsne_plot$density,c("6"="1"))
 ds.cent = tsne_plot %>% group_by(density) %>% select(V1, 
     V2) %>% summarize_all(mean)
 ggplot(tsne_plot, aes(x = V1, y = V2, colour = density)) +
     geom_point(alpha = 0.3) + theme_bw() + geom_label_repel(aes(label = density),
     data = ds.cent) + guides(colour = FALSE)
-
-
 ##-----------make clustering manual
 # tsne_plot$final_clust <- tsne_plot$density
 # tsne_plot_final_clust <- tsne_plot  %>% select(site,  final_clust)
@@ -8999,7 +9347,9 @@ Sterm_none_suplementarybarPlot
 explained_none_plot_nonModi_CLUSTERED <- merge(mst_none_metagenomicMutations_long,tsne_plot_final_clust,by = "site",all.x = TRUE)
 # table(explained_none_plot_nonModi_CLUSTERED$final_clust)
 # unique(explained_none_plot_nonModi_CLUSTERED$final_clust)
-explained_none_plot_nonModi_CLUSTERED$final_clust <- fct_explicit_na(as.character(explained_none_plot_nonModi_CLUSTERED$final_clust), na_level = "not clustered")
+explained_none_plot_nonModi_CLUSTERED <- explained_none_plot_nonModi_CLUSTERED[which(!is.na(explained_none_plot_nonModi_CLUSTERED$final_clust)),]
+
+# explained_none_plot_nonModi_CLUSTERED$final_clust <- fct_explicit_na(as.character(explained_none_plot_nonModi_CLUSTERED$final_clust), na_level = "not clustered")
 # unique(explained_none_plot_nonModi_CLUSTERED$final_clust)
 explained_none_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_none_plot_nonModi_CLUSTERED$final_clust)
 
@@ -9007,13 +9357,15 @@ explained_none_plot_nonModi_CLUSTERED$final_clust <- droplevels(explained_none_p
 ##plotting
 ###------------------------------------
 table(explained_none_plot_nonModi_CLUSTERED$final_clust)
-explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c("not clustered",6:1))
+# explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c(6:1))
 
 # levels(explained_none_plot_nonModi_CLUSTERED$final_clust)
 # plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))],"grey")
 # plotColors <- c("grey",colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[2:6]])
-plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[2:7]])
+# plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))[1:6]])
 
+explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=(sort(unique(explained_none_plot_nonModi_CLUSTERED$final_clust),decreasing = TRUE)))
+plotColors <- colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTERED$final_clust))]
 
 
     p_none_sterm_woModi_clustered <- ggplot(explained_none_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
@@ -9042,12 +9394,43 @@ plotColors <- c(colorsTSNE[as.numeric(levels(explained_none_plot_nonModi_CLUSTER
        )
 p_none_sterm_woModi_clustered
 
+##===========================================
+##-------------------------------------plotting withou clustering
+##===========================================
+
+    p_none_sterm_woModi_NOT_clustered <- ggplot(explained_none_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nPreferred Name:",Preferred_name,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.1, alpha=.5)+ 
+       # facet_grid(final_clust~.)+
+   # labs("",
+         # x="",
+         # y="",
+          # y="all")+
+       # scale_fill_manual(values=(plotColors))+
+      # scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+p_none_sterm_woModi_NOT_clustered
+
 # library(plotly)
 # ggp <- ggplotly(p_none_sterm_woModi_clustered)
 # htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_snpCalling_none_clustered_woModi.html")
 
 tsne_plot_none <- tsne_plot
-
+ 
+ 
 ###------------------------------------
 ##density plot
 ###------------------------------------
@@ -9079,6 +9462,72 @@ Sterm_none_point <- ggplot(forDensityPlot,aes(x=location,y=final_clust,group=fin
   scale_color_manual(values = colors_substrains)+
   labs(x="genomic location",y="cluster")+theme(legend.position = "none",legend.title = element_blank(),axis.text.x = element_blank(),axis.ticks.x = element_blank())
 Sterm_none_point
+
+##====================================================
+###------RIBBON of interquartile range
+##====================================================
+
+##=====================here I apply a hack!!
+##in order to recreat eh labels from ggplot_build I color the samples and final_clust according to a known color scale
+
+colorSamples <- c("gray1","gray2","gray3","gray4","gray5","gray6","gray7","gray8","gray9","gray10","gray11")
+ # explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c(6:1))
+  # non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c("not clustered",6:1))
+
+# explained_none_plot_nonModi_CLUSTERED$final_clust = factor(explained_none_plot_nonModi_CLUSTERED$final_clust, levels=c(6:1))
+ explained_none_plot_nonModi_CLUSTERED$sample = factor(explained_none_plot_nonModi_CLUSTERED$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+##----------------------prepare table
+
+p <- ggplot(explained_none_plot_nonModi_CLUSTERED, aes(x=sample, y=Snps,color=sample,fill=final_clust)) + geom_boxplot() +scale_fill_manual(values = colorSamples)+scale_color_manual(values = colorSamples)
+p
+non_phase_qunatiles <- ggplot_build(p)$data[[1]] %>% as.tibble() %>%  rename(sample=colour)  %>%  rename(final_clust=fill) %>% mutate(final_clust = revalue(final_clust, c("gray1"="1", "gray2"="2", "gray3"="3", "gray4"="4", "gray5"="5", "gray6"="6", "gray7"="7", "gray8"="8")))%>% mutate(sample = revalue(sample, c("gray1"="Lyo\n1996", "gray2"="Lyo\n2012", "gray3"="Lyo\n2014", "gray4"="working\nstock", "gray5"="starter\nculture\n2012", "gray6"="starter\nculture\n2018", "gray7"="cheesemaking\nday1", "gray8"="cheesemaking\nday2")))
+ table( non_phase_qunatiles$final_clust)
+unique(non_phase_qunatiles$final_clust)
+
+
+# non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c(6:1))
+# plotColors <- colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))]
+# non_phase_qunatiles$final_clust = factor(non_phase_qunatiles$final_clust, levels=c("not clustered",6:1))
+# plotColors <- c(colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))[2:7]])
+
+# plotColors <- c(colorsTSNE[as.numeric(levels(non_phase_qunatiles$final_clust))[2:7]])
+
+
+ non_phase_qunatiles$sample = factor(non_phase_qunatiles$sample, levels=(c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2")))
+
+
+none_phased_ribbon <- ggplot()+
+    geom_ribbon(aes(x=sample,ymin = ymin, ymax = ymax,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.4)+
+      # geom_ribbon(aes(x=sample,ymin = lower, ymax = upper,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.4)+
+    # geom_ribbon(aes(x=sample,ymin = X1st.Qu., ymax = X3rd.Qu.,group=final_clust,fill=final_clust),data = none_phase_qunatiles, alpha=.5)+
+    # geom_ribbon(aes(x=sample,ymin = Min., ymax = Max.,group=final_clust,fill=final_clust),data = non_phase_qunatiles, alpha=.5)+
+    # geom_line(data=explained_none_plot_nonModi_CLUSTERED,aes(x=sample,y=Snps,group=site,color=final_clust,fill=final_clust),size=0.1, alpha=.1)+ 
+    # geom_line(data = mappingcoverage,aes(y = coverage, x = time_f_02,group=contig))+
+      # facet_grid(contig~treatment )+
+      # scale_x_continuous(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+       # scale_x_discrete(breaks = c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    scale_fill_manual(values=(plotColors))+
+      scale_color_manual(values=(plotColors))+
+       scale_x_discrete( expand = c(0, 0)) +
+  # scale_y_continuous(breaks =c(0,0.5,1),labels=c(0,0.5,1), expand = c(0, 0)) +
+  theme_classic()+
+          ylim(c(0,1))+
+ theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7),
+       #axis.text.x=element_blank(),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          legend.position="bottom",
+       legend.title = element_blank(),
+       # axis.text.x = element_blank(),
+       axis.text.y = element_text(size=8),
+       # axis.title = element_text(size=9),
+       axis.title = element_blank(),
+       
+            plot.margin=unit(c(t = 0, r = 0.5, b = 0, l = 0.1),"cm")
+       )
+
+
+  none_phased_ribbon
 ```
 
 
@@ -9098,6 +9547,9 @@ among the most mutate genes are:
 ```{r}
 library(grid)
 library(gridExtra)
+library(patchwork)
+
+
 source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
 legend_1 <- g_legend(p_mst1_sterm_woModi_clustered)
 legend_2 <- g_legend(p_mst2_sterm_woModi_clustered)
@@ -9143,6 +9595,82 @@ grid.arrange(p_both_sterm_woModi_clustered+theme(legend.position = "none")+annot
 
 
 dev.off()
+
+
+###--------------------------------Patchwork
+
+
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all_03.svg",width=12,height=8)
+
+ (p_both_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "both strains", x = 5, y = 0.25, size = 7)|Sterm_both_suplementarybarPlot|Sterm_both_density+theme(axis.title.x = element_blank())|Sterm_both_point+theme(axis.title.x = element_blank())|  plot_layout(widths = c(3, 1,1,1))) /
+ (p_mst1_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "mst1", x = 5, y = 0.25, size = 7)|Sterm_mst1_suplementarybarPlot|Sterm_mst1_density+theme(axis.title.x = element_blank())|Sterm_mst1_point+theme(axis.title.x = element_blank())| plot_layout(widths = c(3, 1,1,1))) /
+ (p_mst2_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "mst2", x = 5, y = 0.75, size = 7)|Sterm_mst2_suplementarybarPlot|Sterm_mst2_density+theme(axis.title.x = element_blank())|Sterm_mst2_point+theme(axis.title.x = element_blank())|  plot_layout(widths = c(3, 1,1,1))) /
+ (p_none_sterm_woModi_clustered+theme(legend.position = "none")+annotate("text", label = "not explained", x = 5, y = 0.85, size = 7)|Sterm_none_suplementarybarPlot|Sterm_none_density|Sterm_none_point|plot_layout(widths = c(3, 1,1,1)))
+
+ 
+ dev.off()
+##-----===Ribbon
+ 
+  p2 <- (p_both_sterm_woModi_NOT_clustered+theme(axis.text.x = element_blank())|Sterm_both_suplementaryTsne|both_phased_ribbon+theme(axis.text.x = element_blank(),legend.position = "none")+annotate("text", label = "both strains", x = 5, y = 0.25, size = 7)|Sterm_both_suplementarybarPlot|Sterm_both_point+theme(axis.title.x = element_blank())|  plot_layout(widths = c(2,1,2, 1,1))) /
+ (p_mst1_sterm_woModi_NOT_clustered+theme(axis.text.x = element_blank())|Sterm_mst1_suplementaryTsne|mst1_phased_ribbon+theme(axis.text.x = element_blank(),legend.position = "none")+annotate("text", label = "mst1", x = 5, y = 0.25, size = 7)|Sterm_mst1_suplementarybarPlot|Sterm_mst1_point+theme(axis.title.x = element_blank())| plot_layout(widths = c(2,1,2, 1,1))) /
+ (p_mst2_sterm_woModi_NOT_clustered+theme(axis.text.x = element_blank())|Sterm_mst2_suplementaryTsne|mst2_phased_ribbon+theme(axis.text.x = element_blank(),legend.position = "none")+annotate("text", label = "mst2", x = 5, y = 0.75, size = 7)|Sterm_mst2_suplementarybarPlot|Sterm_mst2_point+theme(axis.title.x = element_blank())|  plot_layout(widths = c(2,1,2, 1,1))) /
+ (p_none_sterm_woModi_NOT_clustered|Sterm_none_suplementaryTsne|none_phased_ribbon+theme(legend.position = "none")+annotate("text", label = "not explained", x = 5, y = 0.85, size = 7)|Sterm_none_suplementarybarPlot|Sterm_none_point|plot_layout(widths = c(2,1,2, 1,1)))
+
+ 
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all_03.svg",width=15,height=8)
+
+p2
+ 
+ dev.off()
+ 
+#===========================
+ ##-----===with original Streptococcus thermophilus profile
+#===========================
+ 
+##----------------
+##prep
+##----------------
+all_snps_sterm_long <-  rbind(explained_mst1_plot_nonModi_CLUSTERED,explained_mst2_plot_nonModi_CLUSTERED,explained_both_plot_nonModi_CLUSTERED,explained_none_plot_nonModi_CLUSTERED)
+ 
+
+##----------------
+##plot
+##----------------
+PLOT_allSNPs <- ggplot(all_snps_sterm_long,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
+    # facet_grid(day~kessel~species)+
+    # facet_grid(species~.)+
+    # facet_grid(treatment~species)+
+    # facet_grid(treatment~species)+
+    labs("",
+         x="time [h]",
+         y="Alternative allele frequency")+
+    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+    #scale_y_continuous(limits = c(0,0.3))+
+    theme_classic()+
+   scale_fill_manual(values=all_colours[2])+
+   scale_color_manual(values=all_colours[2])+
+    scale_x_discrete( expand = c(0, 0)) +
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+      #axis.text.x = element_blank(),
+          axis.title.x = element_blank(),
+          legend.position="none"
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          #legend.title = element_blank()
+          )
+  
+p1 <- plot_spacer() +  PLOT_allSNPs +  plot_spacer() +   plot_layout(nrow=3,heights = c(1,2, 1))
+
+#===========================
+ ##-----==combine all
+#===========================
+
+
+ svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/01_tsne_all_04.svg",width=18,height=8)
+
+(p1|p2)+plot_layout(widths =c(2,6))
+ 
+ dev.off()
 ```
 
 
@@ -10711,13 +11239,13 @@ otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
 # Create dendro
 dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
 # Preview the plot
-# print(dendro.plot)
+print(dendro.plot)
 # 
 # labels(otter.dendro)
 # 
-# svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-# print(dendro.plot)
-# dev.off()
+svg("~/Desktop/Projects/2018_culturomics/fastani/STERM_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+print(dendro.plot)
+dev.off()
 
 sterm_curated_rev_names
 ##reorder according to dendro
@@ -10897,7 +11425,8 @@ library(ggplot2)
 library(reshape2)
 
 table(sterm_snps_core$core)
-sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
+sterm_snps_CORE <- sterm_snps_core
+# sterm_snps_CORE <- sterm_snps_core[which(sterm_snps_core$core=="core"),]
 table(sterm_snps_CORE$core)
 
 
@@ -10948,21 +11477,21 @@ sterm_curated_rev_names
 
 library(ggdendro)
 # 
-# sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
-# rownames(sterm_matrix) <- names_normal
-# otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
-# 
+sterm_matrix <- as.matrix(t(sterm_snps_CORE[, -c(1:2)]))
+rownames(sterm_matrix) <- names_normal
+otter.dendro <- as.dendrogram(hclust(d = dist(x = sterm_matrix)))
+
 # 
 # # Create dendro
-# dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
+dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
 # # Preview the plot
-# print(dendro.plot)
+print(dendro.plot)
 # 
 # labels(otter.dendro)
 # 
-# svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
-# print(dendro.plot)
-# dev.off()
+svg("~/Desktop/Projects/2018_culturomics/fastani/Ldel_SNPs_DENDROGRAM.svg",width=2.5,height=3)
+print(dendro.plot)
+dev.off()
 
 sterm_curated_rev_names
 ##reorder according to dendro
