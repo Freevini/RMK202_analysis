@@ -6330,6 +6330,51 @@ levels(snps_freebayes_long_CRISPR$sample)
 ####cd-hit of all strain CRISPR spacers
 
 
+#Explore Ldel plasmid
+
+```{bash}
+
+sed '/##FAS/q' /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current.gff  > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff 
+
+grep "^#" -v /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff |cut -f 1 |sort|uniq -c
+
+##---------------both plasmids
+grep "^#" -v /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff |grep "CP046131" -v |awk '{if($3=="CDS")print $0}'
+
+###-------------------plasmid 1
+
+
+grep "CP046132" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff |awk '{if($3=="CDS")print $0}'
+
+
+###-------------------plasmid 2
+grep "CP046133" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff |awk '{if($3=="CDS")print $0}'
+
+##-------------------------------extract genes from plasmids---------------
+rm /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes_onlyPlasmid.faa
+
+for plasmidGenes in $(grep "^#" -v /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202.current_withoutFASTA.gff |grep "CP046131" -v |awk -F "[\t.]" '{if($3=="CDS")print $10}' |sed 's/ID=//g')
+do
+
+samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes.faa ${plasmidGenes} >> /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes_onlyPlasmid.faa
+
+done 
+
+
+
+##-------------------------------protein blast---------------
+
+  
+  diamond blastp --threads 32 --max-target-seqs 1 --db /archiv/TREMBL_database/20190710/uniprot_trembl.dmnd --query /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes_onlyPlasmid.faa --out /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes_onlyPlasmid_diamond.txt
+
+##---------------------------------------move local for eggnong
+
+mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/05_LdelPlasmid/
+scp  vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PGAP_assembly/ldel/L_delbrueckii_RMK202_genes_onlyPlasmid.faa ~/Desktop/Projects/2019_RMK202_analysis/05_LdelPlasmid/
+
+```
+
+
 # Illumina analysis
 
 #### download
@@ -6388,7 +6433,7 @@ do
 done
 
 ```
-
+the plasmids do not seem to contain any interesting genes. 
 
 concatenenat the fastq.gz files
 
@@ -12340,11 +12385,11 @@ colnames(sample_relative_safe_woSTRAINS)
   
   p2
   
-  png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
-
-p2
-
-dev.off()
+#   png("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
+# 
+# p2
+# 
+# dev.off()
 
  library(plotly)
 # ggp <- ggplotly(p2)
@@ -12380,39 +12425,39 @@ table(sample_relative_safe_woSTRAINS_sub03$species)
    ##============
 
 
-  p3 <- ggplot(sample_relative_safe_woSTRAINS_sub03,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
-    # facet_grid(day~kessel~species)+
-    # facet_grid(species~.)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="Alternative allele frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   scale_fill_manual(values=all_colours[2])+
-   scale_color_manual(values=all_colours[2])+
-    scale_x_discrete( expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      #axis.text.x = element_blank(),
-          legend.position="none"
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          #legend.title = element_blank()
-          )
-  
-#   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
-# # 
-p3
+#   p3 <- ggplot(sample_relative_safe_woSTRAINS_sub03,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=.1)+ 
+#     # facet_grid(day~kessel~species)+
+#     # facet_grid(species~.)+
+#     # facet_grid(treatment~species)+
+#     # facet_grid(treatment~species)+
+#     labs("",
+#          x="time [h]",
+#          y="Alternative allele frequency")+
+#     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+#     #scale_y_continuous(limits = c(0,0.3))+
+#     theme_classic()+
+#    scale_fill_manual(values=all_colours[2])+
+#    scale_color_manual(values=all_colours[2])+
+#     scale_x_discrete( expand = c(0, 0)) +
+#     theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+#           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+#       #axis.text.x = element_blank(),
+#           legend.position="none"
+#           #legend.justification=c(1,1), legend.position=c(1,1),
+#           #legend.title = element_blank()
+#           )
+#   
+# #   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
+# # # 
+# p3
 # # 
 # dev.off()
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_sterm.svg",width=4,height=1.8)
-   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
-
-p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
-
-dev.off()
+#   svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_sterm.svg",width=4,height=1.8)
+#    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+# 
+# p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
+# 
+# dev.off()
 
 
 
@@ -12423,43 +12468,43 @@ dev.off()
 sample_relative_safe_woSTRAINS_sub_ldel <- sample_relative_safe_woSTRAINS %>% filter(X.CHROM.x=="CP046131") %>% filter(Snps>0.05)
 
 
-  p4 <- ggplot(sample_relative_safe_woSTRAINS_sub_ldel,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=0.8)+ 
-    # facet_grid(day~kessel~species)+
-    # facet_grid(species~.)+
-    # facet_grid(treatment~species)+
-    # facet_grid(treatment~species)+
-    labs("",
-         x="time [h]",
-         y="Alternative allele frequency")+
-    #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
-    #scale_y_continuous(limits = c(0,0.3))+
-    theme_classic()+
-   scale_fill_manual(values=all_colours[1])+
-   scale_color_manual(values=all_colours[1])+
-    scale_x_discrete( expand = c(0, 0)) +
-    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
-          rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
-      # axis.text.x = element_blank(),
-          legend.position="none",
-          #legend.justification=c(1,1), legend.position=c(1,1),
-          # axis.title = element_blank()
-          )
-  
-#   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
-# # 
-  p4
- svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_ldel.svg",width=4,height=1.8)
-   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
-
-p4+theme(axis.title = element_blank(),axis.text.x = element_blank())
-
-dev.off()
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_title.svg",width=4,height=3)
-   # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
-
-p4
-
-dev.off()
+#   p4 <- ggplot(sample_relative_safe_woSTRAINS_sub_ldel,aes(x=sample,y=Snps,group=site,color=species,fill=species, text =paste("effect:", effect,"\nsignficance:",significance,"\ngeneName:",geneName,"\nRepeat_identity:",Repeat_cluster,"\ncore:",core,"\nCOG:",COG_Functional_Category)))+ geom_line(size=0.2, alpha=0.8)+ 
+#     # facet_grid(day~kessel~species)+
+#     # facet_grid(species~.)+
+#     # facet_grid(treatment~species)+
+#     # facet_grid(treatment~species)+
+#     labs("",
+#          x="time [h]",
+#          y="Alternative allele frequency")+
+#     #scale_x_continuous(breaks =c(0,2,4,6,8,10,12,24),labels=c(0,2,4,6,8,10,12,24))+
+#     #scale_y_continuous(limits = c(0,0.3))+
+#     theme_classic()+
+#    scale_fill_manual(values=all_colours[1])+
+#    scale_color_manual(values=all_colours[1])+
+#     scale_x_discrete( expand = c(0, 0)) +
+#     theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+#           rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+#       # axis.text.x = element_blank(),
+#           legend.position="none",
+#           #legend.justification=c(1,1), legend.position=c(1,1),
+#           # axis.title = element_blank()
+#           )
+#   
+# #   svg("~/Desktop/presenations/my_presentations/20190919_VUA/abundance_snps.png", width = 1900, height = 1200,res=300)
+# # # 
+#   p4
+#  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_ldel.svg",width=4,height=1.8)
+#    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+# 
+# p4+theme(axis.title = element_blank(),axis.text.x = element_blank())
+# 
+# dev.off()
+#   svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_title.svg",width=4,height=3)
+#    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
+# 
+# p4
+# 
+# dev.off()
 
 # 
 #  library(plotly)
@@ -13034,7 +13079,9 @@ median(CoreGenome_nucleotide_div$Median_Coverage)
           axis.title.y.right = element_text(color="#10B552"),
        )
   pall
-  svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_sterm_nucleotideDiv.svg",width=6,height=3)
+png("~/Desktop/presenations/my_presentations/2020_groupmeeting/figures/nucleotid_diversity.png", width = 2000, height = 1000,res=300)
+
+  # svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/05_sterm_nucleotideDiv.svg",width=6,height=3)
 pall
 dev.off()
 
