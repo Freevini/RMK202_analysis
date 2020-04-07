@@ -1591,6 +1591,206 @@ scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_
 ```
 
 
+####CRISPR region tree
+
+```{bash}
+
+###--------------------------------
+##CRISPR repeat location
+###--------------------------------
+species=Sterm
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+grep "repeat" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt
+cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/
+arraySeq=$(grep -A 1 "${arraysss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt |tail -1|head -c 25|tail -c 20)
+
+grep "${arraySeq}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}_repeats.txt
+
+tmp=$(cut -f 9 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
+cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
+#grep -A 15 -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i
+
+
+if [[ ${arraysss} == "a1"  && [$(echo ${tmp})>0 ]]; then
+            echo -e "ary1"
+            grep -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
+            echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t+\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            elif [[ ${arraysss} == "a2"  && [$(echo ${tmp})>0 ]] 
+            then
+            echo -e "ary2"
+            grep -B 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "csm6" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
+            ##---
+            grep -A 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas1" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt)
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
+             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            elif [[ ${arraysss} == "a3"  && [$(echo ${tmp})>0 ]]
+            then
+            echo -e "ary3"
+            grep -A 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >             /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt 
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+             echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            
+               
+            fi
+echo "--------------"
+done #arraysss
+done #genomes
+
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/*.gff |awk -F "\t" '{OFS="\t"}{print $0,$5-$4}'
+
+
+
+
+###--------------------------------
+##mask CRISPR repeat region
+###--------------------------------
+
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+
+bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/${genomess}.fna -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna
+
+
+done #arraysss
+done #genomes
+
+
+
+
+###--------------------------------
+##extract CRISPR region out of genome
+###--------------------------------
+
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+
+bedtools getfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna \
+  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff \
+  -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta
+
+
+
+sed "s/>.*$/>${genomess}-${arraysss}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta
+done #arraysss
+done #genomes
+
+
+
+```
+now make a multiseq alignment file
+
+I go information for the [alignment](https://www.protocols.io/view/week-5-aligning-with-muscle-and-making-trees-with-g2sbyee?step=4) and for [RaxML](http://evomics.org/learning/phylogenetics/raxml/)
+
+```{bash}
+###--------------------------------
+##Multiseq alignment
+###--------------------------------
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
+species=Sterm
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
+
+muscle -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta 
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/${arraysss}_MultiseqAlignment.phy
+
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
+done #arraysss
+
+###---------------all
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
+
+muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/all_MultiseqAlignment.phy
+
+
+###---------------only array1 and array3
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_CRISPR_locations.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a3_CRISPR_locations.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
+
+muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/a1_a3_MultiseqAlignment.phy
+
+
+###--------------------------------
+##make tree
+###--------------------------------
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
+#mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
+for arraysss in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/ |grep ".fasta" -v)
+do
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}
+raxmlHPC -s *_MultiseqAlignment.phy -n ${arraysss}_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
+
+done #arraysss
+
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
+
+raxmlHPC -s ${arraysss}_MultiseqAlignment.phy -n ${arraysss}_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
+
+
+```
+
+
 ### pairwise CRISPR 
 want to check for pairwise CRISPR diversity
 ```{bash}
