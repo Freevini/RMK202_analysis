@@ -2036,22 +2036,7 @@ source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
   ##Streptococcus thermophilus
   #--------------
   
-  ###-------------
-  ##assign representaive Spacers to Cluster
-   ###-------------
- #  cat /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results.txt > /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results_ClusterName.txt
-#   for spacersss in $(grep ">" /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results.txt)
-#   do
-#   echo "--------------------------"
-#   grep "${spacersss}" -A 1 /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results.txt  > #/archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   
-#   newNAME=$(grep -B 20 "${spacersss}" /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results.txt.clstr |grep "^>Cluster" |tail -1 |sed 's/ /_/g')
-   
- #  sed -i "s/${spacersss}/${newNAME}/g" /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results_ClusterName.txt
-   
-#   done
-#   rm /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   
+
    
    
 for species in $(echo "Ldel Sterm")
@@ -2082,6 +2067,32 @@ echo ==========================
 done #species
   
 
+  ###======================
+  ##assign representaive Spacers to Cluster
+  ###======================
+  
+  for species in $(echo "Ldel Sterm")
+do
+echo ==========================
+     echo "working on: " ${species}
+     echo ==========================
+
+   cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_ClusterName.txt
+   
+   for spacersss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt)
+   do
+   echo "--------------------------"
+   #grep "${spacersss}" -A 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt  > archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}//tmp_spacer.txt
+   
+   newNAME=$(grep -B 20 "${spacersss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr |grep "^>Cluster" |tail -1 |sed 's/ /_/g')
+   
+   sed -i "s/${spacersss}/${newNAME}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_ClusterName.txt
+   
+   done
+   
+   rm archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}//tmp_spacer.txt
+   
+done #species
 ```
 
 
@@ -2826,12 +2837,21 @@ plocation <- (pfirst+plot_spacer()+plot_layout(widths = c(2,0.5)))
 TotSpacer <- uniqueSpacersss %>% group_by(sample,ARRAY) %>%  summarize(totalSpacersARRAY=max(SPACER))
 uniqueSpacersss_extended <-  merge(uniqueSpacersss, TotSpacer, by=c("sample", "ARRAY")) %>% mutate(relDistanceLeader=SPACER/totalSpacersARRAY)
 
-ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader))+geom_density()+theme_classic()+labs(x="relative proximity to CRISPR leader")
+spacerRelDistance <- ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,fill=ARRAY))+geom_density(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")+theme(legend.position = "none")
+
+# ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,color=ARRAY,fill=ARRAY))+geom_histogram(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")
+
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/CRISPR_spacer_count_location_rel.svg",width=4.5,height=2.5)
+spacerRelDistance
+ dev.off()
 
 ```
+###finder leader sequence
+here I try to identify the leader sequence of the CRISPR arrays
+Finally, I did it online with the [CRISPRdetect](http://crispr.otago.ac.nz/CRISPRDetect/predict_crispr_array.html)
 
 
-###map and follow CRISPR spacers over time
+####map and follow CRISPR spacers over time
 
 Here we map all raw reads against the Pan-CRISPR-array and follow the mapping coverage over time.
 
@@ -3546,6 +3566,8 @@ The way I try to identify CRISPR spacers in teh metagenome is by mapping the CRI
 
 leave genomic spacers away and check in the end if the undemultplexed spacers occur int the genomes with cd-hit.
 
+
+!!!!Important I did not have to reverse complement the reverse reads. 
 ```{bash}
 #---test
 adap=GTTTTAGAGCTGTGTTGTTTCGAATGGTTCCAAAAC
@@ -3762,12 +3784,14 @@ awk -F "\t" '{OFS="\n"} {if($2!="-1" && length($7)>"25" && length($7)<"46" && le
 ##==============================================
 rm ${BaseLocation}/FinalSpacers/mergeSpacersFile/allSamplesMergedspacers_${adap}.fastq
 rm -r ${BaseLocation}/FinalSpacers/ForDADA2/
+rm -r ${BaseLocation}/FinalSpacers/ForDADA2_woREverse
+mkdir -p ${BaseLocation}/FinalSpacers/ForDADA2_woREverse
 mkdir -p ${BaseLocation}/FinalSpacers/ForDADA2/
 for names in $(cat ${samplesss} )
   do
-for adapName in $(grep ">" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/manual_spacer_cut.txt  )
+for adapName in $(grep ">" ${repeatsFile}  )
   do
-adapSeq=$(grep "${adapName}" -A 1 /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/manual_spacer_cut.txt)
+adapSeq=$(grep "${adapName}" -A 1 ${repeatsFile})
 adap=$(echo ${adapName} | sed 's/>//g'|cut -d '_' -f 1)
 cleanRound=1
 
@@ -3788,6 +3812,13 @@ adapShor=$(echo $adap |sed 's/Array/a/g')
 awk -v sampless="$names" -v arrayss="$adapShor"  '{if(NR%4==1) $0=sprintf("@"sampless":R"arrayss":s"++k,(1+i++)); print;}' ${BaseLocation}/${names}/final/${names}_${adap}_final_allRounds_allReads_reversed_regular.fastq > ${BaseLocation}/${names}/final/${names}_${adap}_final_allRounds_allReads_reversed_regular_renamed.fastq
 
 
+###----------------------without Reversing
+adapShor=$(echo $adap |sed 's/Array/a/g')
+awk -v sampless="$names" -v arrayss="$adapShor"  '{if(NR%4==1) $0=sprintf("@"sampless":"arrayss":s"++k,(1+i++)); print;}' ${BaseLocation}/${names}/final/${names}_${adap}_final_allRounds_allReads.fastq >> ${BaseLocation}/FinalSpacers/ForDADA2_woREverse/${names}_allSpacermerged_${adap}.fastq
+
+adapShor=$(echo $adap |sed 's/Array/a/g')
+awk -v sampless="$names" -v arrayss="$adapShor"  '{if(NR%4==1) $0=sprintf("@"sampless":"arrayss":s"++k,(1+i++)); print;}' ${BaseLocation}/${names}/final/${names}_${adap}_final_allRounds_allReads_reversed.fastq >> ${BaseLocation}/FinalSpacers/ForDADA2_woREverse/${names}_allSpacermerged_${adap}.fastq
+
 
 #-----------merge samples
 mkdir -p  ${BaseLocation}/FinalSpacers/mergeSpacersFile
@@ -3803,7 +3834,7 @@ cat ${BaseLocation}/${names}/final/${names}_${adap}_final_allRounds_allReads_rev
 done #adap (spacer)
   done #names (sampleName)
   
-  
+  echo ${BaseLocation}/FinalSpacers/ForDADA2_woREverse/
 echo ${BaseLocation}/FinalSpacers/ForDADA2/
 ```
 move local for Dada2
@@ -3812,6 +3843,10 @@ move local for Dada2
 ##----------------move local for Dada2
 mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/
 scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2/ ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/
+
+##----------------2ithout reversed
+mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse/ ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/
 ```
 
 
@@ -3830,7 +3865,8 @@ library(dada2)
 library(tidyverse)
 
 #path <- "~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/" # CHANGE ME to the directory containing the fastq files after unzipping.
-path <- "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2/" # CHANGE ME to the directory containing the fastq files after unzipping.
+# path <- "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2/" # CHANGE ME to the directory containing the fastq files after unzipping.
+path <- "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse/" 
 
 list.files(path)
 
@@ -3904,17 +3940,44 @@ names(sequences) <- taxa_names(ps)
 ps <- merge_phyloseq(ps, sequences)
 taxa_names(ps) <- paste0("spacer_",seq(ntaxa(ps)))
 
-writeXStringSet(refseq(ps), "~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/all_unique_spacers.fasta", append=FALSE, format="fasta") 
+writeXStringSet(refseq(ps), "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//all_unique_spacers.fasta", append=FALSE, format="fasta") 
 refseq(ps)
-plot_richness(ps, x="Sample",measures=c("Observed","Shannon", "Simpson"),color="Array")
+# plot_richness(ps, x="Sample",measures=c("Observed","Shannon", "Simpson"),color="Array")
+
+
+colors <- c("#fd8d3cff","#807dbaff","#ef3b2cff")
+
+ShannonCRISPR <- plot_richness(ps, x="Array", measures=c( "Shannon"),color="Array") + geom_boxplot()+scale_fill_manual(values=colors)+scale_color_manual(values=colors)+theme_classic()+labs(x="",y="Shannon diversity of CRISPR spacers")+theme(legend.title = element_blank(),legend.position="top",axis.text.x =element_text(angle = 75, hjust = 1,size=9))
+
+AbsorvedCRISPR <- plot_richness(ps, x="Array", measures=c( "Observed"),color="Array") + geom_boxplot()+scale_fill_manual(values=colors)+scale_color_manual(values=colors)+theme_classic()+labs(x="",y="Number of CRISPR spacers observed")+theme(legend.position = "none" ,axis.text.x =element_text(angle = 75, hjust = 1,size=9))
+
+  svg("~/Desktop/Projects/2019_RMK202_analysis/plot/rarefaction_spacers_Shannon.svg",width=4,height=8)
+  AbsorvedCRISPR+ShannonCRISPR
+   dev.off()
 
 ##------rarefaction
 
 library(ranacapa)
-ggrare(ps, step = 10, label = NULL, color = "Sample",
-  plot = TRUE, parallel = FALSE, se = TRUE)
+# rarefaction_spacers <- ggrare(ps, step = 10, label = NULL, color = "Sample",
+#   plot = TRUE, parallel = FALSE, se = TRUE) +theme_classic()
+sample_variables(ps)
+colors <- c("#fd8d3cff","#807dbaff","#ef3b2cff")
 
+rarefaction_spacers <- ggrare(ps, step = 10, label = "Sample", color = "Array",
+  plot = TRUE, parallel = FALSE, se = TRUE) +theme_classic()+scale_fill_manual(values=colors)+scale_color_manual(values=colors)+scale_x_continuous(breaks =c(0,10000,20000,30000,40000,45000),labels=c(0,10000,20000,30000,40000,45000))+labs(x="number of CRISPR spacer reads",y="number of CRISPR spacers detected")+theme(legend.title = element_blank())
+rarefaction_spacers
 
+  
+  
+  svg("~/Desktop/Projects/2019_RMK202_analysis/plot/rarefaction_spacers.svg",width=12,height=8)
+  rarefaction_spacers
+   dev.off()
+   
+   library(patchwork)
+   
+  svg("~/Desktop/Projects/2019_RMK202_analysis/plot/rarefaction_spacers_together.svg",width=15,height=8)
+  rarefaction_spacers+theme(legend.position = "none")+AbsorvedCRISPR+ShannonCRISPR+plot_layout(widths =c(4,1,1))
+   dev.off()  
 ##------pca
 ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 ord.nmds.bray <- ordinate(ps.prop, method="NMDS", distance="bray")
@@ -3935,7 +3998,7 @@ otu_table(d.norm1)
 otu_table_df <- otu_table(d.norm1) %>% as.data.frame()%>% rownames_to_column() %>% separate(rowname, c("sample","Array"), sep = "_allSpacermerged_") %>% select(-Array) %>%  group_by(sample) %>% summarise_all(.funs = c(sum="sum")) %>% column_to_rownames(var="sample") %>% t() %>% as.data.frame() %>% rownames_to_column("spacer") %>% 
   mutate(spacer = str_replace(spacer, "_sum", "")) 
 otu_table_df
-write.table(otu_table_df,"~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/dada_spacer_count.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =TRUE)
+write.table(otu_table_df,"~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//dada_spacer_count.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =TRUE)
 
 ##-----------------------
 ##count number of OTUs larger then 0 in every sample
@@ -3991,24 +4054,233 @@ table(spacer_counts_samples$Array)
 spacer_counts_samples_final <- spacer_counts_samples %>% select(-c(Array1count,Array2count,Array3count,totalArrays))
 spacer_counts_samples_out <- spacer_counts_samples %>% select(c(spacer,Array))
 
-write.table(spacer_counts_samples_out,"~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/spacersAssigned.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
-write.table(spacer_counts_samples_final,"~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/spacers_info.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =TRUE)
+write.table(spacer_counts_samples_out,"~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//spacersAssigned.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
+write.table(spacer_counts_samples_final,"~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//spacers_info.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =TRUE)
 
 ```
 
 spacers only occur in one array. They never change array. 
 
-#####blast Spacers
+```{bash}
+###move to big machine
+
+scp ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//all_unique_spacers.fasta vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse/
+
+scp ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//spacersAssigned.txt vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse/
+
+
+```
+
+
+
+
+
+####match strains to spacers
+
+this output can be used for the spacer heatmap
+
 
 ```{bash}
-  mappingFile=/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/all_unique_spacers.fasta
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt  ##the file with all sample names
+#logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract/
+#Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR_locations/FASTA/S_thermophilus_alltogether.CRISPRlocation.fasta
+species=Sterm
+#BaseLocation_bam=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+repeatsFile=/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/manual_spacer_cut.txt
+MetaspacerFile=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse//all_unique_spacers.fasta
+
+###---------------------------
+##merge CRISPR spacer files
+
+mkdir -p ${BaseLocation}/FinalSpacers/cdhit_withReference
+
+#cat /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/all_unique_spacers.fasta \
+# /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/S_thermophilus_RMK202.pilarCR_out_final_new_short \
+#/archiv/Projects/2018_Culturomics/12_CRISPR_isolates/CIRCOS/S50/pilerCR/pilarCR_out_final_newshort \
+#/archiv/Projects/2018_Culturomics/12_CRISPR_isolates/CIRCOS/S72/pilerCR/pilarCR_out_final_newshort >  \
+#/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/all_spacers_withRef.fasta
+
+
+cat ${MetaspacerFile} \
+ /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_ClusterName.txt |sed 's/Cluster/cl/g' >  \
+${BaseLocation}/FinalSpacers/cdhit_withReference/all_spacers_withRef_and_oldStrains.fasta
+#/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/all_spacers_withRef_and_oldStrains.fasta
+##--------------------------------------------------
+##-----------cd -hit
+##--------------------------------------------------
+mkdir -p ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain
+
+/home/vincent/apps/cd-hit-v4.8.1-2019-0228/cd-hit-est -i ${BaseLocation}/FinalSpacers/cdhit_withReference/all_spacers_withRef_and_oldStrains.fasta \
+    -o  /${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt -c 0.999
+
+
+##--Qualtiy control
+
+grep ">" -c ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt
+
+
+  
+###=====================================================0  
+##extract via spacers
+###----------new approach 
+###=====================================================
+#spacersss=$( echo ">spacer_330")
+
+
+sed 's/>Clu/>META_Clu/g' ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt.clstr |sed 's/META_Cluster /META_Cluster_/g' > ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr
+
+
+echo -e "METAClusterName\tdadaSpacer\tStrains\tARRAYINFO\tClusterINFO" > ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain//uniqueSpacers_count_Ref_wOLDstrains.txt
+
+for spacersssClusts in $(grep "^>" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr)
+do
+#spacersssClusts=$(echo ">META_Cluster_3")
+echo ${spacersssClusts}
+
+#spacerextend=$(echo ${spacersss}"..")
+
+ClusterEND=$(grep -A 10 "${spacersssClusts}$(printf '$')" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr |grep ">META_C"|head -2|tail -1)
+
+
+#ClusterSTART=329
+#ClusterEND=330
+
+  sed -n "/$spacersssClusts$/,/$ClusterEND$/p" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr > ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/tmp.txt
+
+tmpfile=${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/tmp.txt
+
+#spacerName=spacer_16
+
+spacer=$(grep ">spacer_" -c ${tmpfile})  
+strains=$(grep ">cl_" -c ${tmpfile})
+spacerName=$(grep ">spacer_" ${tmpfile} |head -1|awk -F "[>...]" '{print $2}')
+if [ ${strains} == "0" ]; then
+            arrayINFO=$(grep "${spacerName}$(printf '\t')" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse/spacersAssigned.txt |cut -f 2|sed 's/Array/a/g')
+            strains_INFO=$(echo "MetaGenome")
+            else
+              strains_INFO=$(grep ">cl_" ${tmpfile} |head -1|awk -F "[>...]" '{print $2}'|sed 's/cl_/Cluster_/g' )
+            arrayINFO=$(grep "${strains_INFO}$(printf '\t')" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRspacerAnalysis/${species}/spacer_Infos_${species}_final.txt |cut -f 6|head -1)
+               
+            fi
+
+clusterNAME=$(echo -e "${spacersssClusts}" | sed 's/ /_/g')
+
+ echo -e ${clusterNAME}"\t"${spacer}"\t"${strains}"\t"${arrayINFO}"\t"${strains_INFO} >> ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt
+
+done #spacers
+cut -f 2 ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt|sort|uniq -c
+cut -f 3 ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt|sort|uniq -c
+cut -f 4 ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt|sort|uniq -c
+###----------------------------------------
+##change name of SPACERS
+###----------------------------------------
+#/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt
+
+ cat ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt > ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt
+ rm ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/tmp_spacer.txt
+   for spacersss in $(grep ">" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt)
+   do
+   echo "--------------------------"
+   #grep "${spacersss}$(printf '\n')" -A 1 /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt  #> /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
+   
+   #spacersss=spacer_32
+   
+   newNAME=$(grep -B 20 "${spacersss}\." ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr |grep "^>META" |tail -1 )
+   
+   echo -e ${newNAME}"\t"${spacersss} >> ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain//tmp_spacer.txt
+   
+   sed -i "s/${spacersss}$/${newNAME}/g" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt
+   
+   done
+   rm ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain//tmp_spacer.txt
+   grep ">" ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt |sort|uniq |wc -l
+   
+  echo ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt 
+  echo ${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt
+```
+
+
+```{bash}
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt
+
+###--------------------all CRISPR spacers to use with CRISPR map
+scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/
+```
+Than we check which clusters are only metagenomic and which only strains
+
+```{r}
+library(readr)
+library(ggplot2)
+# uniqueSpacers_count_Ref_wOLDstrains <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+uniqueSpacers_count_Ref_wOLDstrains <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+
+uniqueSpacers_count_Ref_wOLDstrains$explained <- ifelse(uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains>0,"both Meta & strains",ifelse(
+  uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains==0,"explained only by meta","explained only by strains"
+))
+
+##-------------plot explained
+# uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO
+
+colorsss <- rev(c("darkcyan","darkturquoise","lightblue"))
+uniqueSpacers_count_Ref_wOLDstrains$explained = factor(uniqueSpacers_count_Ref_wOLDstrains$explained, levels=c("explained only by meta","both Meta & strains","explained only by strains"))
+uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO <- revalue(uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO, c("a2"="CRISPR array 2","a1"="CRISPR array 1","a3"="CRISPR array 3"))
+# uniqueSpacers_count_Ref_wOLDstrains$explained <- revalue(uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO, c("a2"="CRISPR array 2","a1"="CRISPR array 1","a3"="CRISPR array 3"))
+table(uniqueSpacers_count_Ref_wOLDstrains$explained)
+
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerexplained.svg",width=4,height=4)
+ggplot(uniqueSpacers_count_Ref_wOLDstrains,aes(x=ARRAYINFO,group=explained,fill=explained))+geom_bar()+theme_classic()+scale_fill_manual(values=colorsss)+theme(axis.title.x = element_blank(),axis.text.x =element_text(angle = 45, hjust = 1,size=9) )+labs(y="spacer counts",fill="")+scale_y_continuous(breaks =c(0,39,50,100,142,158),labels=c(0,39,50,100,142,158))
+ dev.off()
+ 
+```
+
+#####blast Spacers
+Here a look which spacers map to the phages or bacteria. 
+
+I could also use the [CRISPRCasdb](https://crisprcas.i2bc.paris-saclay.fr/) tool for this. 
+this however did not work ideally. 
+
+```{bash}
+###================
+##description file
+###================
+threads=37
+samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt  ##the file with all sample names
+#logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract/
+#Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR_locations/FASTA/S_thermophilus_alltogether.CRISPRlocation.fasta
+species=Sterm
+#BaseLocation_bam=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+repeatsFile=/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/manual_spacer_cut.txt
+MetaspacerFile=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers/ForDADA2_woREverse//all_unique_spacers.fasta
+mappingFile=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt
+
 
 ##--------------------------blast to local phages 
   
 #rm -r /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast
-mkdir -p /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast
+mkdir -p ${BaseLocation}/CRISPRspacerBLAST/blast
+mkdir -p ${BaseLocation}/CRISPRspacerBLAST/starterPhagesPlasmid
+mkdir -p ${BaseLocation}/CRISPRspacerBLAST/genomes/
+  
+##---------------------
+##get local phages
+##---------------------
+rm ${BaseLocation}/CRISPRspacerBLAST/genomes/phagenGenome.fasta
+for phageesss in $(grep ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/RMK202_MAG_assembly.fasta |grep "CP046134" -v | grep -v "CP046131"|sed 's/>//g')
+do
 
-  mkdir -p /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid
+samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/RMK202_MAG_assembly.fasta ${phageesss} > ${BaseLocation}/CRISPRspacerBLAST/genomes/${phageesss}.fasta
+cat ${BaseLocation}/CRISPRspacerBLAST/genomes/${phageesss}.fasta >> ${BaseLocation}/CRISPRspacerBLAST/genomes/phagenGenome.fasta
+done
+
+
+
   
 #  cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//splitContigs/L_del_plasmid_01.fasta \
 #/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter//splitContigs/S_thermophilus_repA.fasta \
@@ -4022,15 +4294,15 @@ mkdir -p /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRIS
 #makeblastdb -max_file_sz 1GB -in /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids.fasta \
 # -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids -parse_seqids -dbtype nucl
 
-makeblastdb -max_file_sz 1GB -in /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids.fasta \
- -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids -parse_seqids -dbtype nucl
+makeblastdb -max_file_sz 1GB -in ${BaseLocation}/CRISPRspacerBLAST/genomes/phagenGenome.fasta \
+ -out ${BaseLocation}/CRISPRspacerBLAST/genomes/phagenGenome -parse_seqids -dbtype nucl
 
 
   blastn -num_threads 35 -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis \
   -query ${mappingFile} \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc sblastnames staxids sscinames" \
-  -db /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids \
-  -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202phages.txt \
+  -db ${BaseLocation}/CRISPRspacerBLAST/genomes/phagenGenome \
+  -out ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_rmk202phages.txt \
   -evalue 0.01 -word_size 16
 
 ##--------------------------------  
@@ -4067,6 +4339,9 @@ makeblastdb -max_file_sz 1GB -in /archiv/Projects/2019_RMK202_analysis/04_CRISPR
 #makeblastdb -max_file_sz 1GB -in /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids.fasta \
 # -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/starterPhagesPlasmid/rmk202_phages_plasmids -parse_seqids -dbtype nucl
 
+
+
+
 makeblastdb -max_file_sz 1GB -in /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats/Streptococcus_CRISPR.masked_allStrepGenomesrmk202_Genome.fa \
  -out /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats/Streptococcus_CRISPR.masked_allStrepGenomesrmk202_Genome -parse_seqids -dbtype nucl
 
@@ -4075,11 +4350,9 @@ makeblastdb -max_file_sz 1GB -in /data/Project/CRISPRspacers/02_PilerCR/20190112
   -query ${mappingFile} \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc sblastnames staxids sscinames" \
   -db /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats/Streptococcus_CRISPR.masked_allStrepGenomesrmk202_Genome \
-  -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202Bacteria.txt \
+  -out ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_rmk202Bacteria.txt \
   -evalue 0.01 -word_size 16
   
-
-
 
 
   ####------------exkursion
@@ -4169,16 +4442,15 @@ makeblastdb -max_file_sz 1GB -in /data/Project/CRISPRspacers/02_PilerCR/20190112
 #/archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages.fna
 
 
-
-#makeblastdb -max_file_sz 1GB -in /archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages.fna \
-# -out /archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages -parse_seqids -dbtype nucl
+makeblastdb -max_file_sz 1GB -in /archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages.fna \
+ -out /archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages -parse_seqids -dbtype nucl
 
 
   blastn -num_threads 35 -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis \
   -query ${mappingFile} \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc sblastnames staxids sscinames" \
   -db /archiv/Phage_DB/BLAST/20190519/Vcontact/Database/alltogether/data/merged_all_phages \
-  -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB.txt \
+  -out ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB.txt \
   -evalue 0.01 -word_size 16
   
 
@@ -4190,7 +4462,7 @@ makeblastdb -max_file_sz 1GB -in /data/Project/CRISPRspacers/02_PilerCR/20190112
   -query ${mappingFile} \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen sgi sacc sblastnames staxids sscinames" \
   -db /archiv/BLAST/blast_db/20190204/viral_nucleotide/viral \
-  -out /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB_old.txt \
+  -out ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB_old.txt \
   -evalue 0.01 -word_size 16
   
   
@@ -4208,7 +4480,7 @@ blastn -num_threads 37 -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis 
   -query ${mappingFile} \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle slen" \
   -db /archiv/BLAST/blast_db/20190204/nucleotide/prokaryotes \
-  -out  /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_nucleotideDB.txt \
+  -out  ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_nucleotideDB.txt \
   -evalue 0.01 -word_size 16
 
 
@@ -4217,189 +4489,30 @@ blastn -num_threads 37 -max_hsps 1 -max_target_seqs 1 -task megablast -show_gis 
 ##-----------------------merge all blasts
 
 
-  cut -f 1,2 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202phages.txt |sed 's/_contig[[:digit:]]\+//g'  | awk -F "[\t]" '{OFS="\t"} {print "localPHAGE",$1,$2}' > /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
+ # cut -f 1,2 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202phages.txt |sed 's/_contig[[:digit:]]\+//g'  | awk -F "[\t]" '{OFS="\t"} {print "localPHAGE",$1,$2}' > /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
 
-  awk -F "\t" '{OFS="\t"} {print $1 ,$2 }' /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202Bacteria.txt | awk -F "[\t]" '{OFS="\t"} {print "localBAC",$1,$2}' >>  /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
-
-
-  cut -f 1,13 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB.txt |cut -d ',' -f 1 | sed 's/ complete prophage genome//g' |sed 's/ complete genome//g'  | awk -F "[\t]" '{OFS="\t"} {print "phageDB",$1,$2}' >>  /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
-
-cut -f 1,13 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_nucleotideDB.txt |cut -d ',' -f 1 | awk -F "[\t]" '{OFS="\t"} {print "BactDB",$1,$2}' >>  /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
-
-cut -f 1 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt | sort|uniq -c
-
-  ##-------------------------transfer local
-  #scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_viralREF.txt ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/
- # scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_spacersNames.txt ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/
-#  scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_unmapped2prokaryoteREF.txt ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/
-  
- # scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/CRISPRblast_rmk202Phages.txt ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ 
-  
-   scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ 
-  
-```
+  cut -f 1,2 ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_rmk202phages.txt | awk -F "[\t]" '{OFS="\t"} {print "localPHAGE",$1,$2}' > ${BaseLocation}/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
 
 
-####match strains to spacers
-
-this output can be used for the spacer heatmap
-
-```{bash}
-###move to big machine
-
-scp /home/vincent/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/all_unique_spacers.fasta vincent@130.223.51.116:/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/
+  awk -F "\t" '{OFS="\t"} {print $1 ,$2 }' ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_rmk202Bacteria.txt | awk -F "[\t]" '{OFS="\t"} {print "localBAC",$1,$2}' >>  ${BaseLocation}/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
 
 
-###================
-##description file
-###================
-threads=37
-samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/onlyMeta_samples.txt  ##the file with all sample names
-#logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
-BaseLocation=/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats/
-#Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR_locations/FASTA/S_thermophilus_alltogether.CRISPRlocation.fasta
-species=Sterm
-BaseLocation_bam=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP
+  cut -f 1,13 ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_ViralDB.txt |cut -d ',' -f 1 | sed 's/ complete prophage genome//g' |sed 's/ complete genome//g'  | awk -F "[\t]" '{OFS="\t"} {print "phageDB",$1,$2}' >>  ${BaseLocation}/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
 
+cut -f 1,13 ${BaseLocation}/CRISPRspacerBLAST/blast/CRISPRblast_nucleotideDB.txt |cut -d ',' -f 1 | awk -F "[\t]" '{OFS="\t"} {print "BactDB",$1,$2}' >>  ${BaseLocation}/CRISPRspacerBLAST/blast/all_differentBlastHits.txt
 
-###---------------------------
-##merge CRISPR spacer files
-
-mkdir -p /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference
-
-#cat /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/all_unique_spacers.fasta \
-# /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/S_thermophilus_RMK202.pilarCR_out_final_new_short \
-#/archiv/Projects/2018_Culturomics/12_CRISPR_isolates/CIRCOS/S50/pilerCR/pilarCR_out_final_newshort \
-#/archiv/Projects/2018_Culturomics/12_CRISPR_isolates/CIRCOS/S72/pilerCR/pilarCR_out_final_newshort >  \
-#/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/all_spacers_withRef.fasta
-
-
-cat /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/all_unique_spacers.fasta \
- /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/sterm_results_ClusterName.txt |sed 's/Cluster/cl/g' >  \
-/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/all_spacers_withRef_and_oldStrains.fasta
-##--------------------------------------------------
-##-----------cd -hit
-##--------------------------------------------------
-mkdir -p /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain
-
-/home/vincent/apps/cd-hit-v4.8.1-2019-0228/cd-hit-est -i /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/all_spacers_withRef_and_oldStrains.fasta \
-    -o  /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt -c 0.95
-
-
-##--Qualtiy control
-
-grep ">" -c /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt
-
-
-  
-###=====================================================0  
-##extract via spacers
-###----------new approach 
-###=====================================================
-spacersss=$( echo ">spacer_330")
-
-
-sed 's/>Clu/>META_Clu/g' /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered.txt.clstr |sed 's/META_Cluster /META_Cluster_/g' > /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr
-
-
-echo -e "METAClusterName\tdadaSpacer\tStrains\tARRAYINFO\tClusterINFO" > /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/uniqueSpacers_count_Ref_wOLDstrains.txt
-
-for spacersssClusts in $(grep "^>" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr)
-do
-
-echo ${spacersssClusts}
-#spacersssClusts=$(echo ">META_Cluster 325")
-#spacerextend=$(echo ${spacersss}"..")
-
-ClusterEND=$(grep -A 10 "$spacersssClusts" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr |grep ">META_C"|head -2|tail -1)
-
-
-#ClusterSTART=329
-#ClusterEND=330
-
-  sed -n "/$spacersssClusts$/,/$ClusterEND$/p" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr > /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/tmp.txt
-
-tmpfile=/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/tmp.txt
-
-#spacerName=spacer_16
-
-spacer=$(grep ">spacer_" -c ${tmpfile})  
-strains=$(grep ">cl_" -c ${tmpfile})
-spacerName=$(grep ">spacer_" ${tmpfile} |head -1|awk -F "[>...]" '{print $2}')
-if [ ${strains} == "0" ]; then
-            arrayINFO=$(grep "${spacerName}$(printf '\t')" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats/FinalSpacers/ForDADA2/spacersAssigned.txt |cut -f 2|sed 's/Array/a/g')
-            strains_INFO=$(echo "MetaGenome")
-            else
-              strains_INFO=$(grep ">cl_" ${tmpfile} |head -1|awk -F "[>...]" '{print $2}'|sed 's/cl_/Cluster_/g' )
-            arrayINFO=$(grep "${strains_INFO}" /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/assembledSpacers/Alluvialplot/spacer_Infos_Sterm_final.txt |cut -f 6|head -1)
-               
-            fi
-
-clusterNAME=$(echo -e "${spacersssClusts}" | sed 's/ /_/g')
-
- echo -e ${clusterNAME}"\t"${spacer}"\t"${strains}"\t"${arrayINFO}"\t"${strains_INFO} >> /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/uniqueSpacers_count_Ref_wOLDstrains.txt
-
-done #spacers
-cut -f 2 /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/uniqueSpacers_count_Ref_wOLDstrains.txt|sort|uniq -c
-cut -f 3 /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/uniqueSpacers_count_Ref_wOLDstrains.txt|sort|uniq -c
-
-###----------------------------------------
-##change name of SPACERS
-###----------------------------------------
-#/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt
-
- cat /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt > /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt
- rm /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   for spacersss in $(grep ">" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt)
-   do
-   echo "--------------------------"
-   #grep "${spacersss}$(printf '\n')" -A 1 /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt  #> /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   
-   #spacersss=spacer_32
-   
-   newNAME=$(grep -B 20 "${spacersss}\." /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed.txt.clstr |grep "^>META" |tail -1 )
-   
-   echo -e ${newNAME}"\t"${spacersss} >> /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   
-   sed -i "s/${spacersss}$/${newNAME}/g" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt
-   
-   done
-   rm /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/CD-hit/sterm/tmp_spacer.txt
-   grep ">" /data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference_oldStrain/allspacersClustered_renamed_ClusterName.txt |sort|uniq |wc -l
-   
-   
+cut -f 1 ${BaseLocation}/CRISPRspacerBLAST/blast/all_differentBlastHits.txt | sort|uniq -c
+#cut -f 1 /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerBLAST/blast/all_differentBlastHits.txt|sort|uniq -c
 ```
 
 
 ```{bash}
-scp vincent@130.223.51.116:/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/cdhit_withReference/uniqueSpacers_count_Ref_wOLDstrains.txt /home/vincent/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/
+##-------------------------transfer local
 
+  mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//CRISPRspacerBLAST/blast
+   scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//CRISPRspacerBLAST/blast/all_differentBlastHits.txt ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//CRISPRspacerBLAST/blast/all_differentBlastHits.txt
+  
 ```
-Than we check which clusters are only metagenomic and which only strains
-
-```{r}
-library(readr)
-library(ggplot2)
-uniqueSpacers_count_Ref_wOLDstrains <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
-
-uniqueSpacers_count_Ref_wOLDstrains$explained <- ifelse(uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains>0,"both Meta & strains",ifelse(
-  uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains==0,"explained only by meta","explained only by strains"
-))
-
-##-------------plot explained
-# uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO
-
-colorsss <- rev(c("darkcyan","darkturquoise","lightblue"))
-uniqueSpacers_count_Ref_wOLDstrains$explained = factor(uniqueSpacers_count_Ref_wOLDstrains$explained, levels=c("explained only by meta","both Meta & strains","explained only by strains"))
-uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO <- revalue(uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO, c("a2"="CRISPR array 2","a1"="CRISPR array 1","a3"="CRISPR array 3"))
-# uniqueSpacers_count_Ref_wOLDstrains$explained <- revalue(uniqueSpacers_count_Ref_wOLDstrains$ARRAYINFO, c("a2"="CRISPR array 2","a1"="CRISPR array 1","a3"="CRISPR array 3"))
-
-svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerexplained.svg",width=4,height=4)
-ggplot(uniqueSpacers_count_Ref_wOLDstrains,aes(x=ARRAYINFO,group=explained,fill=explained))+geom_bar()+theme_classic()+scale_fill_manual(values=colorsss)+theme(axis.title.x = element_blank(),axis.text.x =element_text(angle = 75, hjust = 1,size=9) )+labs(y="spacer counts",fill="")
- dev.off()
- 
-```
-
 
 
 ####map meta
@@ -4413,8 +4526,6 @@ What we do:
 
 ```{bash}
 
-
-  
 
   ###================
   ##description file
@@ -4745,9 +4856,14 @@ dada_spacer_count <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRIS
 ##!!!!!!!!!!!!!!!spacer file
 library(readr)
 ##-------information array assignment
-spacers_info <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/spacers_info.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+  
+metaspacer_info <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt", "\t", escape_double = FALSE, trim_ws = TRUE)  
+metaspacer_info$METAClusterName <- gsub(">","",metaspacer_info$METAClusterName)
+spacers_info <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//spacers_info.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 ##-------information spacer blast
-spacers_info_blast <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
+# spacers_info_blast <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
+spacers_info_blast <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//CRISPRspacerBLAST/blast/all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
+
 spacers_info_blast$explainedBLAST <- ifelse(!is.na(spacers_info_blast$localPHAGE),"localPHAGE",ifelse(!is.na(spacers_info_blast$localBAC),"localBAC",ifelse(!is.na(spacers_info_blast$phageDB),"phageDB",ifelse(!is.na(spacers_info_blast$BactDB),"phageDB","No-match"))))
 ##-------clustering vContact blast
 Streptococcus_phage_Cluster_assignment <- read_csv("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new//allPhages_vContact/Streptococcus_phage_Cluster_assignment.txt",col_types = cols(.default = "c")) %>% mutate(Size = as.double(Size), Quality = as.double(Quality)) %>% select(-c(Order,Family,Genus,Quality,Type.x))
