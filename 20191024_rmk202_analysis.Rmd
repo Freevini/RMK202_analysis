@@ -1021,7 +1021,10 @@ species=Sterm
 
 scp   vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/01_roaryStrains/${species}/analysis_1588600355/gene_presence_absence.csv ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/${species}/analysis/
 
+###-----------------eggnog prep
+species=Sterm
 
+grep ">" ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/${species}/analysis/accesoryGenes.faa |sed 's/>//g' > ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/${species}/analysis/accesoryGenes.names
 ```
 
 ######lineage specific genes
@@ -1083,17 +1086,23 @@ LINEAGE_2_4
 
 ```{r}
 library(readr)
-genes_soacer <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/query_seqs.fa.emapper.annotations", "\t", escape_double = FALSE, trim_ws = TRUE,  skip = 3)
+library(plyr)
+library(tidyverse)
+# genes_soacer <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/eggnog/accessoryGenes_eggnog.annotations", "\t", escape_double = FALSE, trim_ws = TRUE,  skip = 3)
 
-intersect_genes_prep_prepped <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/intersect_genes_prep_prepped.txt", "\t", escape_double = FALSE, col_names = c("query_name","spacerName"),   trim_ws = TRUE)
+accesoryGenesNames <- read_csv("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/Sterm/analysis/accesoryGenes.names", col_names = "names")
+
+# intersect_genes_prep_prepped <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/intersect_genes_prep_prepped.txt", "\t", escape_double = FALSE, col_names = c("query_name","spacerName"),   trim_ws = TRUE)
 
 
-S50 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/query_seqs.fa.emapper.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3)) 
+# S50 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/query_seqs.fa.emapper.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3)) 
 
-genes_soacer <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/query_seqs.fa.emapper.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3)) 
+genes_soacer <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/eggnog/accessoryGenes_eggnog.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3))
 colnames(genes_soacer) <- c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description")
 
 COG_functional_categories <- read_delim("~/Desktop/ScriptRepository/COG_functional_categories.csv",  ",", escape_double = FALSE, col_names = c("short","long","divided"),trim_ws = TRUE, na = "NA")
+
+
 ##----------------COG
 
 ALL_sterm <- genes_soacer
@@ -1117,46 +1126,28 @@ for (i in 1:nrow(ALL_sterm)) {
   
 }
 
-# ALL_sterm[which(is.na(ALL_sterm$longCOG)),"COG_Functional_Category"] %>% table()
 
+##---------------which genes do not cluster in eggnog
 
-# ALL_sterm_unnested_not <- ALL_sterm %>% select(COG_Functional_Category)
+genes <- accesoryGenesNames[which(!accesoryGenesNames$names %in% genes_soacer$query_name),"names"]
+unclustering <- data.frame("query_name"=genes,"longCOG"="Function Unknown")
+colnames(unclustering) <- c("query_name","longCOG")
+# table(ALL_sterm$longCOG)
+ALL_sterm_extended <- ALL_sterm %>% select(c("query_name","longCOG"))
+ALL_sterm_extended <- rbind(ALL_sterm_extended,unclustering)
+# table(ALL_sterm_extended$longCOG)
+ALL_sterm_extended$longCOG  <- revalue(ALL_sterm_extended$longCOG, c("character(0)"="Function Unknown"))
+100*(sort(table(ALL_sterm_extended$longCOG ))/802)
 
-# ALL_sterm <- ALL_sterm[which(!is.na(ALL_sterm$longCOG)),]
-# unique(ALL_sterm$COG_Functional_Category)[which(!unique(ALL_sterm$COG_Functional_Category) %in% COG_functional_categories$short )]
+##---------------plot
 
-
-   # svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/cogPlot_allSterm.svg",width=7,height=7)
-# CogPlotSterm 
- # dev.off()
-
-##-----------------------
-##add array information
-##-----------------------
-ALL_sterm$query_name
-
-
-
-ALL_sterm_sub <- ALL_sterm %>% drop_na(COG_Functional_Category) %>% select(query_name,longCOG)
-# ALL_sterm[which(ALL_sterm$longCOG=="character(0)"),]%>% select(-1,-2,-3)
-ALL_sterm_extended <- merge(ALL_sterm_sub,intersect_genes_prep_prepped,by="query_name") 
-
-ALL_sterm_extended$spacerName <- gsub(":R",":",ALL_sterm_extended$spacerName) 
-
-ALL_sterm_extended$array <- str_split_fixed(ALL_sterm_extended$spacerName, ":", 3)[,2]
-
- ALL_sterm_extended$array  <- revalue( ALL_sterm_extended$array, c("a1"="Array 1", "a2"="Array 2",   "a3"="Array 3"))
-
-ALL_sterm_extended$array = factor(ALL_sterm_extended$array, levels=(c("Array 1", "Array 2",   "Array 3","all")))
-
-
-CogPlotSterm <- ggplot(ALL_sterm_extended,aes(x=forcats::fct_infreq(longCOG),group=array,color=array,fill=array))+geom_bar()+
+CogPlotSterm <- ggplot(ALL_sterm_extended,aes(x=forcats::fct_infreq(longCOG)))+geom_bar()+
   theme_classic()+
   # facet_wrap(array ~ .)+
-  labs(x="",y="spacers mapped")+
-    scale_fill_manual(values=three_reds)+
-   scale_color_manual(values=three_reds)+
-  theme(axis.text.x = element_text(angle = 60, hjust = 1,size=6),
+  labs(x="",y="Accessory genes")+
+    # scale_fill_manual(values=three_reds)+
+   # scale_color_manual(values=three_reds)+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1,size=9),
           # # axis.text.y.left = element_text(color = "blue"),
           # axis.text.y.right = element_text(color="red"),
           # axis.title.y.left = element_text(color="blue"),
@@ -1170,12 +1161,12 @@ CogPlotSterm <- ggplot(ALL_sterm_extended,aes(x=forcats::fct_infreq(longCOG),gro
           #legend.position = c(0.02, 0.98),
           #legend.justification = c("left", "top")
           )
-
+CogPlotSterm
 library(patchwork)
 
-spacersmapped_genes_plot/CogPlotSterm
 
-png("~/Desktop/Projects/2019_RMK202_analysis/plot/MappingDB_mappingtoBac_eggnog.png", width = 1000, height = 2000,res=300)
+# png("~/Desktop/Projects/2019_RMK202_analysis/plot/MappingDB_mappingtoBac_eggnog.png", width = 1000, height = 2000,res=300)
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/accessory_genes_eggnog.svg",width=6,height=5)
 
 CogPlotSterm
 
@@ -4418,6 +4409,7 @@ scp -r vincent@130.223.51.116:/archiv/Phage_DB/BLAST/20200122/Vcontact/Database/
 library(ggplot2)
 library(readr)
 library(igraph)
+library(plyr)
 library(tidyverse)
 #---------------
 ##import data
@@ -4497,31 +4489,11 @@ Sterm_clustering_unnested_which <-
   nrow(Sterm_cluster_sub)
   Sterm_cluster_sub <- Sterm_cluster_sub[which(Sterm_cluster_sub$from %in% Sterm_clustering_unnested_which_keep_genome$Genome|Sterm_cluster_sub$to %in% Sterm_clustering_unnested_which_keep_genome$Genome),]
   nrow(Sterm_cluster_sub)
-# sum(Sterm_cluster$from %in% Sterm_clustering_unnested$Members)
-# Sterm_clustering_new$Members
-# Sterm_cluster_sub <- Sterm_cluster[grep("Streptococcus", Sterm_cluster$from, ignore.case = TRUE),]
-# dim(Sterm_cluster_sub)
-# Sterm_cluster_sub <- Sterm_cluster_sub[grep("Streptococcus", Sterm_cluster_sub$to, ignore.case = TRUE),]
-# dim(Sterm_cluster_sub)
-# Sterm_cluster_sub <- Sterm_cluster_sub[Sterm_cluster_sub$power>50,]
-# dim(Sterm_cluster_sub)
-
-# 
-# Ldel_cluster_sub <- Sterm_cluster[grep("Lactobacillus", Sterm_cluster$from, ignore.case = TRUE),]
-# dim(Ldel_cluster_sub)
-# Ldel_cluster_sub <- Ldel_cluster_sub[grep("Lactobacillus", Ldel_cluster_sub$to, ignore.case = TRUE),]
-# dim(Ldel_cluster_sub)
-# Ldel_cluster_sub <- Ldel_cluster_sub[Ldel_cluster_sub$power>25,]
-# dim(Ldel_cluster_sub)
-# 
-# 
-# Llac_cluster_sub <- Sterm_cluster[grep("Lactococcus", Sterm_cluster$from, ignore.case = TRUE),]
-# dim(Llac_cluster_sub)
-# Llac_cluster_sub <- Llac_cluster_sub[grep("Lactococcus", Llac_cluster_sub$to, ignore.case = TRUE),]
-# dim(Llac_cluster_sub)
-# Llac_cluster_sub <- Llac_cluster_sub[Llac_cluster_sub$power>50,]
-# dim(Llac_cluster_sub)
-
+# own_cluster_sub_new<- Sterm_cluster_sub
+ 
+ ##===============================
+ #old plots
+  ##===============================
 #---------------
 ##plot interaction
 #---------------
@@ -4584,7 +4556,7 @@ Mahony_genomes_5093 <- Mahony_genomes[which(Mahony_genomes$Type=="5093"),]
 ###--------
 ##coloring
 #---------------
-
+# n[grep("RMK202_",n$vertex.names),"vertex.names"] %>% table()
  n$color <- as.character("Viral DB")
  n$color[grep("RMK202_",n$vertex.names)] <- "RMK202 phages"
  n$color[n$vertex.names %in% Mahony_genomes_cos] <- "cos"
@@ -4609,7 +4581,7 @@ Mahony_genomes_5093 <- Mahony_genomes[which(Mahony_genomes$Type=="5093"),]
 colnames(nExtended)
 colnames(nExtended) <- revalue(colnames(nExtended), c("Adj P-value"="Adj_P_value","Genera in VC"="Genera_in_VC","Topology Confidence Score"="Topology_Confidence_Score","Genus Confidence Score"="Genus_Confidence_Score"))
 
-table(nExtended$VC) 
+# nExtended$ad
  ##------------------
  ##plot
  ##------------------
@@ -4627,6 +4599,162 @@ table(nExtended$VC)
  htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03//allPhages_vContact//networkPlot.html")
  # View(nExtended)
  
+  ##==================================
+ ##keep only phages in our s. thermophilus phage cluster
+  ##==================================
+ ###---------------------identify phages in our cluster
+
+ 
+# table(nExtended$VC) 
+
+tmp_phages <- nExtended[grep("RMK202_",nExtended$vertex.names),] 
+ourPhageCluster <- c(unique(tmp_phages$VC))
+nExtended_ourphages <- nExtended %>% filter(VC %in% ourPhageCluster)
+
+phagesinClusters <- Phages_names %>% filter(VC %in% ourPhageCluster)
+phagesinClusters$Genome
+
+###---------------------clustering
+# Sterm_clustering_new <- read_csv("~/Desktop/Projects/2019_PhageDB/Vcontact/allPhages_vContact/c1.clusters") %>% as.data.frame()
+Sterm_clustering_new <- read_csv("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03//allPhages_vContact/c1.clusters") %>% as.data.frame()
+Sterm_clustering_forFiltering_new <- Sterm_clustering_new  %>% filter(., grepl('Streptococcus', Members,ignore.case = TRUE))
+
+Sterm_clustering_unnested <- Sterm_clustering_forFiltering_new %>% 
+    mutate(Members = strsplit(as.character(Members), " ")) %>% 
+    unnest(Members)
+
+# str_split_fixed(Sterm_clustering_unnested$Members, "~", 3)[,1]  %>% table()
+
+
+###---------------1. filter:
+##clusters that contain a Streptococcus
+
+
+# nrow(Sterm_clustering_unnested)
+nrow(Sterm_cluster)
+Sterm_cluster_sub <- Sterm_cluster[which(Sterm_cluster$from %in% phagesinClusters$Genome | Sterm_cluster$to %in% phagesinClusters$Genome),]
+nrow(Sterm_cluster_sub)
+Sterm_net_sub <- graph_from_data_frame(Sterm_cluster_sub,direct=F)
+
+ 
+
+ net<-asNetwork(Sterm_net_sub) #ggnetwork requires a network object
+ n<-ggnetwork(net)
+  ##------------------
+ ##color and size change
+  ##------------------
+ 
+ 
+###--------
+##coloring
+#---------------
+# n[grep("RMK202_",n$vertex.names),"vertex.names"] %>% table()
+ n$color <- as.character("Viral DB")
+ n$color[grep("RMK202_",n$vertex.names)] <- "RMK202 phages"
+ n$color[n$vertex.names %in% Mahony_genomes_cos$namez] <- "cos"
+ n$color[n$vertex.names %in% Mahony_genomes_pac$namez] <- "pac"
+ n$color[n$vertex.names %in% Mahony_genomes_987$namez] <- "987"
+ n$color[n$vertex.names %in% Mahony_genomes_5093$namez] <- "5093"
+ 
+ 
+ n$color = factor(n$color, levels=c("RMK202 phages","cos","pac","987","5093","Viral DB"))
+ colorzzz <- c("red","blue","green","#808000","purple","grey50")
+ size <- c("4","2","2","2","2","1.5")
+ 
+ 
+ # n$color = factor(n$color, levels=c("RMK202 phages","cos","987","Viral DB"))
+ # colorzzz <- c("red","blue","#808000","grey50")
+ # size <- c("4","2","2","1.5")
+ 
+ table(n$color)
+ 
+ n$color_new <- as.character("Viral DB")
+n$color_new[grep("RMK202_Streptococcus_phage_1",n$vertex.names)[1]] <- "RMK202 phages"
+n$color_new[grep("RMK202_Streptococcus_phage_2",n$vertex.names)[1]] <- "RMK202 phages"
+
+
+ ##------------------
+ ##extend
+ ##------------------
+ 
+ nExtended <-  merge(n, Phages_names, by.y="Genome",by.x="vertex.names",all.x = TRUE)
+ # nrow(n)
+ # nExtended <-  merge(n, Phages_names, by.y="Genome",by.x="vertex.names",all.x = TRUE) 
+ # nrow(nExtended)
+ # nExtended <- n
+ # ccolnames(nExtended)
+colnames(nExtended)
+colnames(nExtended) <- revalue(colnames(nExtended), c("Adj P-value"="Adj_P_value","Genera in VC"="Genera_in_VC","Topology Confidence Score"="Topology_Confidence_Score","Genus Confidence Score"="Genus_Confidence_Score"))
+
+
+
+ nExtended$alpha <- as.character("Viral DB")
+nExtended$alpha[nExtended$VC %in% ourPhageCluster] <- "RMK202 phages"
+table(nExtended$alpha)
+  alphaCol <- c(1,0.03)
+  
+tmp <- nExtended[nExtended$alpha=="RMK202 phages",]
+table(tmp$VC)
+  
+nExtended$fillings <- as.character("Viral DB")
+nExtended$fillings[nExtended$VC %in% ourPhageCluster[1]] <- ourPhageCluster[1]
+nExtended$fillings[nExtended$VC %in% ourPhageCluster[2]] <- ourPhageCluster[2]
+nExtended$fillings[nExtended$vertex.names %in% Mahony_genomes_cos$namez] <- "cos"
+nExtended$fillings[nExtended$vertex.names %in% Mahony_genomes_987$namez] <- "987"
+nExtended$fillings[nExtended$vertex.names=="RMK202_Streptococcus_phage_1"] <- "Streptococcus_phage_1"
+nExtended$fillings[nExtended$vertex.names=="RMK202_Streptococcus_phage_2"] <- "Streptococcus_phage_2"
+as.factor(nExtended$fillings)
+library("RColorBrewer")
+
+three_reds <- c(brewer.pal(9,name="YlOrRd")[c(4,6)],
+							 brewer.pal(3,name="Reds")[3])
+three_browns <- brewer.pal(9,name="YlOrBr")[c(7,8,9)]
+three_blues <- brewer.pal(9,name="YlGnBu")[c(5,6,8)]
+
+filling <- c(three_reds[1],three_blues[1],three_reds[2],three_blues[2],three_reds[3],three_blues[3],"grey")
+# filling <- c(three_reds[1],three_browns[1],three_reds[2],three_browns[2],three_reds[3],three_browns[3],"grey")
+
+# filling <- c("black","red","darkgrey","darkred","grey")
+# table(nExtended$alpha)
+
+  
+
+
+
+# nExtended$ad
+ ##------------------
+ ##plot
+ ##------------------
+table(nExtended$alpha)
+# nExtended$Family
+ networkplot_sub <- ggplot(nExtended, aes(x = x, y = y, xend = xend, yend = yend,text =paste("genome:", vertex.names,"\npower: ",power,"\nOrder: ",Order,"\nFamily: ",Family,"\nGenus: ",Genus,"\nVC: ",VC,"\nSize: ",Size,"\nAdj P-value: ",Adj_P_value,"\nGenera in VC: ",Genera_in_VC,"\nGenus_Confidence_ScoreC: ",Genus_Confidence_Score,"\nTopology_Confidence_Score: ",Topology_Confidence_Score))) + geom_edges(color = "lightgray",alpha=0.1) +
+   geom_nodes(aes(color = as.factor(fillings),size=as.factor(alpha),alpha=as.factor(alpha))) +
+   # scale_fill_manual(values="gray41")+
+    scale_color_manual(values=filling)+
+     scale_alpha_manual(values=alphaCol)+
+    scale_fill_manual(values=colorzzz)+
+   geom_nodelabel_repel(aes(label = vertex.names),
+                       box.padding = unit(1, "lines"),
+                       data = function(x) { x[ x$color_new == "RMK202 phages", ]})+
+    scale_size_manual(values=as.numeric(c(2,1.25)))+
+   # guides(color=FALSE,size=FALSE)+ #Remove legends
+ theme_blank()+theme(legend.title = element_blank())
+ networkplot_sub
+ table(nExtended$color_new)
+ # RMK202 phages
+#  x[grep("RMK202_",x$vertex.names),]
+#  n$color[grep("RMK202_",n$vertex.names)]
+ svg("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03//allPhages_vContact//networkPlot_subset.svg",width=7,height=7)
+ # png("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03//allPhages_vContact//networkPlot_subset.png", width = 2800, height = 2800,res=300)
+  networkplot_sub
+   dev.off()
+ 
+ library(plotly)
+ ggp <- ggplotly(networkplot_sub)
+ htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03//allPhages_vContact//networkPlot_subset.html")
+ # View(nExtended)
+
+
  ##==================================
  ##old analysis
   ##==================================
@@ -5065,7 +5193,6 @@ wc -l /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping
 
 awk -F "\t" '{OFS="\t"}{if($4!~"_phage_")print $0}' /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/mappingLocation/allGenomes_mapping_2_genomes.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/mappingLocation/allGenomes_mapping_2_genomes_cleaned.txt
 wc -l /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/mappingLocation/allGenomes_mapping_2_genomes_cleaned.txt
-
 
 ```
 move local
@@ -6983,6 +7110,7 @@ spacers_final %>% filter(!is.na(phageDB)) %>% filter(is.na(VC))
 scp ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/log/Clusters_spacers_final.txt vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/log/.
 ```
 
+
 ######bwa check plots
 
 ```{r}
@@ -7075,23 +7203,39 @@ these will continiously be propagated
 ##--------------------------
 ##gather data from plotting
 ##--------------------------
-dada_ggprep <- dada_spacer_count %>% gather(.,key="sample",value="DadaCount",-METAClusterName) 
+dada_ggprep <- dada_spacer_count %>% gather(.,key="sample",value="DadaCount",-METAClusterName) %>% group_by(METAClusterName) %>% dplyr::summarise(median=median(DadaCount),mean=mean(DadaCount)) 
+
+# dada_ggprep <- dada_spacer_count %>% gather(.,key="sample",value="DadaCount",-METAClusterName) 
 
 dada_ggprep_plot_time <- merge(dada_ggprep,spacers_final,by.x="METAClusterName",by.y="METAClusterName") 
 
 # dada_ggprep_plot_time$RefStrain_explained
 # CRISPR_spacer_long <- gather(CRISPR_spacer_coverage_extended_wide, sample, CPM,c("Lyo\n1996", "Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2"), factor_key=TRUE,na.rm = TRUE) %>% filter(Name!="d2_6h:Ra2:s289")
 ##create a named vector for revalue
-test <- setNames(sampleDF$final,sampleDF$shortfinal)
+# test <- setNames(sampleDF$final,sampleDF$shortfinal)
 ##revalue
-dada_ggprep_plot_time$sample  <- plyr::revalue(dada_ggprep_plot_time$sample, test)
+# dada_ggprep_plot_time$sample  <- plyr::revalue(dada_ggprep_plot_time$sample, test)
 dada_ggprep_plot_time$DadaCount <- dada_ggprep_plot_time$DadaCount+10
 
       p3 <- ggplot(dada_ggprep_plot_time,aes(x=sample,y=DadaCount,group=spacer,color=RefStrain_explained))+ geom_line(size=0.4, alpha=.4) +theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9))+facet_wrap(~RefStrain_explained)+coord_trans(y="log2")
  
   p3
 
+    
+      # ggplot(dada_ggprep_plot_time,aes(x=origin,y=mean))+geom_violin()+theme_classic()+coord_trans(y="log2")
+
+    plotSpacerAbundance <- ggplot(dada_ggprep_plot_time,aes(x=origin,y=mean))+geom_boxplot()+labs(y="mean spacer count")+theme_classic()+coord_trans(y="log2")+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),axis.title.x = element_blank())
+    
+        t.test(mean ~ origin, data = dada_ggprep_plot_time)$p.value
+        t.test(mean ~ origin, data = dada_ggprep_plot_time)
+    
+   svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/data_spacerCoverage.svg",width=2,height=4)
+
+  plotSpacerAbundance
   
+  dev.off()
+        
+        
   ###-------------------------
  ## spacer count
     ###-------------------------
@@ -12536,6 +12680,18 @@ grep "^#" -v /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S
 
 ##---------------------prophages
 awk -F "\t" '{OFS="\t"}{if($1=="CP046134") print "S_thermophilus_mag_rmk202",$4,$5}'  /home/vincent/Desktop/Projects/2019_RMK202_analysis/phage_annotation/phaster/ZZ_be76e5e924.PHASTER/prophage_summary_onlyGenome.gff > $home/data/rmk202/MAG_rmk202_sterm/prophages.txt
+
+##---------------------protease
+
+#only in l. delbrueckii 
+#I checked online on NCBI if the genomes contain PrtS or PrtB
+grep "^#" -v /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S_thermophilus_RMK202.current.gb.gff |grep "S8 family serine peptidase" |awk -F "\t" '{OFS="\t"}{if($1=="CP046134") print "S_thermophilus_mag_rmk202",$4,$5}'> $home/data/rmk202/MAG_rmk202_sterm/protease.txt
+##---------------------transporter
+
+
+grep "^#" -v /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S_thermophilus_RMK202.current.gb.gff |grep "transporter" |awk -F "\t" '{OFS="\t"}{if($1=="CP046134") print "S_thermophilus_mag_rmk202",$4,$5}' > $home/data/rmk202/MAG_rmk202_sterm/transporter.txt
+
+
 ##---------------------CRISPR arrays
 
 scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/S_thermophilus_RMK202.pilarCR_out $home/data/rmk202/MAG_rmk202_sterm/
@@ -19160,6 +19316,16 @@ grep "rhamnosyltransferase" -i /home/vincent/Desktop/Projects/2019_Pilotplan/11_
 grep "Gkc13_02695" -i -A 100 /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S_thermophilus_RMK202.current.gb.gff|awk -F "\t" '{if($3=="CDS")print $0}' |grep "glycosyltransferase"
 
 
+mkdir -p /home/vincent/Desktop/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Ldel/202-LMAG
+
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Ldel/202-LMAG/PROKKA_04012020.faa /home/vincent/Desktop/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Ldel/202-LMAG
+
+
+mkdir -p /home/vincent/Desktop/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/202-SMAG//
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/202-SMAG/PROKKA_04012020.faa /home/vincent/Desktop/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/202-SMAG//
+
+/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/202-SMAG/PROKKA_04012020.faa
+
 ```
 
 
@@ -19362,7 +19528,7 @@ levels(sample_relative_safe_woSTRAINS$sample)
 p3
 #
 # dev.off()
-  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_sterm.svg",width=10,height=4.5)
+  svg("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance_bac_snps_sterm.svg",width=7,height=4.5)
 #    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 # 
 # p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
