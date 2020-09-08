@@ -85,6 +85,8 @@ library(plotly)
 X20200810_Vincent_cultures_profinder_untargeted <- read.xlsx("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/metabolomics/20200810_Vincent_cultures_profinder_untargeted.xlsx")
 # pca_res <- prcomp(df, scale. = TRUE)
 
+colnames(X20200810_Vincent_cultures_profinder_untargeted)[1:3,1:10]
+X20200810_Vincent_cultures_profinder_untargeted[1:3,1:10]
 ##------------------remove zero columns
 X20200810_Vincent_cultures_profinder_untargeted_new <- X20200810_Vincent_cultures_profinder_untargeted[,!(colnames(X20200810_Vincent_cultures_profinder_untargeted)%in% names(which(colSums(X20200810_Vincent_cultures_profinder_untargeted[,5:ncol(X20200810_Vincent_cultures_profinder_untargeted)])==0)))]
 
@@ -278,6 +280,81 @@ for (metaolsss in colnames(X20200810_Vincent_cultures_profinder_untargeted_new)[
 
 
 dat %>% mutate(zscore = (BMI - mean(BMI))/sd(BMI))
+
+
+##--------------------------------------------------------------------
+##test
+##--------------------------------------------------------------------
+
+##multiple T-test function
+ttestRat <- function(df, grp1, grp2) {
+  x = df[grp1]
+  y = df[grp2]
+  x = as.numeric(x)
+  y = as.numeric(y)  
+  results = t.test(x, y)
+  results$p.value
+}
+##prepare for function
+X20200810_Vincent_cultures_profinder_untargeted_new[,2]
+
+X20200810_Vincent_cultures_profinder_untargeted_new[,2][c(1:6,13:34,51:56,63:84)]
+X20200810_Vincent_cultures_profinder_untargeted_new[,2][c(7:12,35:50,57:62,85:100)]
+
+
+metagData <- t(X20200810_Vincent_cultures_profinder_untargeted_new[,5:ncol(X20200810_Vincent_cultures_profinder_untargeted_new)])
+dim(metagData)
+###aply function
+rawpvalue = apply(metagData, 1, ttestRat, grp1 = c(1:6,13:34,51:56,63:84), grp2 =c(7:12,35:50,57:62,85:100))
+hist(rawpvalue)
+
+###----fold change
+##transform our data into log2 base.
+metagData_log = log2(metagData)
+
+#calculate the mean of each gene per control group
+control = apply(metagData_log[,c(1:6,13:34,51:56,63:84)], 1, mean)
+
+#calcuate the mean of each gene per test group
+test = apply(metagData_log[, c(7:12,35:50,57:62,85:100)], 1, mean) 
+
+#confirming that we have a vector of numbers
+class(control) 
+foldchange <- control - test 
+
+hist(foldchange, xlab = "log2 Fold Change (Control vs Test)")
+
+##----volcano
+
+results = cbind(foldchange, rawpvalue)
+results = as.data.frame(results)
+results$probename <- rownames(results)
+
+results$fill <- ifelse(results$foldchange>2&-log10(results$rawpvalue)>10,"significant","NS")
+table(results$fill)
+colorsss <- c("grey","red")
+
+library(ggplot2)
+volcano = ggplot(data = results, aes(x = foldchange, y = -1*log10(rawpvalue),color=fill))+theme_classic()+geom_point()+theme(legend.position = "none")+scale_color_manual(values=colorsss)
+volcano
+
+namessSignificant <- results %>% filter(fill=="significant") %>% rownames()
+
+
+significant_samples <- X20200810_Vincent_cultures_profinder_untargeted_new %>%  dplyr::select(namessSignificant)
+significant_samples$groups <- substr(X20200810_Vincent_cultures_profinder_untargeted_new$sample, 1, 1)
+significant_samples$sample <- X20200810_Vincent_cultures_profinder_untargeted_new$sample
+# gather(significant_samples,)
+
+significant_samples_long <- gather(significant_samples, feature, intensity, colnames(significant_samples)[1:10], factor_key=TRUE,na.rm = TRUE) 
+ggplot(significant_samples_long,aes(x=groups,intensity,fill=groups))+theme_classic()+geom_boxplot()+facet_wrap(~feature,scales="free")
+
+# str_split_fixed(X20200810_Vincent_cultures_profinder_untargeted_new$sample, fixed("*"), 3)[,1]
+
+png("~/Desktop/Projects/2019_RMK202_analysis/plot/GC_MS_ttest_coculture-vs-isolates.png", width = 1400, height = 1400,res=300)
+ # svg("Desktop/Projects/2019_RMK202_analysis/00_FINAL/04_AA_annotation/GapMind/plots/AminoAcidBiosynthesis_bothSpecies_predicted.svg",width=10,height=7)
+volcano
+dev.off()
 ```
 
 
@@ -1803,7 +1880,52 @@ done
 
 ll /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna"
 
+
+
+##and others
+
+species=Ldel
+#ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ 
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}
+for genomess in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+do
+cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/${genomess}.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/
+
+done
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-LMAG.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/L_I_202_LMAG.fasta
+
+species=Sterm
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}
+for genomess in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+do
+cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/${genomess}.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/
+
+done
+
+ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|grep -v "CRISPR" -i
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-13491.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_I_202_13491.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-13494.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_O_202_13494.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-13496.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_O_202_13496.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-13499c1.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_I_202_13499c1.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-13499c2.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_I_202_13499c2.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-S50.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_I_202_S50.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-S72.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_I_202_S72.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/202-SMAG.fna >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/S_O_202_SMAG.fasta
+
 ```
+
+
 
 
 ##Annotation
@@ -1813,13 +1935,13 @@ Prokka
 for species in $(echo "Ldel Sterm")
 do
 #species=Ldel
-for genomess in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 #for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|grep -v "CRISPR" -i|cut -d '_' -f 1|sed 's/.fna//g')
 do
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/
 
-/usr/bin/perl /usr/bin/prokka --cpus 38 --outdir /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/ --force --usegenus --genus ${species} --locustag ${genomess} --proteins proteins.faa --evalue 0.001 --addgenes /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}//${genomess}.fasta
+/usr/bin/perl /usr/bin/prokka --cpus 38 --outdir /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/ --force --usegenus --genus ${species} --locustag ${genomess} --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}//${genomess}.fasta
 
 #grep "${id}"  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/PROKKA_plasmids/$id/PROKKA*.gff |sed 's/Parent.*product=//g' |awk -F "[\t;]" '{OFS="\t"}{if($3=="CDS") print $9,$10}'
 
@@ -1842,19 +1964,19 @@ mkdir -p //archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${
 mkdir -p //archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/GFF_all
 #species=Sterm
 #for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|grep -v "CRISPR" -i|cut -d '_' -f 1|sed 's/.fna//g')
-for genomess in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
 echo "====================================================================="
 echo ${genomess}
 #cut -d ' ' -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.faa > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/${genomess}.faa
 
-#cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.faa > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/${genomess}.faa
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.faa > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/${genomess}.faa
 
 cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.fna > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/${genomess}.fna
 
 #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.faa > /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}_references/FAA//${genomess}.faa
 
-#cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/GFF_all/${genomess}.gff
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/GFF_all/${genomess}.gff
 
 grep ">" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/${genomess}.fna
 
@@ -1875,7 +1997,7 @@ done # species
 
 ```
 
-## Eggnog
+#### Eggnog
 move local for Eggnog
 ```{bash}
 
@@ -1886,7 +2008,7 @@ scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_
 ```
 
 
-##### AA biosynthesis
+#### AA biosynthesis
 
 For the Amino acid biosynthesis annotation of the strain I will use [Gapmind](http://papers.genomics.lbl.gov/cgi-bin/gapView.cgi).
 Therefor I have to upload all FAA files first to the GapMind server
@@ -1900,7 +2022,7 @@ rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${spec
 mkdir -p //archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all
 
 #for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|grep -v "CRISPR" -i|cut -d '_' -f 1|sed 's/.fna//g')
-for genomess in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
 #cut -d ' ' -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.faa > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/${genomess}.faa
 
@@ -2013,8 +2135,9 @@ dev.off()
 
 ```
 
+##Phylogeny
 
-##core genome snp tree
+####core genome snp tree
 Here, I maka a core genome snp tree. In order to do this I use the tool parsnp. 
 take the species [type strains](https://bacdive.dsmz.de/search?search=Lactobacillus+delbrueckii+subsp.+lactis&submit=) as outgroups. 
 ```{bash}
@@ -2054,11 +2177,11 @@ rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNP
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/${species}/{genome,analysis}
 
 species=Sterm
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|grep -v "CRISPR" -i|cut -d '_' -f 1|sed 's/.fna//g' )
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
 
 #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned//${genomess}.fna > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/${species}/genome/${genomess}.fasta
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned//${genomess}.fna > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree_with_References/Sterm/${genomess}.fasta
+cat  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/${genomess}.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree_with_References/Sterm/${genomess}.fasta
 
 
 
@@ -2144,7 +2267,7 @@ scp  vincent@130.223.49.145:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_an
 
 ```
 
-##own nucleotide reference tree
+####own nucleotide reference tree
 
 1. get genomes (.gff files)
 ```{bash}
@@ -2317,7 +2440,7 @@ done #SCCG
 ```
 
 
-##REference trees
+####REference trees
 
 ```{bash}
 ###-----------------------------------------
@@ -2616,6 +2739,7 @@ rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceT
 mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}_references/FAA
 
 cp /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/* /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}_references/FAA/
+
 cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/NCBI_Refs/${species}_references/PROKKA_FAA/* /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}_references/FAA/
 echo "==========================================================="
 ll /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}_references/FAA/
@@ -3043,7 +3167,7 @@ awk -F "-" 'BEGIN{OFS="\t"} {print $1"-"$2,"FAM"$2,"-1","#ff0000","italic","0.2"
 
 
 
-##making a smaller tree 
+####making a smaller tree 
 here I make a reduced tree of only the closer related strains around the RMK202 strains
 
 
@@ -3223,113 +3347,21 @@ cd /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree
 
 ```
 
-####Decipher
 
-Trying out [Decipher](http://www2.decipher.codes/) to find ampliconable regions.
-
-
-
+##Fastani with RMK202
 ```{bash}
-if (!requireNamespace("BiocManager", quietly=TRUE))
-    install.packages("BiocManager")
-BiocManager::install("DECIPHER")
-```
-
-
-
-####fastani
-```{bash}
-
-###-----------------------------------------
-##get references
-###-----------------------------------------
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log
-#curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' > /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt
-
-##ldel
-species=$(echo "Lactobacillus delbrueckii")
-species_short=Ldel
-typeStrain=$(echo "equicursoris")
-
-#rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
-
-
-cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >    \
-    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-
-
-cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${typeStrain}" -i |grep "type strain"|head -1 |cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >>    \
-    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-    
-    rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
-mkdir -p //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
-    cd //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
-    wget -i /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-    gunzip *.fna.gz
-
-#-------------------------------Sterm
-
-species=$(echo "Streptococcus thermophilus")
-species_short=Sterm
-typeStrain=$(echo "S735")
-typeStrain=$(echo "vestibularis")
-
-#rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
-
-cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}"|cut -f 12|sort|uniq -c
-#cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}"|awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'
-
-cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >    \
-    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-    
-
-cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${typeStrain}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|head -1|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >>    \
-    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-    
-rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
-mkdir -p //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
-    cd //archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
-    wget -i /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
-gunzip *.fna.gz
-
-
-
-###-----------------------------------------
-##move all fna
-###-----------------------------------------
-
-for species in $(echo "Ldel Sterm")
-do
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
-
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|sed 's/.fna//g')
-do
-cut -d ' ' -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.fna > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/${genomess}.fna
-
-done #genomes
-rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
-cp /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/*.fna /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
-cp /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA/*.fna /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
-
-done # species
-
 
 ###-----------------------------------------
 ##make list
 ###-----------------------------------------
-
+#/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FAA_all/${genomess}.faa
 for species in $(echo "Ldel Sterm")
 do
-rm /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt
+rm /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani_rmk202.txt
 
-for genomssss in $(ls /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/ |grep ".fna$")
+for genomssss in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/ |grep ".fna$")
 do
-echo "/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/"${species}"/FNA_all/"${genomssss} >> /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt
+echo "/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/"${species}"/FNA_all/"${genomssss} >> /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani_rmk202.txt
 
 
 done #genomes
@@ -3345,52 +3377,51 @@ done # species
 for species in $(echo "Ldel Sterm")
 do
 
-
-
-fastANI --fragLen 1000  -t 37 --ql /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt \
-  --rl /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt \
+fastANI --fragLen 1000  -t 37 --ql /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani_rmk202.txt \
+  --rl /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani_rmk202.txt \
   -o /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt
 
 done # species
 
 
-###-----------------------------------------
-##closest genome
-###-----------------------------------------
-for species in $(echo "Ldel Sterm")
-do
+```
+move local
 
-
-simss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt|grep "GCF"|sort -k3  |tail -1 |cut -f 3)
-covesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1 |awk -F "\t" '{OFS="\t"}{print ($4/$5)*100}')
-genomesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1|cut -f 1|sed 's/\/home\/vincent\/Desktop\/Projects\/2019_RMK202_analysis\/00_FINAL\/09_referenceTree\/Sterm\/FNA_all\///g'|sed 's/_genomic.fna//g')
-
-
-speciessss=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 8)
-strain=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 9|sed 's/strain=//g')
-
-echo -e "closest strain for the Metagenome of "${species} " is : "${speciessss} ${strain} " with a similarity " ${simss} "% and coverage "${covesss}"%"
-
-done # species
-
-
-species=Ldel
-simss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt|grep "GCF"|sort -k3  |tail -1 |cut -f 3)
-covesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1 |awk -F "\t" '{OFS="\t"}{print ($4/$5)*100}')
-genomesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1|cut -f 1|sed 's/\/home\/vincent\/Desktop\/Projects\/2019_RMK202_analysis\/00_FINAL\/09_referenceTree\/Ldel\/FNA_all\///g'|sed 's/_genomic.fna//g')
-
-
-speciessss=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 8)
-strain=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 9|sed 's/strain=//g')
-
-echo -e "closest strain for the Metagenome of "${species} " is : "${speciessss} ${strain} " with a similarity " ${simss} "% and coverage "${covesss}"%"
-
+```{bash}
+species=Sterm
+mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/
+scp  vincent@130.223.51.116:/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt
 
 ```
 
 
 
-#### Pandaroo
+```{r}
+
+library(readr)
+library(plyr)
+library(tidyverse)
+final_ANI <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/Sterm/fastaANI_comparision.txt",  "\t", escape_double = FALSE, col_names = c("GenomeA","GenomeB","ANI","mappedFragemnts","totFragemnts"),  trim_ws = TRUE)
+final_ANI$coverage_ANI <- 100*(final_ANI$mappedFragemnts/final_ANI$totFragemnts)
+
+
+
+final_ANI$GenomeA <- str_remove(final_ANI$GenomeA,"/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/FNA_all/") %>% str_remove(.,".fna") %>% str_remove(.,".fasta")%>% str_remove(.,"L_I_202_")%>% str_remove(.,"S_O_202_")%>% str_remove(.,"S_I_202_")
+
+final_ANI$GenomeB <- str_remove(final_ANI$GenomeB,"/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/FNA_all/") %>% str_remove(.,".fna") %>% str_remove(.,".fasta")%>% str_remove(.,"L_I_202_")%>% str_remove(.,"S_O_202_")%>% str_remove(.,"S_I_202_")
+
+
+# final_ANI$GenomeB <- revalue(final_ANI$GenomeB, c("S50"="mst1","S72"="mst2"))
+# final_ANI$GenomeA <- revalue(final_ANI$GenomeA, c("S50"="mst1","S72"="mst2"))
+
+final_ANI$ANI <- round(final_ANI$ANI,digits = 2)
+
+write.table(final_ANI,"~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/Sterm/fastaANI_comparision_curated.txt",sep = "\t",quote = FALSE,row.names = FALSE,col.names = TRUE)
+##------------
+```
+
+
+## Pandaroo
 
 first I combine only the completely sequenced genomes (ONT)
 ```{bash}
@@ -3605,8 +3636,7 @@ done #SCCG
 
 ```
 
-######eggnog
-
+eggnog of pandarooo results
 ```{r}
 library(readr)
 library(plyr)
@@ -3997,8 +4027,7 @@ LINEAGE_2_4
 
 
 
-######eggnog
-
+eggnog of lineage specific genes
 ```{r}
 library(readr)
 library(plyr)
@@ -4549,31 +4578,11 @@ done
 
 ```
 
-#### mismatch repair genes
+##CRISPR analysis
 
-```{bash}
+####PilerCR crispr 
 
-
-cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/eggnog_of_orthofinder/
-species=Sterm
-for species in $(echo "Ldel Sterm")
-do
-####================
-##OGs
-####================
-echo "==================================================="
-echo ${species}
-echo "==================================================="
-
- awk -F "\t" '{OFS="\t"}{if($6~"mut")print $0}' eggnog_orthifinder_${species}_annotations.tsv |cut -f 6
-
-done
-```
-
-
-###PilerCR crispr for MAG
-
-Importantly gather all strains first (last chunkd)
+Importantly gather all strains first
 
 I identify the CRISPR spacers with [PilerCR](https://www.drive5.com/pilercr/).
 
@@ -4590,7 +4599,7 @@ echo ==========================
      echo "working on: " ${species}
      echo ==========================
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}
-for genomes in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep ".fasta$" |sed 's/.fasta//g')
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
       echo ==========================
      echo -e "extracting strain: " ${genomes}
@@ -4599,7 +4608,7 @@ mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${spec
 
 
 
-  ~/apps/PilerCR/pilercr1.06/pilercr -in /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/${genomes}.fasta \
+  ~/apps/PilerCR/pilercr1.06/pilercr -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}//${genomes}.fasta \
     -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out -noinfo\
     -seq /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out.fasta
 
@@ -4610,58 +4619,23 @@ mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${spec
   #  grep ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/${id}.pilarCR_out_final_new | sed 's/>//g' |awk -F "__" '{OFS="\t"} {print $4,$2,$3,$1}' > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/${id}.pilarCR_out_spacer.bed
 
 done #species
-```
 
+##------------------------------------------------------------
+##check directionality of CRISPRS
+##------------------------------------------------------------
 
-##### CRISPRcasFinder
-
-```{bash}
-
-
-
-for species in $(echo "Ldel Sterm")
+species=Sterm
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
-echo ==========================
-     echo "working on: " ${species}
-     echo ==========================
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}
-for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/|grep ".fna$" |sed 's/.fna//g')
-do
-      echo ==========================
-     echo -e "extracting strain: " ${genomes}
-     echo ==========================
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas
-/usr/bin/perl CRISPRCasFinder.pl -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${genomes}.fna \
-  -cf -cas CasFinder-2.0.3 -def G -keep -html -log  -cpuM 37 -ccc \
-  -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas/
-
-
-  done #genomes
-done #species
-
-
-/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/Sterm/
-
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas
-/usr/bin/perl CRISPRCasFinder.pl -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${genomes}.fna \
-  -cas -rcfowce -def G -force -ccvRep -keep -html -log  -cpuM 37 -ccc 20000 \
-  -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas/
-
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas/TSV/Cas_REPORT.tsv
-cut -f 7 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/Sterm/202-SMAG_cas/TSV/CRISPR-Cas_summary.tsv
-
-###-------------------------test
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/test_meta/202-SMAG_cas/
-/usr/bin/perl /home/vincent/apps/CRISPRCasFinder/CRISPRCasFinder.pl -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/202-SMAG.fna \
-  -cas -rcfowce -def G -force -ccvRep -keep -html -log  -cpuM 37 -ccc 20000 \
-  -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/test_meta/202-SMAG_cas/
+echo "--------------------------------------------------------------------------------------"
+echo  ${genomes}
+grep "SUMMARY BY SIMILARITY" -A 15   /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out
+done
 ```
+all CRISPR arrays are in the same orientation.
 
 
-
-#####merge all CRISPR spacers
+###merge all CRISPR spacers
 Here, I want to bring all annotated CRISPR spacers into one file.
 
 However I also want to change the name of the spacer header to the following:
@@ -4676,12 +4650,14 @@ I do this later
 
 for species in $(echo "Ldel Sterm")
 do
+
+#specsss=$(echo ${species}|head -c 1)
 echo ==========================
      echo "working on: " ${species}
      echo ==========================
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/CRISPR_spacer_merged_short.fasta
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/
-for genomes in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep ".fasta$" |sed 's/.fasta//g')
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 #for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned| grep ".fna$" |sed 's/.fna//g')
 do
       echo ==========================
@@ -4690,7 +4666,9 @@ do
 
  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out_final >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/CRISPR_spacer_merged.fasta
 
-sed 's/__.*$//g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out_final | sed "s/>/>${genomes}_/g"| sed 's/ary0/a/g' |sed 's/spc0/s/g' |sed 's/202-//g' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/CRISPR_spacer_merged_short.fasta
+
+genomes_short=$(echo ${genomes}|sed 's/S_O_202_//g'|sed 's/S_I_202_//g'|sed 's/L_I_202_//g')
+sed 's/__.*$//g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out_final | sed "s/>/>${genomes_short}_/g"| sed 's/ary0/a/g' |sed 's/spc0/s/g' |sed 's/202-//g' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/CRISPR_spacer_merged_short.fasta
 done #genomes
 
 grep ">" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta
@@ -4700,227 +4678,6 @@ done #species
 ```
 This will be used later in the CRISPR spacer section
 
-
-###CRISPR location Circos
-
-
-
-```{bash}
-
-##------------------------
-###bwa mem
-##------------------------
-threads=37
-for species in $(echo "Ldel Sterm")
-do
-rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/
-rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/
-
-REF=$(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/ |grep "MAG" |grep ".fna$")
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${REF}.*
-bwa index /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${REF}
-#for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g')
-for genomes in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep ".fasta$" |sed 's/.fasta//g'|grep "MAG" -v )
-
-do
-
-#/archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs//202-SMAG.fna
-
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}
-
-bwa mem -x intractg /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned//StartAligned/${REF} /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned//${genomess}.fna | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam - 
-
-samtools view -F 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |awk -F "\t" '{OFS="\t"}{print $3,$4,$4+length($10)}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_contigs.txt
-samtools view -F 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |awk -F "\t" '{OFS="\t"}{print $3,$4,$4+length($10),$1}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt
-done #genomes
-done # species
-
-###why they still map reverse complement
-#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | awk -F "\t"  '{OFS="\t"}{if($2=="16")print $1,$2,$6}'
-
-#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | grep "534M" |cut -f 1,2,6
-#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | grep "667" |cut -f 1,2,6
-
-
-
-#grep "534M"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/tmp/202-13495_allcontigsMapped2CRISPRs.cleaned |cut -f 1,2,6
-##--------------------
-##check alignment 
-##--------------------
-for species in $(echo "Ldel Sterm")
-do
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g')
-do
-samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |cut -f 1,2 >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
-
-samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam | awk -F "\t"  '{OFS="\t"}{if($2=="16")print $1,$2,$6}' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
-
-done #genomes
-cut -f 2 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment |sort|uniq -c
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
-echo "==================="
-done # species
-
-wc -l /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
-cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment |sort|uniq |wc -l
-
-##------------------------
-###CRISPRs
-##------------------------
-for species in $(echo "Ldel Sterm")
-do
-echo "##=========================="
-echo $species
-echo "##=========================="
-rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}_allCRISPR.txt
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned//StartAligned/ |grep ".fna$" |grep "MAG" -v|sed 's/.fna//g')
-do
-echo "#----------------------"
-$genomess
-echo "#----------------------"
-
-mkdir -p  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}
-
-  sed -n "/SUMMARY BY SIMILARITY$/,/SUMMARY BY POSITION$/p" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomess}/${genomess}.pilarCR_out | grep "Array" -v |grep "^====" -v |grep "SUMM" -v|sed '/^$/d' | sed 's/^ *//g'|grep "^\*" -v |sed -E 's/\s+/\t/g' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_CRISPR.txt
-
-for CRISPRsss in $(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt)
-do
-echo $CRISPRsss
-
-contigName=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 2)
-contigpsoitionOrig=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 3)
-contigLengthOrig=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 4)
-
-RepeatSeq=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 9|head -c 20|tail -c 10)
-RepeatArray=$(grep "${RepeatSeq}" -B 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/${species}_CRISPR_repeat.txt |grep "^>" |head -1|sed 's/>//g')
-
-REFname=$(grep "${contigName}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt |head -1|cut -f 1)
-REFStart=$(grep "${contigName}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt |head -1|cut -f 2)
-#echo -e ${REFname}"\t"${REFStart}
-
-CRISPRstart=$((REFStart+contigpsoitionOrig))
-CRISPREND=$((REFStart+contigpsoitionOrig+contigLengthOrig))
-echo -e ${REFname}"\t"${CRISPRstart}"\t"${CRISPREND}"\t"${RepeatArray} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
-echo -e ${REFname}"\t"${CRISPRstart}"\t"${CRISPREND}"\t"${contigName} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}_allCRISPR.txt
-
-#echo -e ${contigName}"\t"${contigpsoitionOrig}"\t"${contigLengthOrig}
-done #CRISPRsss
-
-##change name to color
-sed -i 's/a1/stroke_color=orange/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
-sed -i 's/a2/stroke_color=dpurple/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
-sed -i 's/a3/stroke_color=dred/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
-
-done #genomes
-
-done # species
-
-cut -f 2,4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}_allCRISPR.txt |sort -n
-##--location
-for species in $(echo "Ldel Sterm")
-do
-echo "##=========================="
-echo $species
-echo "##=========================="
-cut -f 2,4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/*_CRISPR.txt |sort -n
-done # species
-```
-
-make circos with the following data that I created in the last two chunks
-1. Start alignment
-2. CRISPR locations
-
-make the plot according to the pyhlogeny
-
-move all necessary files local
-```{bash}
-
-mkdir -p /home/vincent/bin/apps/circos-0.69-6/data/CRISPR
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/ /home/vincent/bin/apps/circos-0.69-6/data/CRISPR
-```
-
-some manual work still needs to be done:
-1. larger CRISPR array bands (data/CRISPR/forCircos_contigs/Sterm/arrays.txt)
-2. links file for jumping arrays (data/CRISPR/forCircos_contigs/Sterm/links.txt)
-
-```{bash}
-
-##==================
-##Sterm
-##==================
-home=/home/vincent/bin/apps/circos-0.69-6/
-cd $home
-
-##organisational 
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_both.conf /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_CRISPR.conf
-
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag.conf /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag_CRISPR.conf
-<!-- mkdir -p $home/data/rmk202/MAG_rmk202_sterm_CRISPR/ -->
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_circos.conf /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_CRISPR.conf
-##---------------------karyotyp
-#seqlength.py /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned//StartAligned/ |head -1 > ${home}/data/karyotype/sterm_magg_rmk202.txt
-
-sed 's/S_thermophilus_mag_rmk202/202-SMAG-1/g' ${home}/data/karyotype/sterm_magg_rmk202.txt > ${home}/data/karyotype/sterm_magg_rmk202_CRISPR.txt
-##have to change the format a bit
-
-##---------------------number genomes
-
-ls /home/vincent/bin/apps/circos-0.69-6/data/CRISPR/forCircos_contigs/Sterm/ |cut -d '_' -f 1|sort|uniq
-202-13494
-202-S72
-202-13498
-202-13493
-202-13500
-202-13491
-202-13492
-
-202-13495
-202-13496
-202-13497
-
-202-13499c1
-202-13499c2
-202-S50
-
-
-#202-13494
-
-
-##example
-#cp etc/repeat_nwc1_sterm_01.conf etc/sterm_rmk202_mag_circos.conf
-
-#example run
-bin/circos -conf etc/sterm_rmk202_mag_CRISPR.conf -outputfile ./Sterm_mag_rmk202_CRISPR.svg; firefox ./Sterm_mag_rmk202_CRISPR.svg &
-
-
-##==================
-##Ldel
-##==================
-home=/home/vincent/bin/apps/circos-0.69-6/
-cd $home
-
-##organisational 
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/ticks_nwc_1_ldel_both.conf /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_both.conf ##already done
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/ideogram.conf /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag.conf ##already done
-#cp /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_circos.conf /home/vincent/bin/apps/circos-0.69-6/etc/ldel_rmk202_mag_circos.conf
-mkdir -p $home/data/rmk202/MAG_rmk202_ldel/
-##---------------------karyotyp
-
-#seqlength.py /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/ldel/L_delbrueckii_RMK202.fasta |head -1 > ${home}/data/karyotype/ldel_magg_rmk202.txt
-
-
-##have to change the format a bit
-
-```
 
 ###Weblogo repeats
 
@@ -4942,9 +4699,7 @@ echo "##=========================="
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/REPEATS/${species}
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/REPEATS/${species}
 #for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/ |grep ".fna$" |sed 's/.fna//g')
-for genomes in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/${species}/ |grep ".fasta$" |sed 's/.fasta//g')
-
-
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
 
 sed 's/\[Array/-a/' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomess}/${genomess}.pilarCR_out.fasta |sed 's/\;.*\]//' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/REPEATS/${species}/all_repeats.fasta
@@ -5043,7 +4798,7 @@ scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_
 
 ```
 
-######tracrRNA
+####tracrRNA
 
 trans-activating crRNA (tracrRNA) is important to form a RNA duplexes by the base-pairing of tracrRNA with the pre-crRNA repeats in the presence of Cas9.
 
@@ -5344,7 +5099,7 @@ scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_
 
 ```
 
-#####geneIdentity CAS
+####geneIdentity CAS
 here I want to do a multi-seq alignment of all Cas-genes to identify the similarity. 
 
 ```{bash}
@@ -5506,353 +5261,8 @@ dev.off()
 
 
 
-###CRISPR region tree
-Here, I want to make a CRISPR tree array (with Cas genes)
-Is not used for the paper. 
-```{bash}
 
-###--------------------------------
-##CRISPR repeat location
-###--------------------------------
-species=Sterm
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISP§R_region_tree/${species}/array/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
-do
-echo "===================================="
-echo ${genomess}
-grep "repeat" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt
-cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed
-for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
-do
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/
-arraySeq=$(grep -A 1 "${arraysss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt |tail -1|head -c 25|tail -c 20)
-
-grep "${arraySeq}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}_repeats.txt
-
-tmp=$(cut -f 9 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
-cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
-#grep -A 15 -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i
-
-
-if [[ ${arraysss} == "a1"  && [$(echo ${tmp})>0 ]]; then
-            echo -e "ary1"
-            grep -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
-            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
-            
-            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
-            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt|awk '{print $1}')
-            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt|awk '{print $1}')
-            echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
-            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t+\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
-            
-            elif [[ ${arraysss} == "a2"  && [$(echo ${tmp})>0 ]] 
-            then
-            echo -e "ary2"
-            grep -B 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "csm6" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
-            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
-            ##---
-            grep -A 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas1" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
-            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
-            
-            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
-            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt)
-            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
-             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
-            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
-            
-            elif [[ ${arraysss} == "a3"  && [$(echo ${tmp})>0 ]]
-            then
-            echo -e "ary3"
-            grep -A 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >             /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt 
-            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
-            
-            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
-            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
-            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
-             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
-             echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
-            
-            
-               
-            fi
-echo "--------------"
-done #arraysss
-done #genomes
-
-
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/*.gff |awk -F "\t" '{OFS="\t"}{print $0,$5-$4}'
-
-
-
-
-###--------------------------------
-##mask CRISPR repeat region
-###--------------------------------
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
-do
-echo "===================================="
-echo ${genomess}
-
-awk -F "\t" '{OFS="\t"}{print $1,$2-500,$3+500}' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats_extended.bed
-
-for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
-do
-
-bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/${genomess}.fna -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna
-
-
-bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/${genomess}.fna -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats_extended.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked_extended.fna
-
-done #arraysss
-done #genomes
-
-
-
-
-###--------------------------------
-##extract CRISPR region out of genome
-###--------------------------------
-
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
-for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
-do
-echo "===================================="
-echo ${genomess}
-
-for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
-do
-
-bedtools getfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna \
-  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff \
-  -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta
-
-
-
-sed "s/>.*$/>${genomess}-${arraysss}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta
-done #arraysss
-done #genomes
-
-
-
-```
-now make a multiseq alignment file
-
-I go information for the [alignment](https://www.protocols.io/view/week-5-aligning-with-muscle-and-making-trees-with-g2sbyee?step=4) and for [RaxML](http://evomics.org/learning/phylogenetics/raxml/)
-
-```{bash}
-###--------------------------------
-##Multiseq alignment
-###--------------------------------
-
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
-species=Sterm
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
-for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
-do
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
-
-muscle -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta 
-
-/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/${arraysss}_MultiseqAlignment.phy
-
-
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
-done #arraysss
-
-###---------------all
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
-
-muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta
-
-/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/all_MultiseqAlignment.phy
-
-
-###---------------only array1 and array3
-
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_CRISPR_locations.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a3_CRISPR_locations.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
-
-muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta
-
-/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/a1_a3_MultiseqAlignment.phy
-
-
-###--------------------------------
-##make tree
-###--------------------------------
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
-#mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
-for arraysss in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/ |grep ".fasta" -v)
-do
-cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}
-raxmlHPC -s *_MultiseqAlignment.phy -n ${arraysss}_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
-
-done #arraysss
-
-
-```
-
-move local 
-
-```{bash}
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment
-
-```
-
-#####special:DGCC 7710
-
-Here, I want to look into the S. thermophilus strain DGCC 7710 because this streptococcus has 4 CRISPR arrays and could be used for the referencing of my 3 S. thermophilus CRISPR arrays. 
-
-```{bash}
-##=================================
-##download genome
-##=================================
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/
-
-curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' |grep "DGCC 7710" |tail -1 |awk 'BEGIN{FS="\t";OFS="\t"}  {print $20}'| sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/download.file
-
-
-
-cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/
-wget -i download.file
-gunzip *.fna.gz
-
-##=================================
-##PilarCR
-##=================================
-
-
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/
-
-  ~/apps/PilerCR/pilercr1.06/pilercr -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna \
-    -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out -noinfo\
-    -seq /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out.fasta
-
-  
-  perl ~/apps/PilerCR/PilerCR_parser_new_vincent /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out > \
-    /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out_final
-
-
-##=================================
-##Prokka
-##=================================
-
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA
-/usr/bin/perl /usr/bin/prokka --outdir /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA --force --usegenus --genus Streptococcus --locustag DGCC_7710 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna 
-
-##=================================
-##Cas genes
-##=================================
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-#grep -i "isfinder"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff
-grep -i "=cas" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-grep -i "=csn"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-grep -i "=Csy" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-grep -i "=Csm" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-
-grep "SUMMARY BY POSITION" -A 15 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out |grep "===========" -A 6 |sed '1d'  |sed 's/^ *//' |sed 's/  */\t/g' |awk -F "\t" '{OFS="\t"}{print $2,$4,$4+$5,"CRISPRspacers"}' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-
-sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
-
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation
-
-sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^6")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a1.txt
-sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^8")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a2.txt
-sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^9")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a3.txt
-sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^1")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a4.txt
-
-##=================================
-##mask CRISPR spacers
-##=================================
-grep "repeat" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.txt
-
-cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.bed
-
-bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic_CRISPRmasked.fna 
-
-
-##=================================
-##CRISPR extract
-##=================================
-rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
-for arrayzzz in $(echo "a1 a2 a3 a4")
-do
-echo $arrayzzz
-contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|head -1)
-start=$(cut -f 2 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|head -1)
-end=$(cut -f 3 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|tail -1)
-
-echo -e ${contig}"\t"${start}"\t"${end}"\tstrain_DGCC_7710;"${arrayzzz} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.bed
-
-
-bedtools getfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic_CRISPRmasked.fna  \
-  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.bed \
-  -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.fasta
-
-
-sed "s/>.*$/>strain_DGCC_7710-${arrayzzz}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}_locations.fasta
-
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
-done #arrayzzz
-
-##=================================
-##merge and MSA with other Arrays
-##=================================
-cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/extractedCRISPR/all_CRISPR_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
-
-rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
-mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
-
-muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta -maxiters 2
-
-/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.phy
-
-###for alignment score
-cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
-/home/vincent/apps/MstatX/mstatx -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta -s trident
-
-##=================================
-##make tree
-##=================================
-#rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation//RaxML_tree/
-#mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
-
-cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
-raxmlHPC -s all_MultiseqAlignment.phy -n withDGCC_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
-
-
-
-```
-
-```{bash}
-/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
-```
-
-move local 
-
-```{bash}
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
-
-```
-
-
-### pairwise CRISPR 
+### pairwise CRISPR spacer
 want to check for pairwise CRISPR diversity. 
 We do this to see how many and which spacers are shared. 
 First we align the spacers witha needle -munsch algorithm. 
@@ -5866,14 +5276,14 @@ This is currently not a crucial analysis
 for species in $(echo "Ldel Sterm")
 do
 
-samtools faidx /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged.fasta
+samtools faidx /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta
 
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/seperated
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/seperated
-for spacer in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged.fasta|sed 's/>//g')
+for spacer in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta|sed 's/>//g')
   do
 
-samtools faidx /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged.fasta ${spacer} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/seperated/${spacer}.fasta
+samtools faidx /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta ${spacer} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/seperated/${spacer}.fasta
 
   done
   
@@ -5906,19 +5316,19 @@ task(){
 
 ###------Run parallel in batches
 
-for species in $(echo "Ldel Sterm")
+for species in $(echo "Sterm Ldel")
 do
 
 rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/Pairwise_needle
 mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/Pairwise_needle
 #counts=$(wc -l /data/Project/CRISPRspacers/02_PilerCR/20200217/all/pilerCR_out_repeats_short|cut -d ' ' -f 1)
 N=300
-for spacer1 in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged.fasta|sed 's/>//g')
+for spacer1 in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta|sed 's/>//g')
   do
   
   spacer1_final=$(echo ${spacer1})
 
-  for spacer2 in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged.fasta|sed 's/>//g')
+  for spacer2 in $(grep "^>" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}//CRISPR_spacer_merged_short.fasta|sed 's/>//g')
     do
     
       spacer2_final=$(echo ${spacer2})
@@ -6133,7 +5543,7 @@ echo ==========================
    echo "--------------------------"
    #grep "${spacersss}" -A 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt  > archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}//tmp_spacer.txt
    
-   newNAME=$(grep -B 20 "${spacersss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr |grep "^>Cluster" |tail -1 |sed 's/ /_/g')
+   newNAME=$(grep -B 30 "${spacersss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr |grep "^>Cluster" |tail -1 |sed 's/ /_/g')
    
    sed -i "s/${spacersss}/${newNAME}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_ClusterName.txt
    
@@ -6143,8 +5553,6 @@ echo ==========================
    
 done #species
 ```
-
-
 
 
 
@@ -6160,6 +5568,8 @@ This is used for the heatmap of the CRISPR spacer identity.
 species=Sterm
 count=$(grep ">Cluster" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr)
 
+grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt |cut -d _ -f 1 |sed 's/>//g'|sort|uniq -c|wc -l
+
 ##----------prime
 start_num=0
 i=1
@@ -6168,7 +5578,9 @@ i=1
   #grep ">" /archiv/Projects/2019_pilotplant/02_annotation/CRISPR/mapping2phageGenome/CRISPR_alltogether_new_withOLDsamples_newNAMED_short |sed 's/>//g' | cut -d '_' -f 1 |sort| uniq
 
  #  echo -e "Clustername\tMAGRMK202\tmst1\tmst2\tF13491\tF13492\tF13493\tF13494\tF13495\tF13496\tF13497\tF13498\tF13499c1\tF13499c2\tF13500" > /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/assembledSpacers/CD-hit_new/count//clusterCRISPRs.txt
- echo -e "Clustername\tSMAG\tS50\tS72\tF13491\tF13492\tF13493\tF13494\tF13495\tF13496\tF13497\tF13498\tF13499c1\tF13499c2\tF13500" >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//clusterCRISPRs.txt
+# echo -e "Clustername\tSMAG\tS50\tS72\tF13491\tF13492\tF13493\tF13494\tF13495\tF13496\tF13497\tF13498\tF13499c1\tF13499c2\tF13500\t13499\t24737\t24738\t24739\t24740\t24853\t24854\t24855" >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//clusterCRISPRs.txt
+  echo -e "Clustername\tSMAG\tS50\tS72\t13491\t13492\t13493\t13494\t13495\t13496\t13497\t13498\t13499c1\t13499c2\t13500\t13499\t24737\t24738\t24739\t24740\t24853\t24854\t24855" >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//clusterCRISPRs.txt
+
   
 ##---------start analysis 
 for i in $(seq 1 $count)
@@ -6195,7 +5607,16 @@ F13499c1=$(grep ">13499c1" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_
 F13499c2=$(grep ">13499c2" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
 F13500=$(grep ">13500" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
 
- echo -e "Cluster_"${start_num}"\t"${REF_RMK202}"\t"${REF_mst1}"\t"${REF_mst2}"\t"${F13491}"\t"${F13492}"\t"${F13493}"\t"${F13494}"\t"${F13495}"\t"${F13496}"\t"${F13497}"\t"${F13498}"\t"${F13499c1}"\t"${F13499c2}"\t"${F13500} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count///clusterCRISPRs.txt
+F13499_old=$(grep ">13499_" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24737=$(grep ">24737" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24738=$(grep ">24738" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24740=$(grep ">24740" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24739=$(grep ">24739" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24853=$(grep ">24853" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24854=$(grep ">24854" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+F24855=$(grep ">24855" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count//tmpCRISPRS.txt) 
+
+ echo -e "Cluster_"${start_num}"\t"${REF_RMK202}"\t"${REF_mst1}"\t"${REF_mst2}"\t"${F13491}"\t"${F13492}"\t"${F13493}"\t"${F13494}"\t"${F13495}"\t"${F13496}"\t"${F13497}"\t"${F13498}"\t"${F13499c1}"\t"${F13499c2}"\t"${F13500}"\t"${F13499_old}"\t"${F24737}"\t"${F24738}"\t"${F24739}"\t"${F24740}"\t"${F24853}"\t"${F24854}"\t"${F24855} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/count///clusterCRISPRs.txt
 
   
   start_num=$((start_num+1))
@@ -6243,144 +5664,7 @@ for (rowss in colnames(clusterCRISPRs)[-1]) {
 }
 }
 
-write.table(pairwiseSharedSpacers, "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count//CRISPR_ID_sterm_withOLD.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
-
-##--------------
-##plot
-##-------------
-library(stringr)
-library(readr)
-library(ggplot2)
-library(reshape2)
-
-##------------
-##for SNP legend
-##------------
-# pairwiseSharedSpacers
-# 
-# pairwiseSharedSpacers_tmp_02 <-  data.frame(Ref1=c(as.character(pairwiseSharedSpacers$Ref2),as.character(pairwiseSharedSpacers$Ref1)),Ref2=c(as.character(pairwiseSharedSpacers$Ref1),as.character(pairwiseSharedSpacers$Ref2)),PercentShared=c(as.numeric(pairwiseSharedSpacers$PercentShared),as.numeric(pairwiseSharedSpacers$PercentShared)))
-# 
-# 
-# # pairwiseSharedSpacers_final <- rbind(pairwiseSharedSpacers_tmp_02[,c("Ref2","Ref1","PercentShared")],pairwiseSharedSpacers[,c("Ref1","Ref2","PercentShared")])
-# ggheatmap <- ggplot(pairwiseSharedSpacers_tmp_02, aes(Ref2, Ref1, fill = PercentShared))+
-#  geom_tile(color = "white",size=1.1)+
-#  #scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-#   # midpoint = 99.5, limit = c(98.9,100), space = "Lab", 
-#   # name="ANI") +
-#   scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
-#   # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
-#   theme_minimal()+ # minimal theme
-#  theme(axis.text.y = element_text(size = 12),
-#       axis.text.x = element_text(angle = 45, vjust = 1, 
-#     size = 12, hjust = 1))+
-#  coord_fixed()
-# # Print the heatmap
-# print(ggheatmap)
-
-##------------
-##CRISPR
-##------------
-# 
-# plotFinal_sterm <- ggheatmap + 
-# geom_text(aes(Ref2, Ref1, label =PercentShared), color = "black", size = 2.5) +
-#     # labs(title=paste0("# core genes :",nrow(coreGeneNames_sterm)," (",CoreGeneSize_sterm,"bp)"))+
-#   scale_y_discrete(position = 'right')+
-# theme(
-#   axis.title.x = element_blank(),
-#   axis.title.y = element_blank(),
-#   # axis.text.y.left = element_text(angle = 75, hjust = 1,size=9),
-#   panel.grid.major = element_blank(),
-#   # scale_y_date(position = "right"),
-#   panel.border = element_blank(),
-#   panel.background = element_blank(),
-#   axis.ticks = element_blank(),
-#   # legend.justification = c(1, 0),
-#   legend.position = "right",
-#   legend.text = element_text(angle = 0),
-#   legend.direction = "vertical")+
-#   guides(fill = guide_colorbar(barwidth = 1, barheight = 7,
-#                 title.position = "top", title.hjust = 0.5))
-# plotFinal_sterm
-##-----------save heatmap
-# svg("~/Desktop/Projects/2018_culturomics/fastani/Sterm_CRISPR_core_absolute_final.svg",width=5.5,height=4)
-# plotFinal_sterm#+theme(legend.position = "none")
-# dev.off()
-
-##------------
-##make matrix
-##------------
-
-# names<- unique(pairwiseSharedSpacers$Ref1)
-# 
-# heatmap_prep_matrix <- matrix(NA,nrow=length(names),ncol = length(names))
-# rownames(heatmap_prep_matrix) <- names
-# colnames(heatmap_prep_matrix) <- names
-# 
-# 
-# for (rowsss in names){
-#   for (colsss in names){
-#   
-# heatmap_prep_matrix[rowsss,colsss]  <-  pairwiseSharedSpacers[which(pairwiseSharedSpacers$Ref1==rowsss & pairwiseSharedSpacers$Ref2==colsss),"PercentShared"] %>% as.numeric
-#   
-#   
-#   }  
-# }
-
-
-##------------
-##make dendro of all snps sites
-##------------
-# library(ggdendro)
-# 
-# otter.dendro <- as.dendrogram(hclust(d = dist(x = heatmap_prep_matrix)))
-# 
-# 
-# # Create dendro
-# dendro.plot <- ggdendrogram(data = otter.dendro, rotate = FALSE)
-# # Preview the plot
-# print(dendro.plot)
-
-##===============================================
-##heatmap2
-##===============================================
-
-# if (!require("gplots")) {
-#    install.packages("gplots", dependencies = TRUE)
-#    library(gplots)
-#    }
-# if (!require("RColorBrewer")) {
-#    install.packages("RColorBrewer", dependencies = TRUE)
-#    library(RColorBrewer)
-#    }
-# 
-# 
-# 
-# mat_data <- heatmap_prep_matrix # transform column 2-5 into a matrix
-# # mat_data[upper.tri(mat_data, diag = TRUE)] <- NA
-# my_palette <- colorRampPalette(c("blue", "white", "red"))(n = 299)
-# # col_breaks = c(seq(99.3,100,length=300))
-# 
-# col_breaks = c(seq(0,25,length=100),  # for red
-#   seq(26,75,length=100),           # for yellow
-#   seq(76,100,length=100))             # for green
-# 
-# dev.off()
-#     # png("~/Desktop/Projects/2019_RMK202_analysis/10_assembly/heatmap_all_Sterm_strains.png", width = 4000, height = 4000,res=300)
-#  # svg("~/Desktop/Projects/2019_RMK202_analysis/10_assembly/heatmap_all_Sterm_strains.svg",width=14,height=14)
-# heatmap.2(mat_data,
-#   cellnote = mat_data,  # same data set for cell labels
-#   main = "Streptococcus thermophilus CRISPR ID", # heat map title
-#   notecol="black",      # change font color of cell labels to black
-#   density.info="none",
-#   trace="none",         # turns off trace lines inside the heat map
-#  # margins = c(12, 12),     # widens margins around plot
-#   col=my_palette,   
-#   breaks=col_breaks,    # enable color transition at specified limits
-#   sepcolor="black",
-#   sepwidth=c(0.5,0.5),
-#   dendrogram="both")
-# dev.off()
-
+write.table(pairwiseSharedSpacers, "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count///clusterCRISPRs_curated.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
 
 ```
 
@@ -6390,19 +5674,21 @@ here I combine the fastANI heatmap and the CRISPR spacer heatmap to make one big
 library(readr)
 library(plyr)
 library(tidyverse)
-pairwiseSharedSpacers <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count//CRISPR_ID_sterm_withOLD.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
-final_ANI <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/12_oldStrains/fastANI/Sterm/ANI_output_cleaned.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+pairwiseSharedSpacers <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count///clusterCRISPRs_curated.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+final_ANI <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/Sterm/fastaANI_comparision_curated.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 unique(final_ANI$GenomeA)
 unique(pairwiseSharedSpacers$Ref1)
 
+unique(final_ANI$GenomeA) %in% unique(pairwiseSharedSpacers$Ref1)
+unique(pairwiseSharedSpacers$Ref1)%in%unique(final_ANI$GenomeA)
 
-pairwiseSharedSpacers$Ref1 <- revalue(pairwiseSharedSpacers$Ref1, c("SMAG"="Sterm:MAG","S50"="mst1","S72"="mst2","F13491"="FAM13491","F13492"="FAM13492","F13493"="FAM13493","F13494"="FAM13494","F13495"="FAM13495","F13496"="FAM13496","F13497"="FAM13497","F13498"="FAM13498","F13499c1"="FAM13499c1","F13499c2"="FAM13499c2","F13500"="FAM13500"))
-pairwiseSharedSpacers$Ref2 <- revalue(pairwiseSharedSpacers$Ref2, c("SMAG"="Sterm:MAG","S50"="mst1","S72"="mst2","F13491"="FAM13491","F13492"="FAM13492","F13493"="FAM13493","F13494"="FAM13494","F13495"="FAM13495","F13496"="FAM13496","F13497"="FAM13497","F13498"="FAM13498","F13499c1"="FAM13499c1","F13499c2"="FAM13499c2","F13500"="FAM13500"))
-
-final_ANI$GenomeA <- revalue(final_ANI$GenomeA, c("FAM13491_03292016"="FAM13491","FAM13492_03292016"="FAM13492","FAM13493_03292016"="FAM13493","FAM13494_03292016"="FAM13494","FAM13495_03292016"="FAM13495","FAM13496_03292016"="FAM13496","FAM13497_03292016"="FAM13497","FAM13498_03292016"="FAM13498","FAM13499c1_03292016"="FAM13499c1","FAM13499c2_03292016"="FAM13499c2","FAM13500_03292016"="FAM13500","Sterm_MAG"="Sterm:MAG"))
-
-final_ANI$GenomeB <- revalue(final_ANI$GenomeB, c("FAM13491_03292016"="FAM13491","FAM13492_03292016"="FAM13492","FAM13493_03292016"="FAM13493","FAM13494_03292016"="FAM13494","FAM13495_03292016"="FAM13495","FAM13496_03292016"="FAM13496","FAM13497_03292016"="FAM13497","FAM13498_03292016"="FAM13498","FAM13499c1_03292016"="FAM13499c1","FAM13499c2_03292016"="FAM13499c2","FAM13500_03292016"="FAM13500","Sterm_MAG"="Sterm:MAG"))
+# pairwiseSharedSpacers$Ref1 <- revalue(pairwiseSharedSpacers$Ref1, c("SMAG"="Sterm:MAG","S50"="mst1","S72"="mst2","F13491"="FAM13491","F13492"="FAM13492","F13493"="FAM13493","F13494"="FAM13494","F13495"="FAM13495","F13496"="FAM13496","F13497"="FAM13497","F13498"="FAM13498","F13499c1"="FAM13499c1","F13499c2"="FAM13499c2","F13500"="FAM13500"))
+# pairwiseSharedSpacers$Ref2 <- revalue(pairwiseSharedSpacers$Ref2, c("SMAG"="Sterm:MAG","S50"="mst1","S72"="mst2","F13491"="FAM13491","F13492"="FAM13492","F13493"="FAM13493","F13494"="FAM13494","F13495"="FAM13495","F13496"="FAM13496","F13497"="FAM13497","F13498"="FAM13498","F13499c1"="FAM13499c1","F13499c2"="FAM13499c2","F13500"="FAM13500"))
+# 
+# final_ANI$GenomeA <- revalue(final_ANI$GenomeA, c("FAM13491_03292016"="FAM13491","FAM13492_03292016"="FAM13492","FAM13493_03292016"="FAM13493","FAM13494_03292016"="FAM13494","FAM13495_03292016"="FAM13495","FAM13496_03292016"="FAM13496","FAM13497_03292016"="FAM13497","FAM13498_03292016"="FAM13498","FAM13499c1_03292016"="FAM13499c1","FAM13499c2_03292016"="FAM13499c2","FAM13500_03292016"="FAM13500","Sterm_MAG"="Sterm:MAG"))
+# 
+# final_ANI$GenomeB <- revalue(final_ANI$GenomeB, c("FAM13491_03292016"="FAM13491","FAM13492_03292016"="FAM13492","FAM13493_03292016"="FAM13493","FAM13494_03292016"="FAM13494","FAM13495_03292016"="FAM13495","FAM13496_03292016"="FAM13496","FAM13497_03292016"="FAM13497","FAM13498_03292016"="FAM13498","FAM13499c1_03292016"="FAM13499c1","FAM13499c2_03292016"="FAM13499c2","FAM13500_03292016"="FAM13500","Sterm_MAG"="Sterm:MAG"))
 # 
 # final_ANI$GenomeA <- final_ANI$GenomeA %>% gsub("_MAG",":MAG",.) %>% gsub("_.*","",.)
 # final_ANI$GenomeB <- final_ANI$GenomeB %>% gsub("_MAG",":MAG",.) %>% gsub("_.*","",.)
@@ -6424,17 +5710,18 @@ names<- unique(final_ANI$GenomeA)
 heatmap_prep_matrix <- matrix(NA,nrow=length(names),ncol = length(names))
 rownames(heatmap_prep_matrix) <- names
 colnames(heatmap_prep_matrix) <- names
+# heatmap_prep_matrix <- heatmap_prep_matrix[!duplicated(heatmap_prep_matrix)]
 
+final_ANI_02 <- final_ANI[!duplicated(final_ANI[,]), ]
 
 for (rowsss in names){
   for (colsss in names){
   
-heatmap_prep_matrix[rowsss,colsss]  <-  final_ANI[which(final_ANI$GenomeA==rowsss & final_ANI$GenomeB==colsss),"ANI"] %>% as.numeric
+heatmap_prep_matrix[rowsss,colsss]  <-  final_ANI_02[which(final_ANI_02$GenomeA==rowsss & final_ANI_02$GenomeB==colsss),"ANI"] %>% as.numeric
   
   
   }  
 }
-
 
 ##------------
 ##make dendro of all snps sites
@@ -6476,17 +5763,22 @@ levels(final_ANI$GenomeB)
 # print(ggheatmap_ANI)
 # 
 
+  final_ANI$GenomeA = factor(final_ANI$GenomeA, levels=c("13492","13491","24854","24737","13500","13493","13498","SMAG","24853","13494","24855","S72","13499c1","13499","13499c2","24738","24740","S50", "13497", "24739","13495","13496"))
+final_ANI$GenomeB = factor(final_ANI$GenomeB, levels=c("13492","13491","24854","24737","13500","13493","13498","SMAG","24853","13494","24855","S72","13499c1","13499","13499c2","24738","24740","S50", "13497", "24739","13495","13496"))
+
+densityANI <- ggplot(final_ANI,aes(x=ANI))+geom_density()+theme_classic()+lims(x=c(95,100))
+
 ggheatmap_ANI <- ggplot(final_ANI, aes(GenomeA, GenomeB, fill = ANI))+
  geom_tile(color = "white",size=1.1)+
  scale_fill_gradient2(low = "grey", high = "red",
-  midpoint = 92.5, limit = c(90,100), space = "Lab",
+  midpoint = 96, limit = c(95,100), space = "Lab",
   name="ANI") +
   scale_y_discrete(position = "right")+
   labs(legend="ANI",x="",y="")+
   # scale_fill_distiller(name = "SNPs", palette = "Blues", direction = -1)+
   # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
   theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
+ theme(legend.position = "top",axis.text.y = element_text(size = 12),
       axis.text.x = element_text(angle = 45, vjust = 1, 
     size = 12, hjust = 1))+
  coord_fixed()
@@ -6527,6 +5819,8 @@ levels(final_ANI$GenomeB)
 # # Print the heatmap
 # print(ggheatmap_CRISPR)
 
+pairwiseSharedSpacers_tmp_02$Ref2 = factor(pairwiseSharedSpacers_tmp_02$Ref2, levels=c("13492","13491","24854","24737","13500","13493","13498","SMAG","24853","13494","24855","S72","13499c1","13499","13499c2","24738","24740","S50", "13497", "24739","13495","13496"))
+pairwiseSharedSpacers_tmp_02$Ref1 = factor(pairwiseSharedSpacers_tmp_02$Ref1, levels=c("13492","13491","24854","24737","13500","13493","13498","SMAG","24853","13494","24855","S72","13499c1","13499","13499c2","24738","24740","S50", "13497", "24739","13495","13496"))
 
 ggheatmap_CRISPR <- ggplot(pairwiseSharedSpacers_tmp_02, aes(Ref2, Ref1, fill = PercentShared))+
  geom_tile(color = "white",size=1.1)+
@@ -6540,18 +5834,29 @@ ggheatmap_CRISPR <- ggplot(pairwiseSharedSpacers_tmp_02, aes(Ref2, Ref1, fill = 
   # scale_fill_distiller(name = "SNPs", palette = "Viridis", direction = -1)+
   # scale_fill_distiller(name = "ANI", palette = "Reds", direction = 1)+
   theme_minimal()+ # minimal theme
- theme(axis.text.y = element_text(size = 12),
+ theme(legend.position = "top",axis.text.y = element_text(size = 12),
       axis.text.x = element_text(angle = 45, vjust = 1, 
     size = 12, hjust = 1))+
  coord_fixed()
 # Print the heatmap
 print(ggheatmap_CRISPR)
 
+densityCRISPR <- ggplot(pairwiseSharedSpacers_tmp_02,aes(x=PercentShared))+geom_density()+theme_classic()+lims(x=c(0,100))
+densityCRISPR
+
 library(patchwork)
 
 ##===================================================
 ##plot
 ##=================================================== 
+
+  svg("~/Desktop/Projects/2019_RMK202_analysis/plot/HEATMAP_ani_crispr_density.svg",width=20,height=12)
+
+(densityANI+densityCRISPR) / (ggheatmap_ANI+ggheatmap_CRISPR)
+
+ dev.off()
+
+
 
  
   svg("~/Desktop/Projects/2019_RMK202_analysis/plot/HEATMAP_ani_crispr.svg",width=15,height=7.5)
@@ -6608,14 +5913,18 @@ Here, we check which spacers are common. Then we check who shares them (same gen
 library(readr)
 # clusterCRISPRs <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/clusterCRISPRs_sterm_new.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 clusterCRISPRs <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count///clusterCRISPRs.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+length(names) #from previous chunk
+occurence <- data.frame(ClusterName=clusterCRISPRs$Clustername,occurrencecounts=rowSums(clusterCRISPRs[,-1]))
+# occurence <- data.frame(ClusterName=clusterCRISPRs$Clustername,occurrencecounts=rowSums(clusterCRISPRs[,-1]>0))
 
-occurence <- data.frame(ClusterName=clusterCRISPRs$Clustername,occurrencecounts=rowSums(clusterCRISPRs[,-1]>0))
 table(occurence$occurrencecounts)
-plotspacerCOUNT <- ggplot(occurence,aes(x=occurrencecounts))+geom_bar()+theme_classic()+labs(x="spacer occurring in number of strains",y="spacer count")+scale_x_continuous(breaks =c(1:14),labels=c(1:14),limits = c(0,14))+scale_y_continuous(breaks =c(0,5,10,20,30,40,44),labels=c(0,5,10,20,30,40,44))
+plotspacerCOUNT <- ggplot(occurence,aes(x=occurrencecounts))+geom_bar()+theme_classic()+labs(x="number of genomes containing the same spacer",y="spacer count")+scale_x_continuous(breaks =c(1:length(names)),labels=c(1:length(names)),limits = c(0,length(names)))+scale_y_continuous(breaks =c(0,7,31,60,154),labels=c(0,7,31,60,154))
+plotspacerCOUNT
 svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerUniquenessCount.svg",width=4.5,height=2.5)
 plotspacerCOUNT
  dev.off()
 ```
+
 
 ###CRISPR spacers prep
 Here, I want ot make an alluvial plot to trace the CRISPR spacers through the samples.
@@ -6708,15 +6017,20 @@ echo ==========================
      echo ==========================
 rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/allRepeatsAssembled.fasta
 #mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/
-for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned| grep ".fna$" |sed 's/.fna//g')
+#for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned| grep ".fna$" |sed 's/.fna//g')
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
 do
       echo ==========================
      echo -e "extracting repeats of strain: " ${genomes}
      echo ==========================
 
+genomes_short=$(echo ${genomes}|sed 's/S_O_202_//g'|sed 's/S_I_202_//g'|sed 's/L_I_202_//g')
 
-sed "s/>/>${genomes}_/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out.fasta|sed 's/>202-/>/g'| sed 's/_.*Array/_a/g'|sed 's/;.*$//g' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/allRepeatsAssembled.fasta
+sed "s/.*\[Array/>_a/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out.fasta|sed 's/;.*$//g'|sed "s/>_/>${genomes_short}_/g" >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/allRepeatsAssembled.fasta
 
+
+
+#sed 's/__.*$//g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomes}/${genomes}.pilarCR_out.fasta | sed "s/>/>${genomes_short}_/g"| sed 's/ary0/a/g' |sed 's/spc0/s/g' |sed 's/202-//g' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/all/${species}/CRISPR_spacer_merged_short.fasta
 
 done #genomes
 
@@ -6909,12 +6223,14 @@ spacerCount2 <- ggplot(spacer_Infos_Sterm_final,aes(x=sample,group=spacerUniquen
 ##------------------------------
 ###spacer location
 ##------------------------------ 
-colorsss <- rev(c("darkcyan","darkturquoise"))
+colorsss <- rev(c("darkcyan","darkturquoise","red"))
  
+
+max(uniqueSpacersss$SPACER)
 
 uniqueSpacersss <- spacer_Infos_Sterm_final[which(spacer_Infos_Sterm_final$numSpacers_in_CLUSTER==1),]
 range(spacer_Infos_Sterm_final$SPACER)
-pfirst <- ggplot(uniqueSpacersss,aes(x=SPACER,group=ARRAY,fill=ARRAY))+geom_bar()+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7))+scale_fill_manual(values=colorsss)+labs(x="spacer location",y="number of unique spacers",fill="Uniqueness")+scale_x_continuous(breaks =c(1:33),labels=c(1:33))
+pfirst <- ggplot(uniqueSpacersss,aes(x=SPACER,group=ARRAY,fill=ARRAY))+geom_bar()+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=7))+scale_fill_manual(values=colorsss)+labs(x="spacer location",y="number of unique spacers",fill="Uniqueness")+scale_x_continuous(breaks =c(1:max(uniqueSpacersss$SPACER)),labels=c(1:max(uniqueSpacersss$SPACER)))
 
 plocation <- (pfirst+plot_spacer()+plot_layout(widths = c(2,0.5)))
 
@@ -6926,7 +6242,7 @@ plocation <- (pfirst+plot_spacer()+plot_layout(widths = c(2,0.5)))
 ##------------------------------
 ###number of uniq spacers
 ##------------------------------ 
-colorsss <- rev(c("darkcyan","darkturquoise"))
+colorsss <- rev(c("darkcyan","darkturquoise","red"))
  
 spacer_Infos_Sterm_final$ARRAY
 uniqueSpacersss_tmp1 <- spacer_Infos_Sterm_final[which(spacer_Infos_Sterm_final$numSpacers_in_CLUSTER==1),] %>% select(ClusterName,ARRAY) %>% unique() %>% add_column(uniqueness="unique") 
@@ -6947,6 +6263,7 @@ colorsss <- c("lightgray","darkgray")
  
 table(uniqueSpacersss$uniqueness)
 table(uniqueSpacersss$uniqueness,uniqueSpacersss$ARRAY)
+uniqueSpac
 svg("~/Desktop/Projects/2019_RMK202_analysis/plot/UniqueSpacers.svg",width=2.5,height=3)
 uniqueSpac
  dev.off()
@@ -6955,23 +6272,89 @@ uniqueSpac
 ##------------------------------
 ###spacer location relative distance
 ##------------------------------ 
+ 
+uniqueSpacersss_again <- spacer_Infos_Sterm_final %>% filter(spacerUniqueness=="unique")
+ 
+TotSpacer <- spacer_Infos_Sterm_final %>% group_by(sample,ARRAY) %>%  summarize(totalSpacersARRAY=max(SPACER))
+uniqueSpacersss_extended <-  merge(uniqueSpacersss_again, TotSpacer, by=c("sample", "ARRAY")) %>% mutate(relDistanceLeader=SPACER/totalSpacersARRAY)
+# 
 
-TotSpacer <- uniqueSpacersss %>% group_by(sample,ARRAY) %>%  summarize(totalSpacersARRAY=max(SPACER))
-uniqueSpacersss_extended <-  merge(uniqueSpacersss, TotSpacer, by=c("sample", "ARRAY")) %>% mutate(relDistanceLeader=SPACER/totalSpacersARRAY)
-
-spacerRelDistance <- ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,fill=ARRAY))+geom_density(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")+theme(legend.position = "none")
-
-# ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,color=ARRAY,fill=ARRAY))+geom_histogram(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")
-
+colors <- c("#fd8d3cff","#807dbaff","#ef3b2cff")
+spacerRelDistance <- ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,fill=ARRAY))+geom_density(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")+theme(legend.position = "right",axis.ticks.y=element_blank(),axis.text.y=element_blank())+scale_fill_manual(values = colors)
+# 
+# # ggplot(uniqueSpacersss_extended,aes(x=relDistanceLeader,group=ARRAY,color=ARRAY,fill=ARRAY))+geom_histogram(alpha=0.3)+theme_classic()+labs(x="relative proximity to CRISPR leader")
+spacerRelDistance
 svg("~/Desktop/Projects/2019_RMK202_analysis/plot/CRISPR_spacer_count_location_rel.svg",width=4.5,height=2.5)
 spacerRelDistance
  dev.off()
+ 
+ 
+##----------------------------------------------
+#number of spacers
+##----------------------------------------------
+
+
+
+ library(readr)
+spacer_Infos_Sterm_final_sub <- spacer_Infos_Sterm_final %>% select(ClusterName,ARRAY) 
+spacer_Infos_Sterm_final_sub_uniques <- spacer_Infos_Sterm_final_sub[!duplicated(spacer_Infos_Sterm_final_sub[,]), ]
+namesSingleArrays <- which(table(spacer_Infos_Sterm_final_sub_uniques$ClusterName)==1) %>% names()
+tmp1 <- spacer_Infos_Sterm_final_sub_uniques %>% filter(ClusterName %in% namesSingleArrays)
+namesMultipleArrays <- which(table(spacer_Infos_Sterm_final_sub_uniques$ClusterName)==2) %>% names()
+tmp2 <- data.frame(ClusterName=namesMultipleArrays,ARRAY="multiple Arrays")
+Arrayasignment <- rbind(tmp1,tmp2)
+   
+# clusterCRISPRs <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/clusterCRISPRs_sterm_new.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+clusterCRISPRs <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/Sterm/count///clusterCRISPRs.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+length(names) #from previous chunk
+occurence <- data.frame(ClusterName=clusterCRISPRs$Clustername,occurrencecounts=rowSums(clusterCRISPRs[,-1]))
+# occurence <- data.frame(ClusterName=clusterCRISPRs$Clustername,occurrencecounts=rowSums(clusterCRISPRs[,-1]>0))
+  occurence_final <- merge(occurence,Arrayasignment,by="ClusterName")
+
+colors <- c("#fd8d3cff","#807dbaff","#ef3b2cff","grey")
+
+table(occurence$occurrencecounts)
+plotspacerCOUNT <- ggplot(occurence_final,aes(x=occurrencecounts,fill=ARRAY))+geom_bar(alpha=0.8)+theme_classic()+labs(x="number of genomes containing the same spacer",y="spacer count")+scale_x_continuous(breaks =c(1:length(names)),labels=c(1:length(names)),limits = c(0,length(names)))+scale_y_continuous(breaks =c(0,7,31,60,154),labels=c(0,7,31,60,154))+scale_fill_manual(values = colors)
+plotspacerCOUNT
+# svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerUniquenessCount.svg",width=4.5,height=2.5)
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerUniquenessCount.svg",width=5.5,height=2.5)
+
+plotspacerCOUNT
+ dev.off()
+ 
+ 
+ svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerUniquenessCount_distance.svg",width=13,height=3)
+
+plotspacerCOUNT+spacerRelDistance
+ dev.off()
 
 ```
-###finder leader sequence
+###find leader sequence
 here I try to identify the leader sequence of the CRISPR arrays
 Finally, I did it online with the [CRISPRdetect](http://crispr.otago.ac.nz/CRISPRDetect/predict_crispr_array.html)
 
+
+####extract CRISPR SPACERS
+
+Here, I extract the spacers 
+```{bash}
+
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_spacerLibrary_fromIsolates.txt
+
+for spacersss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt)
+do
+echo $spacersss
+
+clusternamess=$(grep "${spacersss}" -B 30 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr |grep ">Clu" |tail -1|sed 's/ /_/g')
+echo $clusternamess
+
+sed -i "s/${spacersss}/${clusternamess}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results_spacerLibrary_fromIsolates.txt
+echo "-----------------------------------"
+done
+
+
+```
 
 ####map and follow CRISPR spacers over time
 
@@ -6984,6 +6367,8 @@ What we do:
 4. map all timepoints against the pan-CRISPR-array
 
 ```{bash}
+
+
 
 ###================
 ##description file
@@ -7005,28 +6390,40 @@ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_
 
 
 
+###=================================================================================
+##olished
+###=================================================================================
+
 ##---------------------------Prepare
 mkdir -p /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/tmp
 rm /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_demultiplexed.fasta
 rm /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_only.bed
 
 spazerss=RMK202:a01s24
-spazerss=RMK202:a01s21
-for spazerss in $(grep "*" /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/assembledSpacers/cdHIT/CRISPR_Clustering.txt.clstr |awk -F "\t" '{print $2}'|awk -F " " '{print $2}' |sed 's/\.\.\.//g')
+spazerss=13494_a3s06
+
+#for spazerss in $(grep "*" /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/assembledSpacers/cdHIT/CRISPR_Clustering.txt.clstr |awk -F "\t" '{print $2}'|awk -F " " '{print $2}' |sed 's/\.\.\.//g')
+
+for spazerss in $(grep "*" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr |awk -F "\t" '{print $2}'|awk -F " " '{print $2}' |sed 's/\.\.\.//g')
   do
   
-  ClusterName=$(grep -B 15 "${spazerss}" /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/assembledSpacers/cdHIT/CRISPR_Clustering.txt.clstr | grep "^>Cluster" |tail -1|sed 's/>//g' |sed 's/ //g')
-  sampless=$(echo $spazerss | cut -d ':' -f 1| sed 's/L_/Lyo_/g' | sed 's/Kon_/Konserve_/g' | sed 's/Ver_/Versand_/g' |sed 's/>//g')
-  array=$(echo $spazerss | cut -d ':' -f 2| cut -d 's' -f 1|sed 's/a//g' |sed 's/^0//g')
-  spacer=$(echo $spazerss | cut -d ':' -f 2| cut -d 's' -f 2|cut -d '_' -f 1|sed 's/^0//g')
+  ClusterName=$(grep -B 15 "${spazerss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CD-hit_spacers/${species}/${species}_results.txt.clstr | grep "^>Cluster" |tail -1|sed 's/>//g' |sed 's/ //g')
+  sampless=$(echo $spazerss | cut -d '_' -f 1|sed 's/>//g')
+  samplessName=$(echo -e "S_*_202_"${sampless})
+  array=$(echo $spazerss | cut -d '_' -f 2| cut -d 's' -f 1|sed 's/a//g' |sed 's/^0//g')
+  spacer=$(echo $spazerss | cut -d '_' -f 2| cut -d 's' -f 2|cut -d '_' -f 1|sed 's/^0//g')
   arrayquery=$(echo "Array "${array})
   spacerROW=$((spacer+4))
-  #echo ${spacerROW}
-  #echo ${arrayquery}
   
-  genomeFastaLocation=$(grep ".fas" ${BaseLocation}/${sampless}/assembled_and_CRISPR_pilerCR//.pilarCR_out | cut -d ':' -f 1)
-  contigName=$(grep -A 1 "${arrayquery}$" ${BaseLocation}/${sampless}/assembled_and_CRISPR_pilerCR//.pilarCR_out |tail -1 | sed 's/>//g')
-  spacerINfo=$(grep -A ${spacerROW} "${arrayquery}$" ${BaseLocation}/${sampless}/assembled_and_CRISPR_pilerCR//.pilarCR_out |tail -1 )
+  echo ${spacerROW}
+  echo ${arrayquery}
+
+
+#/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${samplessName}/${samplessName}.pilarCR_out.fasta
+
+  genomeFastaLocation=$(grep ".fas" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${samplessName}/${samplessName}.pilarCR_out |sed 's/^.*pilarCR_out://g' | cut -d ':' -f 1|head -1)
+  contigName=$(grep -A 1 "${arrayquery}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${samplessName}/${samplessName}.pilarCR_out |tail -1 | sed 's/>//g')
+  spacerINfo=$(grep -A ${spacerROW} "${arrayquery}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${samplessName}/${samplessName}.pilarCR_out |tail -1 )
   
   start=$(echo $spacerINfo | awk '{print $1}')
   end=$(echo $spacerINfo | awk '{print $1+$2+$4}')
@@ -7050,7 +6447,10 @@ bedtools getfasta -fi ${genomeFastaLocation} \
   -bed /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/tmp/tmp.bed \
   -fo /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/tmp/tmp.fasta
 
-echo -e ">"${sampless}":ary"${array}"spc"${spacer} >> /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_demultiplexed.fasta
+echo -e ">"${ClusterName} >> /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_demultiplexed.fasta
+#echo -e ">"${sampless}":ary"${array}"spc"${spacer} >> /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_demultiplexed.fasta
+
+
 grep ">" -v /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/tmp/tmp.fasta >> /archiv/Projects/2019_RMK202_analysis/04_CRISPRmappings/01_mapping2CRISPRregion/CRISPRspacerExtractall/CRISPR_spacers_demultiplexed.fasta
 
 echo -e ">"${sampless}":ary"${array}"spc"${spacer} 
@@ -38664,3 +38064,790 @@ LdelPlasmid_coverage$copyNumber <- LdelPlasmid_coverage$plasmidCoverage/LdelPlas
 range(LdelPlasmid_coverage$copyNumber)
 ggplot(LdelPlasmid_coverage,aes(x=sample,y=copyNumber))+geom_bar( stat="identity")+theme_classic()
 ```
+
+####Decipher
+added 28.8.2020
+Trying out [Decipher](http://www2.decipher.codes/) to find ampliconable regions.
+
+
+
+```{bash}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("DECIPHER")
+```
+
+
+
+###CRISPR location Circos
+added 28.8.2020
+
+```{bash}
+
+##------------------------
+###bwa mem
+##------------------------
+threads=37
+for species in $(echo "Ldel Sterm")
+do
+rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/
+rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/
+
+REF=$(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/ |grep "MAG" |grep ".fna$")
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${REF}.*
+bwa index /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/${REF}
+#for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g')
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g'|grep "MAG" -v)
+
+do
+
+#/archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs//202-SMAG.fna
+
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}
+
+bwa mem -x intractg /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned//StartAligned/${REF} /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned//${genomess}.fna | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam - 
+
+samtools view -F 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |awk -F "\t" '{OFS="\t"}{print $3,$4,$4+length($10)}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_contigs.txt
+samtools view -F 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |awk -F "\t" '{OFS="\t"}{print $3,$4,$4+length($10),$1}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt
+done #genomes
+done # species
+
+###why they still map reverse complement
+#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | awk -F "\t"  '{OFS="\t"}{if($2=="16")print $1,$2,$6}'
+
+#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | grep "534M" |cut -f 1,2,6
+#samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/202-13495/allcontigsMapped2CRISPRs.bam | grep "667" |cut -f 1,2,6
+
+
+
+#grep "534M"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/tmp/202-13495_allcontigsMapped2CRISPRs.cleaned |cut -f 1,2,6
+##--------------------
+##check alignment 
+##--------------------
+for species in $(echo "Ldel Sterm")
+do
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|grep "MAG" -v |sed 's/.fna//g')
+do
+samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam |cut -f 1,2 >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
+
+samtools view /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/${genomess}/allcontigsMapped2CRISPRs.bam | awk -F "\t"  '{OFS="\t"}{if($2=="16")print $1,$2,$6}' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
+
+done #genomes
+cut -f 2 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment |sort|uniq -c
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment_02
+echo "==================="
+done # species
+
+wc -l /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment
+cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/startaligned/Aligned/${species}/tmp.alignment |sort|uniq |wc -l
+
+##------------------------
+###CRISPRs
+##------------------------
+for species in $(echo "Ldel Sterm")
+do
+echo "##=========================="
+echo $species
+echo "##=========================="
+rm -r  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}_allCRISPR.txt
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned//StartAligned/ |grep ".fna$" |grep "MAG" -v|sed 's/.fna//g')
+do
+echo "#----------------------"
+$genomess
+echo "#----------------------"
+
+mkdir -p  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}
+
+  sed -n "/SUMMARY BY SIMILARITY$/,/SUMMARY BY POSITION$/p" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/pilerCR/${species}/${genomess}/${genomess}.pilarCR_out | grep "Array" -v |grep "^====" -v |grep "SUMM" -v|sed '/^$/d' | sed 's/^ *//g'|grep "^\*" -v |sed -E 's/\s+/\t/g' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_CRISPR.txt
+
+for CRISPRsss in $(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt)
+do
+echo $CRISPRsss
+
+contigName=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 2)
+contigpsoitionOrig=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 3)
+contigLengthOrig=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 4)
+
+RepeatSeq=$(grep "^${CRISPRsss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/CRISPRlocation/${species}/${genomess}/tmp.txt| cut -f 9|head -c 20|tail -c 10)
+RepeatArray=$(grep "${RepeatSeq}" -B 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/${species}_CRISPR_repeat.txt |grep "^>" |head -1|sed 's/>//g')
+
+REFname=$(grep "${contigName}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt |head -1|cut -f 1)
+REFStart=$(grep "${contigName}$" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}/${genomess}_contigs.txt |head -1|cut -f 2)
+#echo -e ${REFname}"\t"${REFStart}
+
+CRISPRstart=$((REFStart+contigpsoitionOrig))
+CRISPREND=$((REFStart+contigpsoitionOrig+contigLengthOrig))
+echo -e ${REFname}"\t"${CRISPRstart}"\t"${CRISPREND}"\t"${RepeatArray} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
+echo -e ${REFname}"\t"${CRISPRstart}"\t"${CRISPREND}"\t"${contigName} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCRISPRs/${species}_allCRISPR.txt
+
+#echo -e ${contigName}"\t"${contigpsoitionOrig}"\t"${contigLengthOrig}
+done #CRISPRsss
+
+##change name to color
+sed -i 's/a1/stroke_color=orange/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
+sed -i 's/a2/stroke_color=dpurple/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
+sed -i 's/a3/stroke_color=dred/g' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/${genomess}_CRISPR.txt
+
+done #genomes
+
+done # species
+
+cut -f 2,4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}_allCRISPR.txt |sort -n
+##--location
+for species in $(echo "Ldel Sterm")
+do
+echo "##=========================="
+echo $species
+echo "##=========================="
+cut -f 2,4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/${species}/*_CRISPR.txt |sort -n
+done # species
+```
+
+make circos with the following data that I created in the last two chunks
+1. Start alignment
+2. CRISPR locations
+
+make the plot according to the pyhlogeny
+
+move all necessary files local
+```{bash}
+
+mkdir -p /home/vincent/bin/apps/circos-0.69-6/data/CRISPR
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Location_Circos/forCircos_contigs/ /home/vincent/bin/apps/circos-0.69-6/data/CRISPR
+```
+
+some manual work still needs to be done:
+1. larger CRISPR array bands (data/CRISPR/forCircos_contigs/Sterm/arrays.txt)
+2. links file for jumping arrays (data/CRISPR/forCircos_contigs/Sterm/links.txt)
+
+```{bash}
+
+##==================
+##Sterm
+##==================
+home=/home/vincent/bin/apps/circos-0.69-6/
+cd $home
+
+##organisational 
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_both.conf /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_CRISPR.conf
+
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag.conf /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag_CRISPR.conf
+<!-- mkdir -p $home/data/rmk202/MAG_rmk202_sterm_CRISPR/ -->
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_circos.conf /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_CRISPR.conf
+##---------------------karyotyp
+#seqlength.py /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned//StartAligned/ |head -1 > ${home}/data/karyotype/sterm_magg_rmk202.txt
+
+sed 's/S_thermophilus_mag_rmk202/202-SMAG-1/g' ${home}/data/karyotype/sterm_magg_rmk202.txt > ${home}/data/karyotype/sterm_magg_rmk202_CRISPR.txt
+##have to change the format a bit
+
+##---------------------number genomes
+
+ls /home/vincent/bin/apps/circos-0.69-6/data/CRISPR/forCircos_contigs/Sterm/ |cut -d '_' -f 1|sort|uniq
+202-13494
+202-S72
+202-13498
+202-13493
+202-13500
+202-13491
+202-13492
+
+202-13495
+202-13496
+202-13497
+
+202-13499c1
+202-13499c2
+202-S50
+
+
+#202-13494
+
+
+##example
+#cp etc/repeat_nwc1_sterm_01.conf etc/sterm_rmk202_mag_circos.conf
+
+#example run
+bin/circos -conf etc/sterm_rmk202_mag_CRISPR.conf -outputfile ./Sterm_mag_rmk202_CRISPR.svg; firefox ./Sterm_mag_rmk202_CRISPR.svg &
+
+
+##==================
+##Ldel
+##==================
+home=/home/vincent/bin/apps/circos-0.69-6/
+cd $home
+
+##organisational 
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/ticks_nwc_1_ldel_both.conf /home/vincent/bin/apps/circos-0.69-6/etc/ticks_mag_both.conf ##already done
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/ideogram.conf /home/vincent/bin/apps/circos-0.69-6/etc/ideogram_mag.conf ##already done
+#cp /home/vincent/bin/apps/circos-0.69-6/etc/sterm_rmk202_mag_circos.conf /home/vincent/bin/apps/circos-0.69-6/etc/ldel_rmk202_mag_circos.conf
+mkdir -p $home/data/rmk202/MAG_rmk202_ldel/
+##---------------------karyotyp
+
+#seqlength.py /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/ldel/L_delbrueckii_RMK202.fasta |head -1 > ${home}/data/karyotype/ldel_magg_rmk202.txt
+
+
+##have to change the format a bit
+
+```
+
+#### mismatch repair genes
+added 28.8.2020
+```{bash}
+
+
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/eggnog_of_orthofinder/
+species=Sterm
+for species in $(echo "Ldel Sterm")
+do
+####================
+##OGs
+####================
+echo "==================================================="
+echo ${species}
+echo "==================================================="
+
+ awk -F "\t" '{OFS="\t"}{if($6~"mut")print $0}' eggnog_orthifinder_${species}_annotations.tsv |cut -f 6
+
+done
+```
+
+##### CRISPRcasFinder
+added 28.9.2020
+```{bash}
+
+
+
+for species in $(echo "Ldel Sterm")
+do
+echo ==========================
+     echo "working on: " ${species}
+     echo ==========================
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}/ |grep "_202_"|grep ".fasta$" |sed 's/.fasta//g')
+do
+      echo ==========================
+     echo -e "extracting strain: " ${genomes}
+     echo ==========================
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas
+/usr/bin/perl CRISPRCasFinder.pl -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/Final/${species}//${genomes}.fasta \
+  -cf -cas CasFinder-2.0.3 -def G -keep -html -log  -cpuM 37 -ccc \
+  -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRcasFinder/${species}/${genomes}_cas/
+
+
+  done #genomes
+done #species
+
+
+```
+
+###CRISPR region tree
+added 28.9.2020
+Here, I want to make a CRISPR tree array (with Cas genes)
+Is not used for the paper. 
+```{bash}
+
+###--------------------------------
+##CRISPR repeat location
+###--------------------------------
+species=Sterm
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISP§R_region_tree/${species}/array/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+grep "repeat" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt
+cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/
+arraySeq=$(grep -A 1 "${arraysss}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt |tail -1|head -c 25|tail -c 20)
+
+grep "${arraySeq}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}_repeats.txt
+
+tmp=$(cut -f 9 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
+cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt
+#grep -A 15 -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i
+
+
+if [[ ${arraysss} == "a1"  && [$(echo ${tmp})>0 ]]; then
+            echo -e "ary1"
+            grep -B 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt|awk '{print $1}')
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt|awk '{print $1}')
+            echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t+\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            elif [[ ${arraysss} == "a2"  && [$(echo ${tmp})>0 ]] 
+            then
+            echo -e "ary2"
+            grep -B 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "csm6" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt
+            ##---
+            grep -A 20 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas1" -i |head -1 >            /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_csm6.txt)
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas1.txt)
+             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+            echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            elif [[ ${arraysss} == "a3"  && [$(echo ${tmp})>0 ]]
+            then
+            echo -e "ary3"
+            grep -A 15 "${tmp}" /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.gff |grep "cas9" -i |head -1 >             /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt 
+            cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt
+            
+            contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+            start=$(cut -f 4 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_repeats.txt)
+            end=$(cut -f 5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${arraysss}/${genomess}_${arraysss}_cas9.txt)
+             echo -e ${contig}"\t"${start}"\t"${end}"\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.bed
+             echo -e ${contig}"\tVINCENT\tCRISPRLOCATION\t"${start}"\t"${end}"\t.\t-\t0\t"${genomess}";"${arraysss} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff
+            
+            
+               
+            fi
+echo "--------------"
+done #arraysss
+done #genomes
+
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/*.gff |awk -F "\t" '{OFS="\t"}{print $0,$5-$4}'
+
+
+
+
+###--------------------------------
+##mask CRISPR repeat region
+###--------------------------------
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+
+awk -F "\t" '{OFS="\t"}{print $1,$2-500,$3+500}' /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats_extended.bed
+
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+
+bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/${genomess}.fna -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna
+
+
+bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/Sterm/renamedContigs/StartAligned/StartAligned/${genomess}.fna -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/array/${genomess}_repeats_extended.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked_extended.fna
+
+done #arraysss
+done #genomes
+
+
+
+
+###--------------------------------
+##extract CRISPR region out of genome
+###--------------------------------
+
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1 |sed 's/.fna//g') #|grep "202-13497"
+do
+echo "===================================="
+echo ${genomess}
+
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+
+bedtools getfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/maskedGenomes/${genomess}_CRISPRmasked.fna \
+  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/Tree_location/${genomess}_${arraysss}_CRISPR_location.gff \
+  -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta
+
+
+
+sed "s/>.*$/>${genomess}-${arraysss}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${genomess}_${arraysss}_CRISPR_location.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta
+done #arraysss
+done #genomes
+
+
+
+```
+now make a multiseq alignment file
+
+I go information for the [alignment](https://www.protocols.io/view/week-5-aligning-with-muscle-and-making-trees-with-g2sbyee?step=4) and for [RaxML](http://evomics.org/learning/phylogenetics/raxml/)
+
+```{bash}
+###--------------------------------
+##Multiseq alignment
+###--------------------------------
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
+species=Sterm
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/
+for arraysss in $(grep ">" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sterm_CRISPR_repeat_PROKKA.txt|sed 's/>//g')
+do
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/
+
+muscle -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta 
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}/${arraysss}_MultiseqAlignment.phy
+
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/${arraysss}_CRISPR_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta
+done #arraysss
+
+###---------------all
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/
+
+muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/all_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/all_together/all_MultiseqAlignment.phy
+
+
+###---------------only array1 and array3
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_CRISPR_locations.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a3_CRISPR_locations.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/
+
+muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/extractedCRISPR/a1_a3_CRISPR_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/a1_a3_together/a1_a3_MultiseqAlignment.phy
+
+
+###--------------------------------
+##make tree
+###--------------------------------
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
+#mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
+for arraysss in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/ |grep ".fasta" -v)
+do
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/MultiseqAlignment/${arraysss}
+raxmlHPC -s *_MultiseqAlignment.phy -n ${arraysss}_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
+
+done #arraysss
+
+
+```
+
+move local 
+
+```{bash}
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/MultiseqAlignment
+
+```
+
+#####special:DGCC 7710
+added 28.9.2020
+Here, I want to look into the S. thermophilus strain DGCC 7710 because this streptococcus has 4 CRISPR arrays and could be used for the referencing of my 3 S. thermophilus CRISPR arrays. 
+
+```{bash}
+##=================================
+##download genome
+##=================================
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/
+
+curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' |grep "DGCC 7710" |tail -1 |awk 'BEGIN{FS="\t";OFS="\t"}  {print $20}'| sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/download.file
+
+
+
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/
+wget -i download.file
+gunzip *.fna.gz
+
+##=================================
+##PilarCR
+##=================================
+
+
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/
+
+  ~/apps/PilerCR/pilercr1.06/pilercr -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna \
+    -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out -noinfo\
+    -seq /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out.fasta
+
+  
+  perl ~/apps/PilerCR/PilerCR_parser_new_vincent /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out > \
+    /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out_final
+
+
+##=================================
+##Prokka
+##=================================
+
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA
+/usr/bin/perl /usr/bin/prokka --outdir /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA --force --usegenus --genus Streptococcus --locustag DGCC_7710 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna 
+
+##=================================
+##Cas genes
+##=================================
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+#grep -i "isfinder"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff
+grep -i "=cas" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+grep -i "=csn"  /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+grep -i "=Csy" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+grep -i "=Csm" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff |awk -F "\t" '{OFS="\t"}{if($3=="gene") print $1,$4,$5,$7";"$9}'   >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+
+grep "SUMMARY BY POSITION" -A 15 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/pilerCR/strain_DGCC_7710.pilarCR_out |grep "===========" -A 6 |sed '1d'  |sed 's/^ *//' |sed 's/  */\t/g' |awk -F "\t" '{OFS="\t"}{print $2,$4,$4+$5,"CRISPRspacers"}' >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+
+sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt
+
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation
+
+sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^6")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a1.txt
+sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^8")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a2.txt
+sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^9")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a3.txt
+sort -k2 -n /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/CRISPRarray.txt | awk -F "\t" '{if($2~"^1")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_a4.txt
+
+##=================================
+##mask CRISPR spacers
+##=================================
+grep "repeat" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/*.gff > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.txt
+
+cut -f 1,4,5 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.txt > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.bed
+
+bedtools maskfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic.fna  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/PROKKA/strain_DGCC_7710_repeats.bed -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic_CRISPRmasked.fna 
+
+
+##=================================
+##CRISPR extract
+##=================================
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
+for arrayzzz in $(echo "a1 a2 a3 a4")
+do
+echo $arrayzzz
+contig=$(cut -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|head -1)
+start=$(cut -f 2 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|head -1)
+end=$(cut -f 3 /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.txt|tail -1)
+
+echo -e ${contig}"\t"${start}"\t"${end}"\tstrain_DGCC_7710;"${arrayzzz} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.bed
+
+
+bedtools getfasta -fi /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/genome/GCF_002843115.1_ASM284311v1_genomic_CRISPRmasked.fna  \
+  -bed /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.bed \
+  -fo /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.fasta
+
+
+sed "s/>.*$/>strain_DGCC_7710-${arrayzzz}/g" /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}.fasta > /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}_locations.fasta
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_${arrayzzz}_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
+done #arrayzzz
+
+##=================================
+##merge and MSA with other Arrays
+##=================================
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/Sterm/extractedCRISPR/all_CRISPR_locations.fasta >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
+
+muscle  -in /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/CRISPRarray_all_locations.fasta -out /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta -maxiters 2
+
+/usr/bin/perl /home/vincent/apps/Fasta2Phylip.pl /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.phy
+
+###for alignment score
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
+/home/vincent/apps/MstatX/mstatx -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/all_MultiseqAlignment.fasta -s trident
+
+##=================================
+##make tree
+##=================================
+#rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation//RaxML_tree/
+#mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPR_region_tree/${species}/RaxML_tree/
+
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together/
+raxmlHPC -s all_MultiseqAlignment.phy -n withDGCC_RaxML_tree_out -m GTRCAT -f a -x 123 -N autoMRE -p 456
+
+
+
+```
+
+```{bash}
+/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
+```
+
+move local 
+
+```{bash}
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
+scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/strain_DGCC_7710/ARRAYannotation/MultiseqAlignment/all_together
+
+```
+
+
+
+##fastani for identification
+added 29.8.2020
+```{bash}
+
+###-----------------------------------------
+##get references
+###-----------------------------------------
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log
+#curl 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt' > /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt
+
+##ldel
+species=$(echo "Lactobacillus delbrueckii")
+species_short=Ldel
+typeStrain=$(echo "equicursoris")
+
+#rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
+
+
+cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >    \
+    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+
+
+cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${typeStrain}" -i |grep "type strain"|head -1 |cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >>    \
+    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+    
+    rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
+mkdir -p //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
+    cd //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
+    wget -i /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+    gunzip *.fna.gz
+
+#-------------------------------Sterm
+
+species=$(echo "Streptococcus thermophilus")
+species_short=Sterm
+typeStrain=$(echo "S735")
+typeStrain=$(echo "vestibularis")
+
+#rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}
+
+cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}"|cut -f 12|sort|uniq -c
+#cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}"|awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'
+
+cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${species}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >    \
+    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+    
+
+cat /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |grep -e "${typeStrain}" |awk -F "\t" 'BEGIN{OFS="\t"} {if ($12=="Complete Genome" ||$12=="Chromosome" ) print $0}'|head -1|cut -f 20 | sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.fna.gz|' >>    \
+    /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+    
+rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
+mkdir -p //home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/FNA
+    cd //archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
+    wget -i /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species_short}/download.txt
+gunzip *.fna.gz
+
+
+
+###-----------------------------------------
+##move all fna
+###-----------------------------------------
+
+for species in $(echo "Ldel Sterm")
+do
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all
+
+for genomess in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/strains/${species}/renamedContigs/StartAligned/StartAligned/ |grep ".fna$"|cut -d '_' -f 1|sed 's/.fna//g')
+do
+cut -d ' ' -f 1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/${genomess}/PROKKA*.fna > /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/${genomess}.fna
+
+done #genomes
+rm -r /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
+mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
+cp /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/${species}/FNA_all/*.fna /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
+cp /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA/*.fna /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/
+
+done # species
+
+
+###-----------------------------------------
+##make list
+###-----------------------------------------
+
+for species in $(echo "Ldel Sterm")
+do
+rm /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt
+
+for genomssss in $(ls /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/FNA_all/ |grep ".fna$")
+do
+echo "/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/"${species}"/FNA_all/"${genomssss} >> /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt
+
+
+done #genomes
+done # species
+
+
+###-----------------------------------------
+##fastani
+###-----------------------------------------
+
+
+
+for species in $(echo "Ldel Sterm")
+do
+
+
+
+fastANI --fragLen 1000  -t 37 --ql /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt \
+  --rl /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastani.txt \
+  -o /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt
+
+done # species
+
+
+###-----------------------------------------
+##closest genome
+###-----------------------------------------
+for species in $(echo "Ldel Sterm")
+do
+
+
+simss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt|grep "GCF"|sort -k3  |tail -1 |cut -f 3)
+covesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1 |awk -F "\t" '{OFS="\t"}{print ($4/$5)*100}')
+genomesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1|cut -f 1|sed 's/\/home\/vincent\/Desktop\/Projects\/2019_RMK202_analysis\/00_FINAL\/09_referenceTree\/Sterm\/FNA_all\///g'|sed 's/_genomic.fna//g')
+
+
+speciessss=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 8)
+strain=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 9|sed 's/strain=//g')
+
+echo -e "closest strain for the Metagenome of "${species} " is : "${speciessss} ${strain} " with a similarity " ${simss} "% and coverage "${covesss}"%"
+
+done # species
+
+
+species=Ldel
+simss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt|grep "GCF"|sort -k3  |tail -1 |cut -f 3)
+covesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1 |awk -F "\t" '{OFS="\t"}{print ($4/$5)*100}')
+genomesss=$(grep "MAG" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/${species}/fastaANI_comparision.txt |grep "GCF"|sort -k3  |tail -1|cut -f 1|sed 's/\/home\/vincent\/Desktop\/Projects\/2019_RMK202_analysis\/00_FINAL\/09_referenceTree\/Ldel\/FNA_all\///g'|sed 's/_genomic.fna//g')
+
+
+speciessss=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 8)
+strain=$(grep "${genomesss}" /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/09_referenceTree/log/20200529_NCBI_log.txt |cut -f 9|sed 's/strain=//g')
+
+echo -e "closest strain for the Metagenome of "${species} " is : "${speciessss} ${strain} " with a similarity " ${simss} "% and coverage "${covesss}"%"
+
+
+```
+
+
