@@ -1,0 +1,1043 @@
+---
+title: "Script: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
+author: "Vincent Somerville"
+date: "11/01/2021"
+output: html_document
+---
+
+
+```{r setup ,echo=FALSE}
+#Rmakrdown setup
+knitr::opts_chunk$set(message=FALSE, echo=TRUE, eval=FALSE)
+
+```
+
+
+```{bash ,echo=FALSE}
+#Here, I setup the location were I stored the data and where I will plot my results to. 
+
+mkdir -p /home/vincent/Desktop/Manuscripts/2019_RMK202
+cd /home/vincent/Desktop/Manuscripts/2019_RMK202
+mkdir -p 02_data
+mkdir -p 03_results
+
+```
+
+```{r ,echo=FALSE}
+#Here, I setup the location were I stored the data and where I will plot my results to. 
+
+setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202")
+knitr::opts_knit$set(root.dir = '/home/vincent/Desktop/Manuscripts/2019_RMK202')
+```
+
+```{r ,echo=FALSE}
+#load libraries
+library(ggbiplot)
+library(officer)
+library(openxlsx)
+library(readr)
+library(ggbiplot)
+library(tidyverse)
+library(patchwork)
+library(plotly)
+library(readr)
+library(tsibble)
+
+library(readr)
+library(ggplot2)
+library(plyr)
+library(plotly)
+library(tidyverse)
+library(lubridate)
+library(growthrates)
+library(broom)
+library(drc)
+library(patchwork)
+library(dplyr)
+require(zoo)
+
+library(genoPlotR)
+library(tidyverse)
+library(alluvial)
+library(ggalluvial)
+
+library(genoPlotR)
+
+library(igraph)
+
+```
+
+This script includes the complete workflow how the data for the following publication was analysed:
+
+*Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture*
+
+The structure is mainly in the first part I go through the basic analysis and the second part I focus on the analysi for the figures:
+
+
+# Supplmental analysis
+
+
+### starter culture stability
+
+Here, I loock at the historical data from rmk202 received from the cheese starter culture production. 
+
+```{r}
+ph_workingStock_rmk202 <- read_delim("02_data/ph_workingStock_rmk202.csv", "\t", escape_double = FALSE, trim_ws = TRUE)
+
+# Path$New.Week <-
+  # strftime(ph_workingStock_rmk202$mixDate, format = "%W/%Y")
+
+  yearweek(ph_workingStock_rmk202$yearweekcol)
+ph_workingStock_rmk202$week
+ ph_workingStock_rmk202$date <-  MMWRweek::MMWRweek2Date(MMWRyear = ph_workingStock_rmk202$year,
+                        MMWRweek = ph_workingStock_rmk202$week,
+                        MMWRday = 3)
+  
+  ph_workingStock_rmk202$Versand
+acidicationPlot <- ggplot(ph_workingStock_rmk202,aes(x=date,y=Versand))+geom_point()+theme_classic()+scale_y_continuous(limits = c(0,150))+labs(y="acid-base titration value of starter culture",x="time [year]")+theme(axis.text.x = element_text(angle = 60, hjust = 1,size=9))+geom_hline(yintercept = 110)
+ 
+ acidicationPlot
+ is.num(ph_workingStock_rmk202$`D(-)%`)
+ ph_workingStock_rmk202 %>% filter(!is.na("D(-)%"))
+ 
+# ph_workingStock_rmk202_sub <-   ph_workingStock_rmk202 %>% filter(!is.na(`D(-)%`))
+
+ph_workingStock_rmk202_sub <-   ph_workingStock_rmk202%>% filter(!is.na(`D(-)%`)) %>% filter(as.numeric(`D(-)%`)<100)
+ph_workingStock_rmk202_sub$`D(-)%` <-  as.numeric(ph_workingStock_rmk202_sub$`D(-)%`)
+
+lactatePlot <- ggplot(ph_workingStock_rmk202_sub,aes(x=mixDate,y=`D(-)%`))+geom_point()+theme_classic()+scale_y_continuous(limits = c(0,100))+labs(y="Percent of D-lactate",x="time")+theme(axis.text.x = element_blank())
+ 
+ lactatePlot
+ 
+png("03_results/lactatePlot.png", width = 2100, height = 1500,res=300)
+lactatePlot
+dev.off()
+ 
+
+png("03_results//acidificationPlot.png", width = 2100, height = 1500,res=300)
+acidicationPlot
+dev.off()
+```
+
+### Accessory genes
+
+eggnog of pandarooo results
+
+```{r}
+library(readr)
+library(plyr)
+library(ggplot2)
+library(tidyverse)
+
+accesoryGenesNames <- read_csv("02_data/accesoryGenes.names",  col_names = "names")
+
+genes_soacer <- read_delim("02_data/query_seqs.fa.emapper_accessory.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3))
+
+
+colnames(genes_soacer) <- c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description")
+
+COG_functional_categories <- read_delim("02_data/COG_functional_categories.csv",  ",", escape_double = FALSE, col_names = c("short","long","divided"),trim_ws = TRUE, na = "NA")
+
+##----------------COG
+
+ALL_sterm <- genes_soacer
+nrow(ALL_sterm)
+
+ALL_sterm <- genes_soacer %>% 
+    mutate(COG_Functional_Category = strsplit(as.character(COG_Functional_Category), "")) %>% 
+    unnest(COG_Functional_Category)
+
+
+ALL_sterm <- merge(ALL_sterm,COG_functional_categories,by.y="short",by.x="COG_Functional_Category",all.x=TRUE)
+
+colnames(ALL_sterm)
+table(ALL_sterm$long)
+ALL_sterm_aa <- ALL_sterm %>% filter(long=="Amino acid metabolism and transport")
+
+ALL_sterm_transcriptioon <- ALL_sterm %>% filter(long=="Transcription")
+ALL_sterm_interesting <- ALL_sterm %>% filter(!long %in% c("Replication and repair","Function Unknown")) %>% filter(!is.na(COG_Functional_Category))
+# ALL_sterm$COG_Functional_Category
+grep("transpor",ignore.case = FALSE,ALL_sterm_interesting$`eggNOG free text description`) %>% length()
+
+##---------------which genes do not cluster in eggnog
+
+genes <- accesoryGenesNames[which(!accesoryGenesNames$names %in% genes_soacer$query_name),"names"]
+unclustering <- data.frame("query_name"=genes,"longCOG"="Function Unknown")
+colnames(unclustering) <- c("query_name","long")
+# table(ALL_sterm$longCOG)
+ALL_sterm_extended <- ALL_sterm %>% dplyr::select(c("query_name","long"))
+ALL_sterm_extended <- rbind(ALL_sterm_extended,unclustering)
+# table(ALL_sterm_extended$longCOG)
+ALL_sterm_extended$long  <- revalue(ALL_sterm_extended$long, c("character(0)"="Function Unknown"))
+100*(sort(table(ALL_sterm_extended$long ))/nrow(ALL_sterm_extended))
+
+table(ALL_sterm_extended$long ) %>% sort()
+##---------------plot
+
+CogPlotSterm <- ggplot(ALL_sterm_extended,aes(x=forcats::fct_infreq(long)))+geom_bar()+
+  theme_classic()+
+  # facet_wrap(array ~ .)+
+  labs(x="",y="Accessory genes")+
+    # scale_fill_manual(values=three_reds)+
+   # scale_color_manual(values=three_reds)+
+  scale_y_continuous(breaks =c(0,25,80,192),labels=c(0,25,80,192))+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1,size=9),
+          # # axis.text.y.left = element_text(color = "blue"),
+          # axis.text.y.right = element_text(color="red"),
+          # axis.title.y.left = element_text(color="blue"),
+          # axis.title.y.right = element_text(color="red"),
+          # rect = element_rect(fill = "transparent"), # all rectangles      #axis.text.x = element_blank(),
+          #legend.position="none"
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          legend.title = element_blank(),
+          plot.margin=unit(c(0,0,0,2), "cm"),
+          # axis.text.x.bottom = element_text(size=10)
+          #legend.position = c(0.02, 0.98),
+          #legend.justification = c("left", "top")
+          )
+CogPlotSterm
+library(patchwork)
+
+
+svg("03_results/accessory_genes_eggnog.svg",width=6,height=5)
+
+CogPlotSterm
+
+dev.off()
+
+```
+
+## PGAP analysis
+
+moving genomes from local (previously downloaded from NCBI submission portal) to big machine
+
+```{bash}
+
+scp /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/PGAP_genomes/* vincent@130.223.51.116:/data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/
+
+```
+
+change names of files
+
+```{bash}
+
+##--------------names of strains
+ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/Ldel/ |grep "_202" |grep "fasta$" |sed 's/.fasta//g' > /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/names_RMK202_strains.txt
+ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/genomes/RMKsonly/FINAL/Sterm/ |grep "_202" |grep "fasta$" |sed 's/.fasta//g' >> /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/names_RMK202_strains.txt
+
+##--------------change name
+starterCulturesss=202
+IFS=$'\n'
+for files in $(ls /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/ |grep -v ".gb" )
+do
+
+echo ${files}
+genomeID=$(head -2 /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${files} |tail -1 |awk -F "[,]" '{OFS="\t"}{print $1}'| sed 's/ chromosome//g' |awk -F "strain " '{OFS="\t"}{print $2}')
+Species=$(head -2 /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${files} |tail -1 |awk -F "[ ,]" '{OFS="\t"}{print $3}'|head -c1)
+Techhh=$(grep "Sequencing Technology  ::" /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${files} | sed 's/            Sequencing Technology  :: //g'  |head -1 | sed 's/.*; //g' |head -c1)
+
+echo -e ${genomeID} ${Species} ${Techhh}
+
+cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${files} /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${Species}_${Techhh}_${starterCulturesss}_${genomeID}.gb
+
+rm /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/${files}
+ echo "---------------------------"
+done
+
+###metagenom assembled genomes change name
+
+mv /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs//202_LMAG.gb /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs//L_M_202_LMAG.gb 
+
+mv /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs//202_SMAG.gb /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs//S_M_202_SMAG.gb 
+
+```
+
+download the two reference strains (type strains)
+
+
+```{bash}
+
+mkdir -p /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/{log,genomes}
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/download.file |grep "lactobacillus" -i|grep "DSM"|grep "20072"|tail -1|awk 'BEGIN{FS="\t";OFS="\t"}  {print $20}'| sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gbff.gz|' >  /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/log/download_gb.txt
+
+cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/coreGenomeSNPtree/download.file |grep "streptococcus" -i|grep "19258"|grep "representative genome"|awk 'BEGIN{FS="\t";OFS="\t"}  {print $20}'| sed -r 's|(ftp://ftp.ncbi.nlm.nih.gov/genomes/all/.+/)(GCF_.+)|\1\2\/\2_genomic.gbff.gz|' >> /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/log/download_gb.txt
+
+cd /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes
+
+wget -i /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/log/download_gb.txt
+gunzip /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/*.gz
+
+mv /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/GCF_010120595.1_ASM1012059v1_genomic.gbff /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/S_T_typeStrain_19258.gb
+
+mv /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/GCF_002278095.1_ASM227809v1_genomic.gbff /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/L_T_typeStrain_20072.gb
+
+```
+
+move all genbank files together
+
+```{bash}
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb
+cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/TypeStrainsNCBI/genomes/* /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/
+cp /data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/* /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/
+
+
+```
+
+convert to genbank to fasta
+
+```{bash}
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta
+
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+seqret /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes}.gb /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta
+done
+
+```
+
+convert to genbank to gff
+
+```{bash}
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff
+
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+/home/vincent/perl5/bin/bp_genbank2gff.pl -stdout -file /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes}.gb > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff/${genomes}.gff
+echo -e ${genomes}
+done
+
+```
+
+convert genbank to faa
+
+```{bash}
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/faa
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/faa
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+python2.7 /home/vincent/apps/genbank2faa.py /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes}.gb /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/faa/${genomes}.faa
+echo -e ${genomes}
+done
+
+```
+
+
+#### pseudogene
+Here, I want to create a pseudo gene comparison
+
+```{bash}
+short=RMK202
+#genus=Lactobacillus
+what=pseudogene
+
+##============
+##pseudogenes
+##============
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/
+##--------------------------
+##Ldel
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\tSpecies\tTechnology\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "Pseudo Genes (total)              ::" |head -1| sed 's/Pseudo Genes (total)              :://g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |awk -v genomesss="$shortGenome" -v shortSpeciesss="$shortSpeciesss" -v techsss="$shortTechnology" 'BEGIN{OFS="\t"}{print genomesss , shortSpeciesss , techsss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+```
+
+
+#### rRNA
+
+```{bash}
+
+##============
+##rRNA
+##============
+what=rRNA
+short=RMK202
+#genus=Lactobacillus
+mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "Genes (RNA)                       :: " |head -1| sed 's/Genes (RNA)                       :: //g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+```
+
+#### genes
+
+```{bash}
+
+##============
+##genes
+##============
+what=genes
+short=RMK202
+#genus=Lactobacillus
+
+
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "Genes (total)                     :: " |head -1| sed 's/Genes (total)                     :: //g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |sed 's/,//g'|awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+```
+
+
+#### CRISPR
+
+```{bash}
+
+##============
+##CRISPR
+##============
+what=CRISPR
+short=RMK202
+#genus=Lactobacillus
+
+
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "CRISPR Arrays                     ::" |head -1| sed 's/CRISPR Arrays                     :://g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |sed 's/,//g'|awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+```
+
+#### tRNAs
+
+```{bash}
+
+##============
+##tRNAs
+##============
+what=tRNAs
+short=RMK202
+#genus=Lactobacillus
+
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "tRNAs                             ::" |head -1| sed 's/tRNAs                             :://g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |sed 's/,//g'|awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+```
+
+#### ncRNAs
+
+```{bash}
+
+##============
+##ncRNAs
+##============
+what=ncRNAs
+short=RMK202
+#genus=Lactobacillus
+
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |head -1000 | grep "ncRNAs                            ::" |head -1| sed 's/ncRNAs                            :://g'| sed -e 's/^[ \t]*//' |sed -e 's/*[ \t]$//' |sed 's/,//g'|awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+
+
+```
+
+#### transposase
+
+```{bash}
+
+##============
+##transposase
+##============
+what=transposase
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ )
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"5S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"16S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"23S"
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "transposase" -c |awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+
+```
+
+
+
+#### rRNAs
+```{bash}
+what=rRNAs
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |head -5)
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"5S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"16S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"23S"
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "transposase" -c |awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+```
+
+
+#### contig number
+
+```{bash}
+
+##============
+##contigNumber
+##============
+what=contigs
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ )
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"5S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"16S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"23S"
+  cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "^LOCUS" -c |awk -v genomesss="$shortGenome"  'BEGIN{OFS="\t"}{print genomesss,$0}'  >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+```
+
+#### genome size 
+
+```{bash}
+
+what=genome
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\tSize\tGC" > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+
+sed '2,${/^>/d}' /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta >  /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp.fasta
+#seq_length.py /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp.fasta
+geecee /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp.fasta /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp2.txt
+
+Gcsss=$(tail -1 /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp2.txt|awk '{print $2}'|sed 's/0.//g')
+
+genomesSizzz=$(seq_length.py /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta |awk -F '\t' '{sum += $3} END {print sum}')
+
+echo -e ${shortGenome}"\t"${genomesSizzz}"\t"${Gcsss} >>/archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/tmp*.fasta
+done
+
+```
+
+
+#### plasmid
+
+```{bash}
+
+source activate staramr
+#staramr --help
+
+rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid
+#staramr search -o /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid/out /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/*.fasta
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid
+#plasmidfinder.py -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/L_I_202_11141.fasta
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+echo $genomes
+#rm -r ${genomes}
+mkdir -p ${genomes}
+#plasmidfinder.py -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta -o ${genomes}
+done
+
+
+
+
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+#/home/vincent/perl5/bin/bp_genbank2gff.pl -stdout -file /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes}.gb > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff/${genomes}.gff
+echo -e ${genomes}
+plasmidCount=$(grep "plasmid" -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff/${genomes}.gff |cut -f 1|sort|uniq -c |wc -l)
+done
+##============
+##contigNumber
+##============
+what=plasmid
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+#rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\t"${what} > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |cut -d '.' -f 1 )
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes}|cut -d '_' -f 4)
+  #short=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 3)
+  #shortSpeciesss=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 1)
+  #shortTechnology=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 2)
+  
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"5S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"16S" 
+  #cat /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/${genomes} |grep "/product=\"23S"
+plasmidCount=$(grep "plasmid" -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gff/${genomes}.gff |cut -f 1|sort|uniq -c |wc -l)
+echo -e ${shortGenome}"\t"${plasmidCount} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+done
+
+##---------------------------------checking for plasmid mapping
+
+
+threads=37
+#samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+#logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_Final
+#Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/RMK202_MAG_assembly.fasta
+what=plasmid2
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+#rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\tStermphage\tLdelphage1\tLdelphage2" > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+#for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |cut -d '.' -f 1 )
+for genomes in $(echo "11141 11142 11143 12104 12105 12107 12109 24776 24777 24778 24779 24780 24781 24782 24783 24798")
+do
+echo "========================"
+echo ${genomes}
+  shortGenome=$(echo ${genomes}|cut -d '_' -f 4)
+  
+  #shortGenome=24780
+  bamqccsss=$(echo -e "/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_Final/"${shortGenome}"/bwaMapping2DB/bamqc/genome_results.txt") 
+  STermPhage=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046131" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4-$5}')
+  LdelPhage1=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046132" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4-$5}')
+  LdelPhage2=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046133" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4-$5}')
+
+echo -e ${shortGenome}"\t"${STermPhage}"\t"${LdelPhage1}"\t"${LdelPhage2} #>> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+  done
+  
+
+echo "11141 11142 11143 12104 12105 12107 12109 24776 24777 24778 24779 24780 24781 24782 24783 24798" 
+
+##---------------------------------aligne Ldel genome assemblies to MAG
+
+
+threads=37
+#samplesss=/archiv/Projects/2019_RMK202_analysis/01_log/names_extended.txt  ##the file with all sample names
+#logFilelocation=/archiv/Projects/2019_RMK202_analysis/01_log
+BaseLocation=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_Final
+Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/RMK202_MAG_assembly.fasta
+what=plasmid3
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+#rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\tLdelCov\tLdelplasmid1\tLdelplasmid2" > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |cut -d '.' -f 1 |grep "^L")
+#for genomes in $(echo "11141 11142 11143 12104 12105 12107 12109 24776 24777 24778 24779 24780 24781 24782 24783 24798")
+do
+echo "========================"
+echo ${genomes}
+  shortGenome=$(echo ${genomes}|cut -d '_' -f 4)
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmidAlignment/BamQC/${genomes}
+
+
+  
+#bwa mem -x intractg ${Assembly} /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta  | samtools sort -@${threads} -O BAM -o /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmidAlignment/${genomes}.bam - 
+
+
+
+#qualimap bamqc -bam /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmidAlignment/${genomes}.bam -outdir /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmidAlignment/BamQC/${genomes} --java-mem-size=80G
+
+  
+  #shortGenome=24780
+  bamqccsss=$(echo -e "/archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmidAlignment/BamQC/"${genomes}"/genome_results.txt") 
+  STermPhage=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046131" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4}')
+  LdelPhage1=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046132" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4}')
+  LdelPhage2=$(grep ">>>>>>> Coverage per contig" -A 14 ${bamqccsss} |grep "CP046133" |  sed "s/^[ \t]*//" |sed -r '/^\s*$/d' |awk -F "\t" '{print $4}')
+
+echo -e ${shortGenome}"\t"${STermPhage}"\t"${LdelPhage1}"\t"${LdelPhage2} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+  done
+
+
+```
+
+#### Busco
+
+```{bash}
+
+
+
+what=Busco
+short=RMK202
+#genus=Lactobacillus
+#mkdir -p /home/vincent/Projects/2019_pilotplant/comparativeGenomics/${what}
+
+
+rm /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_*.txt
+echo -e "Genome\tCompleteness" > /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+for genomes in $(ls /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/gb/ |sed 's/.gb//g')
+do
+echo ${genomes}
+  shortGenome=$(echo ${genomes} |cut -d '.' -f 1|cut -d '_' -f 4)
+
+#rm -r /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/busco/${shortGenome}
+mkdir -p /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/busco/${shortGenome}
+
+#busco -m MODE -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/fasta/${genomes}.fasta -o /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/busco/${shortGenome} --auto-lineage-prok
+
+cd /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/busco/${shortGenome}
+#
+ # python3 /home/vincent/apps/busco/scripts/run_BUSCO.py -c 32 -i /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes//FINAL_mix_typestrains_RMK202/faa/${genomes}.faa -o ${shortGenome} -l /home/vincent/apps/busco/lactobacillales_odb9 -m prot
+
+
+  #grep -v "^#" run_${genomesssss}/short_summary_${genomesssss}.txt| grep "C:" -A 7 
+  all_INFO=$(grep -v "^#" run_*/short_summary_*.txt| grep "C:" | sed "s/^[ \t]*//"  )
+  complet=$(echo ${all_INFO} | awk -F "[,[]" '{print $1}'|sed 's/%//g'|sed 's/C://g' )
+  single=$(echo ${all_INFO} | awk -F "[,[]" '{print $2}'|sed 's/%//g'|sed 's/S://g')
+  dupli=$(echo ${all_INFO} | awk -F "[,[]" '{print $3}'|sed 's/%]//g'|sed 's/D://g')
+  fragm=$(echo ${all_INFO} | awk -F "[,[]" '{print $4}'|sed 's/%//g'|sed 's/F://g')
+  Missi=$(echo ${all_INFO} | awk -F "[,[]" '{print $5}'|sed 's/%//g'|sed 's/M://g')
+  numbi=$(echo ${all_INFO} | awk -F "[,[]" '{print $6}'|sed 's/n://g')
+  
+ echo -e ${speciesss}"\t"${genomesssss}"\t"${complet}"\t"${single}"\t"${dupli}"\t"${fragm}"\t"${Missi}"\t"${numbi}  
+# >> /archiv/Projects/2019_Nano_Meta/07_BUSCO_assemblies/all_analysis.txt
+
+ echo -e ${shortGenome}"\t"${complet} >> /archiv/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/${what}_${short}.txt
+
+done
+
+```
+
+####rAnalysis
+```{r}
+library(readr)
+library(plyr)
+library(tidyverse)
+#source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
+
+##=========================================
+##---Pseudo
+RMK_pseudogene <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/pseudogene_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_contigs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/contigs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_genome <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/genome_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_genes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/genes_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_CRISPR <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/CRISPR_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_ncRNAs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/ncRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_plasmid <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_plasmid2 <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid3_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE) %>% dplyr::select(-LdelCov) %>% dplyr::select(-Ldelplasmid2) 
+
+RMK_plasmid2$plasmid <- ifelse(RMK_plasmid2$Ldelplasmid1>0.5,1,0)
+RMK_plasmid3 <- RMK_plasmid2 %>% dplyr::select(-Ldelplasmid1)
+RMK_plasmid <- RMK_plasmid %>% filter(!Genome %in% RMK_plasmid3$Genome)
+
+RMK_plasmid <- rbind(RMK_plasmid3,RMK_plasmid)
+
+RMK_rRNA <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/rRNA_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_transposase <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/transposase_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_tRNAs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/tRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+
+RMK_Busco <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/Busco_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+
+##=========================================
+##merge all samples
+##=========================================
+library(plyr)
+library(tidyverse)
+library(xtable)
+tmp1 <- as.tibble(merge(RMK_pseudogene,RMK_contigs,by="Genome"))
+tmp2 <- as.tibble(merge(tmp1,RMK_genome,by="Genome"))
+tmp3 <- as.tibble(merge(tmp2,RMK_genes,by="Genome"))
+tmp4 <- as.tibble(merge(tmp3,RMK_CRISPR,by="Genome"))
+tmp5 <- as.tibble(merge(tmp4,RMK_ncRNAs,by="Genome"))
+tmp6 <- as.tibble(merge(tmp5,RMK_plasmid,by="Genome"))
+tmp7 <- as.tibble(merge(tmp6,RMK_rRNA,by="Genome"))
+tmp8 <- as.tibble(merge(tmp7,RMK_transposase,by="Genome"))
+tmp9 <- as.tibble(merge(tmp8,RMK_tRNAs,by="Genome"))
+tmp10 <- as.tibble(merge(tmp9,RMK_Busco,by="Genome"))
+
+  RMK_final <- tmp10
+
+  
+  RMK_final$Species <- revalue(RMK_final$Species, c("L"="L. delbrueckii", "S"="S. thermophilus"))
+  RMK_final$Technology <- revalue(RMK_final$Technology, c("I"="Illumina", "O"="Nanopore&I.", "M"="MAG","T"="Typestrain"))
+RMK_final_again <- RMK_final %>% dplyr::select(Species,Genome,Technology,contigs,Size,GC,plasmid,genes,pseudogene,rRNA,tRNAs,transposase,CRISPR,Completeness)
+ colnames(RMK_final_again) <- revalue(colnames(RMK_final_again), c("Size"="Genome size","Completeness"="BUSCO completeness","pseudogene"="Pseudogenes","Genome"="Strain", "contigs"="Contig number", "tRNAs"="tRNA"))
+
+ target <- c("13494","13496","13498","13499","24737","24738","24739","24740","24853","24854","24855","13491","13492","13493","13495","13497","13499c1","13499c2","13500","S50","S72","SMAG","19258","11141","11142","11143","12104","12105","12107","12109","24776","24777","24778","24779","24780","24781","24782","24783","24798","LMAG","20072")
+
+ RMK_final_again$`Contig number` <- as.integer(RMK_final_again$`Contig number`)
+  RMK_final_again$`Genome size` <- as.integer(RMK_final_again$`Genome size`)
+  RMK_final_again$GC <- as.integer(RMK_final_again$GC)
+RMK_final_again$plasmid <- as.integer(RMK_final_again$plasmid)
+ RMK_final_again$genes <- as.integer(RMK_final_again$genes)
+ RMK_final_again$Pseudogenes <- as.integer(RMK_final_again$Pseudogenes)
+ RMK_final_again$rRNA <- as.integer(RMK_final_again$rRNA)
+ RMK_final_again$tRNA <- as.integer(RMK_final_again$tRNA)
+ RMK_final_again$CRISPR <- as.integer(RMK_final_again$CRISPR)
+ RMK_final_again$transposase <- as.integer(RMK_final_again$transposase)
+ RMK_final_again$`BUSCO completeness` <- as.integer(RMK_final_again$`BUSCO completeness`)
+ 
+ RMK_final_again_final <- RMK_final_again %>% arrange(factor(Strain, levels = target))
+xtable(RMK_final_again_final,include.rownames = FALSE)
+
+RMK_final_again %>%  filter(Technology!="Typestrain") %>% group_by(Species) %>% summarize_all(mean)
+RMK_final_again %>%  filter(Technology!="Typestrain") %>% group_by(Species) %>% summarize_all(sd)
+
+
+tsne_plot %>% group_by(density) %>% select(V1, 
+    V2) %>% summarize_all(mean)
+##--------------------go with this into overleaf--------------------------
+
+library(kableExtra)
+knitr::kable(RMK_final_again, "latex", booktabs = TRUE, linesep = "") %>%
+    kable_styling(full_width = TRUE, font_size = 9) %>%  as_image()
+    # column_spec(1, width = "4cm") %>%
+    # save_kable(file = "/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/table.png")
+
+
+##-----transposases
+
+RMK_final_again %>% filter(Species=="L. delbrueckii") %>% filter(Technology!="Typestrain") %>% 
+  dplyr::summarise(mean=mean(transposase),sd=sd(transposase)) 
+
+##=========================================
+pseudoPlot <- ggplot(Lactobacillus_pseudogene,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="pseudogene")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        #legend.position = c(0.02, 0.98),
+          # legend.justification = c("left", "top"),
+          # legend.title = element_blank()
+          legend.position="none"        
+          )
+pseudoPlot
+
+##=========================================
+##---rRNA
+
+Lactobacillus_rRNA <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/rRNA/all_rRNA.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+rRNAPlot <- ggplot(Lactobacillus_rRNA,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="rRNA")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        #legend.position = c(0.02, 0.98),
+          # legend.justification = c("left", "top"),
+          # legend.title = element_blank()
+        legend.position="none"
+          )
+rRNAPlot
+
+##=========================================
+##---ncRNAs
+
+Lactobacillus_ncRNAs <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/ncRNAs/all_ncRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+ncRNAsPlot <- ggplot(Lactobacillus_ncRNAs,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="ncRNAs")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        legend.position = c(0.02, 0.98),
+          legend.justification = c("left", "top"),
+          legend.title = element_blank()
+          )
+ncRNAsPlot
+
+##=========================================
+##---genes
+
+Lactobacillus_genes <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/genes/all_genes.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+genesPlot <- ggplot(Lactobacillus_genes,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="genes")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        legend.position = c(0.02, 0.98),
+          legend.justification = c("left", "top"),
+          legend.title = element_blank()
+          )
+genesPlot
+
+##=========================================
+##---CRISPR
+
+Lactobacillus_CRISPR <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/CRISPR/all_CRISPR.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+CRISPRPlot <- ggplot(Lactobacillus_CRISPR,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="CRISPR")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        #legend.position = c(0.02, 0.98),
+          # legend.justification = c("left", "top"),
+          # legend.title = element_blank()
+        legend.position="none"
+          )
+CRISPRPlot
+
+
+##=========================================
+##---transposase
+
+Lactobacillus_transposase <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/transposase/all_transposase.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+transposasePlot <- ggplot(Lactobacillus_transposase,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="transposase")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        #legend.position = c(0.02, 0.98),
+          # legend.justification = c("left", "top"),
+          # legend.title = element_blank()
+        legend.position="none"
+          )
+transposasePlot
+
+##=========================================
+##---tRNAs
+
+Lactobacillus_tRNAs <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/tRNAs/all_tRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+
+tRNAsPlot <- ggplot(Lactobacillus_transposase,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
+  labs(x="",
+       y="tRNAs")+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        #legend.position = c(0.02, 0.98),
+          # legend.justification = c("left", "top"),
+          # legend.title = element_blank()
+        legend.position="none"
+          )
+tRNAsPlot
+
+##=========================================
+##---arrange
+
+legend <- g_legend(genesPlot)
+grid.arrange(genesPlot+theme(legend.position="none"),rRNAPlot,tRNAsPlot,legend,pseudoPlot,transposasePlot,CRISPRPlot , ncol=4)
+
+
+svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/ldelGenomes.svg",width=10,height=5)
+grid.arrange(genesPlot+theme(legend.position="none"),rRNAPlot,tRNAsPlot,legend,pseudoPlot,transposasePlot,CRISPRPlot , ncol=4)
+
+dev.off()
+```
+
