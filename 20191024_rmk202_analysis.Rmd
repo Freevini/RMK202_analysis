@@ -31486,17 +31486,18 @@ ratio_together_final_tmp1 <- ratio_together_2 %>% select(sample,lin4,lin3,lin2,l
 ratio_together_final <- rbind(ratio_together_final_tmp1,ratio_together_final_referenceSamples,ratio_together_final_referenceSamples2) %>% gather(.,lineage,"Relative abundance","lin4","lin3","lin2","lin1")
 
 table(ratio_together_final$sample)
+
+
+
+ratio_together_final <- ratio_together_final %>% filter(!sample %in% c("Reference 1","Reference 2"))
 ratio_together_final$sample = factor(ratio_together_final$sample, levels=c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2","experiment_A","experiment_B","experiment_C","experiment_D","experiment_E","Reference 1","Reference 2"))
-
-
-
-
 
 ratio_together_final$lineage = factor(ratio_together_final$lineage, levels=(c("lin4","lin3","lin2","lin1")))
 
 
 # colorsss <- c("#0000FF","#6699FF","#99CCFF","#00FFFF")
 colorsss <- c("#99CCFF","#00FFFF","#0000FF","#6699FF")
+colorsss <- c("#99CCFF","#00d5d5ff","#0000FF","#6699FF")
 
 
 plot_strain_abundance <- ggplot(ratio_together_final,aes(x=sample,y=`Relative abundance`,color=lineage,fill=lineage))+geom_bar(stat="identity")+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9))+
@@ -31508,6 +31509,125 @@ svg("~/Desktop/Projects/2019_RMK202_analysis/plot/strain_rel_abundance.svg",widt
 # p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
 plot_strain_abundance
 dev.off()
+
+
+##area plot
+
+plot_strain_abreasss <- ggplot(ratio_together_final,aes(x=sample,y=`Relative abundance`,group=lineage,color=lineage,fill=lineage))+geom_area(alpha=0.5)+geom_point(position = "stack",size=2)+geom_line(position = "stack",size=1.25)+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9))+
+    labs(x="")+scale_color_manual(values=colorsss)+scale_fill_manual(values=colorsss)+theme(legend.position = "none")+scale_x_discrete( expand = c(0.01,0.01)) +scale_y_discrete( expand = c(0.01,0.01)) 
+
+plot_strain_abreasss
+
+
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/strain_rel_abundance_02.svg",width=2.5,height=3.5)
+
+# p3+theme(axis.title = element_blank(),axis.text.x = element_blank())
+plot_strain_abreasss
+dev.off()
+###------------------------
+#with Ldel
+#first have to run the all toghether chunk
+###------------------------
+  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
+
+table(read_count$chr)
+
+# read_count$species <- ifelse(read_count$chr=="L_del_phage_01","L_del_phage_01","S_term_phage_01")
+  
+  table(read_count$chr)
+  
+  read_count$geneCoverage  <- (read_count$count*600)/read_count$geneLength
+  
+   all_final <- read_count %>% 
+    group_by(sample,chr) %>% 
+    dplyr::summarize(median = median(geneCoverage)) %>% filter(chr %in% c("CP046131","CP046134","Lactobacillus_phage_1","Streptococcus_phage_1","Streptococcus_phage_2"))
+  
+
+all_final$sample <- revalue(all_final$sample, c("species.x"="species","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2","G1_6_18"="experiment_A","G2_6_18"="experiment_B","G3_6_18"="experiment_C","G4_6_18"="experiment_D","G5_6_18"="experiment_E"))
+##----------------plot
+all_final_bacteria <- all_final %>% filter(chr %in% c("CP046131","CP046134"))
+total_samples_sumTreatment <- aggregate(. ~sample, data=all_final_bacteria[,c("sample","median")], sum, na.rm=TRUE)
+
+all_final_bacteria$total_coverage <- total_samples_sumTreatment[match(all_final_bacteria$sample,total_samples_sumTreatment$sample),"median"]
+all_final_bacteria$percent_coverage <- 100*(all_final_bacteria$median/all_final_bacteria$total_coverage)
+
+all_colours_new <-  c( "#10B552","#EB4D4D")
+
+PrelAbundance_bacteria <-  ggplot( data = all_final_bacteria,aes(y = percent_coverage, x = sample, group=interaction(chr),fill = chr))+ geom_bar( stat="identity")+
+    labs("",
+         x="",
+         y="relative abundance")+
+    theme_classic()+
+   # scale_color_viridis(discrete=TRUE)+
+   scale_fill_manual(values=all_colours_new)+
+  # scale_fill_viridis(discrete=TRUE)+
+    theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9),
+        # axis.text.x = element_blank(),
+          legend.position="right",
+          #legend.justification=c(1,1), legend.position=c(1,1),
+          legend.title = element_blank()
+          )
+
+  PrelAbundance_bacteria
+  
+  
+  all_final_bacteria$sample <- revalue(all_final_bacteria$sample, c("species.x"="species","L70"="mst3", "L44"="mst10", "L108"="mst7", "L99"="mst8", "L104"="mst6", "L80"="mst5", "L35"="mst9", "L71"="mst4","lyo202_96"="Lyo\n1996","Lyo_202_2012"="Lyo\n2012", "Lyo_202_2014"="Lyo\n2014", "Konserve_202"="working\nstock", "RMK202"="starter\nculture\n2012", "Versand_202"="starter\nculture\n2018","di_K2_6h"="cheesemaking\nday1","th_K2_8h"="cheesemaking\nday2","G1_6_18"="experiment_A","G2_6_18"="experiment_B","G3_6_18"="experiment_C","G4_6_18"="experiment_D","G5_6_18"="experiment_E"))
+  
+    all_final_bacteria_sterm <- all_final_bacteria %>% filter(chr=="CP046134") %>% select(sample,percent_coverage)
+
+  
+  ratio_together_final_sterm <- merge(ratio_together_final,all_final_bacteria_sterm,by="sample") %>% mutate(percent_coverage = `Relative abundance`*(percent_coverage)) %>% select(-`Relative abundance`)
+colnames(ratio_together_final_sterm)[2] <- "chr"
+
+    all_final_bacteria_ldel <- all_final_bacteria %>% filter(chr=="CP046131") %>% select(sample,chr,percent_coverage)
+
+
+# rbind(as_tibble(ratio_together_final_sterm),all_final_bacteria_ldel)
+
+ratio_together_final_all <- bind_rows(as_tibble(ratio_together_final_sterm), all_final_bacteria_ldel)
+ratio_together_final_all$chr
+
+ratio_together_final_all$chr = factor(ratio_together_final_all$chr, levels=(c("CP046131","lin4", "lin3", "lin2", "lin1")))
+
+ratio_together_final_all <- ratio_together_final_all %>% filter(!sample %in% c("cheesemaking\nday1","cheesemaking\nday2"))
+
+colorsss <- c("#fec3b7ff","#99CCFF","#00d5d5ff","#0000FF","#6699FF")
+
+ratio_together_final_all$sample = factor(ratio_together_final_all$sample, levels=c("Lyo\n1996","Lyo\n2012","Lyo\n2014","working\nstock","starter\nculture\n2012","starter\nculture\n2018","cheesemaking\nday1","cheesemaking\nday2","experiment_A","experiment_B","experiment_C","experiment_D","experiment_E","Reference 1","Reference 2"))
+
+plot_strain_abundance <- ggplot(ratio_together_final_all,aes(x=sample,y=percent_coverage,color=chr,fill=chr))+geom_bar(stat="identity")+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9))+
+    labs(x="")+scale_color_manual(values=colorsss)+scale_fill_manual(values=colorsss)+theme(legend.position = "none")
+plot_strain_abundance
+
+
+
+#line plot
+
+plot_strain_abundance_area <- ggplot(ratio_together_final_all,aes(x=sample,y=percent_coverage,group=chr,fill=chr))+geom_area(aes(color=chr),alpha=0.5)+geom_point(aes(color=chr),position = "stack",size=2)+geom_line(aes(color=chr),position = "stack",size=1.25)+theme_classic()+theme(axis.text.x = element_text(angle = 75, hjust = 1,size=9))+
+    labs(x="",y="Relative Abundance")+scale_color_manual(values=colorsss)+scale_fill_manual(values=colorsss)+theme(legend.position = "none")
+plot_strain_abundance_area
+
+
+library(patchwork)
+plot_strain_abundance /
+plot_strain_abreasss /
+plot_strain_abundance_area 
+
+
+   png("~/Desktop/Projects/2019_RMK202_analysis/plot/strain_abundance.png", width = 1200, height = 3000,res=300)
+# svg("~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/05_2Phage_Bact_DB/plots/snpCalling/F1_relativeAbundance_speciesLevel.svg",width=7,height=4)
+
+plot_strain_abundance /
+plot_strain_abreasss /
+plot_strain_abundance_area 
+dev.off()
+
+   # png("~/Desktop/Projects/2019_RMK202_analysis/plot/strain_abundance.png", width = 1200, height = 3000,res=300)
+svg("~/Desktop/Projects/2019_RMK202_analysis/plot/strain_abundance.svg",width=5,height=4)
+
+plot_strain_abundance_area 
+dev.off()
+##-------------
 
 ##---------------------------------
 ##Sample medians calulation per group

@@ -1,0 +1,989 @@
+---
+title: "Script: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
+author: "Vincent Somerville"
+date: "11/01/2021"
+output: html_document
+---
+
+
+```{r setup ,echo=FALSE}
+#Rmakrdown setup
+knitr::opts_chunk$set(message=FALSE, echo=TRUE, eval=FALSE)
+
+```
+
+
+```{bash ,echo=FALSE}
+#Here, I setup the location were I stored the data and where I will plot my results to. 
+
+mkdir -p /home/vincent/Desktop/Manuscripts/2019_RMK202
+cd /home/vincent/Desktop/Manuscripts/2019_RMK202
+mkdir -p 02_data
+mkdir -p 03_results
+
+```
+
+```{r ,echo=FALSE}
+#Here, I setup the location were I stored the data and where I will plot my results to. 
+
+setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202")
+knitr::opts_knit$set(root.dir = '/home/vincent/Desktop/Manuscripts/2019_RMK202')
+```
+
+```{r ,echo=FALSE}
+#load libraries
+library(ggbiplot)
+library(officer)
+library(openxlsx)
+library(readr)
+library(ggbiplot)
+library(tidyverse)
+library(patchwork)
+library(plotly)
+library(readr)
+library(tsibble)
+
+library(readr)
+library(ggplot2)
+library(plyr)
+library(plotly)
+library(tidyverse)
+library(lubridate)
+library(growthrates)
+library(broom)
+library(drc)
+library(patchwork)
+library(dplyr)
+require(zoo)
+
+library(genoPlotR)
+library(tidyverse)
+library(alluvial)
+library(ggalluvial)
+
+library(genoPlotR)
+
+library(igraph)
+
+```
+
+This script includes the complete workflow how the data for the following publication was analysed:
+
+*Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture*
+
+The structure is mainly in the first part I go through the basic analysis and the second part I focus on the analysi for the figures:
+
+# General analysis
+
+Here, I go through the basic analysis on which the figures are the created upon. 
+
+## Genomic data analysis
+
+
+### FastQC
+
+In a first step we creat [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) reports for all the libraries. 
+These are then visualized with [MultiQC](https://multiqc.info/)
+
+```{bash fastqc}
+threads=8
+
+mkdir -p $mainPath/01_rawData/IlluminaFastQC/
+
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed.txt)
+  do
+  echo ${id}e
+
+    
+    fastqc $mainPath/01_rawData/fastq/gz/${id}_R1.fastq.gz -t ${threads} -o $mainPath/01_rawData/IlluminaFastQC/
+    fastqc $mainPath/01_rawData/fastq/gz/${id}_R2.fastq.gz -t ${threads} -o $mainPath/01_rawData/IlluminaFastQC/
+    
+  done
+  mkdir -p $mainPath/01_rawData/IlluminaFastQC/Multiqc,output_file='test.html')
+
+  
+  multiqc $mainPath/01_rawData/IlluminaFastQC/ -o $mainPath/01_rawData/IlluminaFastQC/Multiqc
+
+
+```
+
+### Trim-galore
+In the following we clip adaptors with [trim-galore]()
+
+```{bash trimGalore}
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+threads=30
+id=RMK202_withOld
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed_new.txt)
+  do
+  echo "##=============="
+  echo ${id}
+  echo "##=============="
+      rm -r $mainPath/01_rawData/trimmed_Galore/gz/${id}
+      mkdir -p $mainPath/01_rawData/trimmed_Galore/gz/${id}
+      trim_galore -paired -o $mainPath/01_rawData/trimmed_Galore/gz/${id} \
+        $mainPath/01_rawData/fastq/gz/${id}_R1.fastq.gz  \
+        $mainPath/01_rawData/fastq/gz/${id}_R2.fastq.gz 
+        
+  echo "##=============="
+  echo ${id} "fastQC of trimmed"
+  echo "##=============="
+      
+    mkdir -p $mainPath/01_rawData/trimmed_Galore/fastQC/
+      
+    fastqc $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz -t ${threads} -o $mainPath/01_rawData/trimmed_Galore/fastQC/
+    
+    fastqc $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz -t ${threads} -o $mainPath/01_rawData/trimmed_Galore/fastQC/
+    
+        
+  done 
+  
+
+  mkdir -p $mainPath/01_rawData/trimmed_Galore/fastQC/Multiqc,output_file='test.html')
+
+  multiqc $mainPath/01_rawData/trimmed_Galore/fastQC/ -o $mainPath/01_rawData/trimmed_Galore/fastQC//Multiqc
+
+
+
+```
+
+### SPAdes
+
+In this step we assemble the raw reads of the isolate with [spades](http://bioinf.spbau.ru/en/spades3.7).
+
+```{bash spades}
+source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
+
+threads=35
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+ 
+       mkdir -p $mainPath/06_Spades/${id}/assembly/
+ 
+ 
+     /home/vincent/miniconda2/pkgs/spades-3.13.0-0/bin/spades.py --pe1-1 $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz \
+       --pe1-2 $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz \
+       -o $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta -t ${threads} -m 100
+
+   
+    done
+
+#---------------
+##short info
+##---------------
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+ 
+   grep ">" -c $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/contigs.fasta 
+    done
+##---------------
+##PostAssemblyAnalysis
+##---------------
+
+for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/isolates_names_changed.txt)
+  do
+  echo ==========================
+   echo ${id}
+   echo ==========================
+    
+    #tail -3 $mainPath/03_metaphlan2/${id}_trimmed/metaphlan_profile/profiled_metagenome_${id}_trimmed.txt
+    PostAssemblyAnalysis.R -a $mainPath/06_Spades/${id}/assembly/assemblyMetaSpades_20190121.fasta/scaffolds.fasta \
+      -F $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R1_val_1.fq.gz \
+      -R $mainPath/01_rawData/trimmed_Galore/gz/${id}/${id}_R2_val_2.fq.gz \
+      -o $mainPath/06_Spades/${id}/assembly/PostaAssembly \
+      -t 35
+    
+    done
+
+```
+
+## Metagenomic data analysis
+
+
+### Read filtering
+
+In a first step I filter the fastq Nanopore reads for the pooled replicates with [filtlong](https://github.com/rrwick/Filtlong). 
+I use a filter for min read length of 8kb and the best quality reads. 
+
+
+```{bash}
+
+##2AB
+/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
+
+mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_2A2B/fastq_pass/all_2AB_qualityFiltered_min7000_Q90.fq.gz
+
+##1AB
+/home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_raw.fq | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
+
+mv /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/20190426_NB_1A1B/fastq_pass/all_1AB_qualityFiltered_min7000_Q90.fq.gz
+
+
+##===============
+##Demultiplexed data
+##===============
+
+mkdir -p /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered
+
+for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+  do
+
+  echo "=============="
+  echo ${sample}
+  echo "=============="
+
+    /home/vincent/apps/Filtlong/bin/filtlong --min_length 7000 --keep_percent 90 --target_bases 1000000000 --mean_q_weight 10 /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_renamed/${sample}_nanopore_raw.fastq.gz | gzip > /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz
+
+
+  done
+
+
+scp -r vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/01_rawData/Multiqc /home/vincent/Desktop/Projects/2019_Nano_Meta/Illumina_analysis
+
+
+```
+
+
+### Genome Assembly
+
+Here, we create a [flye](https://github.com/fenderglass/Flye/blob/flye/docs/graph_example.png) assembly of the following:
+1. demultiplexed samples with Qualtiy filtering max 100000000 and minLength 7000 reads
+2. Than I look at the Assembly graph with Bandage. 
+3. Map the short contigs to blastN online to id them
+
+```{bash}
+
+##===========
+##Demultiplexed
+##===========
+
+##===========
+##Assembly plasmid
+##===========
+for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+  do
+  
+    sample=th_K2_8h
+    
+    rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/
+    mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/
+  echo "=============="
+  echo ${sample}
+  echo "=============="
+
+    flye --threads 15  --iterations 5 --genome-size 4500000 --plasmids --nano-raw \
+      /archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz \
+      --out-dir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/
+
+  done
+
+
+
+###---Bandage
+sample=th_K2_8h
+
+
+mkdir -p ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/assembly/
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/assembly/${sample}_assembly_Graph_plasmid.gfa
+
+
+
+##-------assembly length
+
+seq_length.py /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/assembly.fasta
+seq_length.py /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/th_K2_8h/assembly/assembly.fasta
+
+##-------cd -hit
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/cd_hit
+#cd-hit-est -i  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/assembly.fasta \
+#    -o  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/cd_hit/assembly_Clustering.txt -c 0.85 -M 30000 -T 37 -sc 1 -sf 1
+  
+/home/vincent/apps/cd-hit-v4.8.1-2019-0228/cd-hit-est -i   /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/assembly.fasta \
+    -o  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/cd_hit/assembly_Clustering.txt -c 0.85
+  
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/th_K2_8h/assembly/cd_hit
+/home/vincent/apps/cd-hit-v4.8.1-2019-0228/cd-hit-est -i  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/th_K2_8h/assembly/assembly.fasta     -o  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/th_K2_8h/assembly/cd_hit/assembly_Clustering.txt -c 0.85
+
+
+```
+
+
+
+
+### circlator
+as circlator did not work. I will do a prokka annotation and annotate manually at the DnaA
+
+```{bash}
+
+###-----------devide all contigs
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs
+for contigs in $(grep ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/di_rmk202_MAG_reference_renamed.fasta |sed 's/>//g' )
+  do
+  echo ${contigs}
+samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/di_rmk202_MAG_reference_renamed.fasta ${contigs} > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+  done
+###-----------PRokka
+##------------------------------------Streptococcus thermophilus
+contigs=S_thermophilus_mag_rmk202
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}/ --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+##------------------------------------Lactoabillus delbrueckii
+contigs=L_delbrueckii_mag_rmk202
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}/ --force --usegenus --genus Lactobacillus --locustag Ldel_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+  
+  ##=================  
+###-----------rearrang contigs
+  ##=================  
+  
+  ##===================================================Lactobacillus delbrueckii
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/L_delbrueckii_mag_rmk202/PROKKA_11142019.gff
+  
+  #37825
+  contigs=L_delbrueckii_mag_rmk202
+
+
+###---------------extract fragemtent 1-------------------
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs/
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs/
+
+echo -e ${contigs}"\t1\t37000" > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment1.bed
+
+samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+
+bedtools getfasta -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta \
+  -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment1.bed \
+  -fo /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment1.fasta
+
+grep -v ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment1.fasta > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment1_megerable.fasta
+
+
+###---------------extract fragemtent 3-------------------
+
+
+#seq_length.py /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+
+echo -e ${contigs}"\t37001\t2193739" > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment2.bed
+
+#samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/circlaring_ldel/input/contig_1.fasta
+
+bedtools getfasta -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta \
+  -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment2.bed \
+  -fo /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment2.fasta
+
+grep -v ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment2.fasta > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment2_mergeable.fasta
+
+
+##-------merging fragments-------
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final
+
+echo ">"${contigs} > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/${contigs}_unformated.fasta
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_ldel/logs/${contigs}_fragment2_mergeable.fasta \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/logs//${contigs}_fragment1_megerable.fasta | sed 's/\n//g' >>  \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/${contigs}_unformated.fasta
+  
+
+fasta_formatter -w 50 -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/${contigs}_unformated.fasta -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/${contigs}.fasta
+
+###------------------checking with annotation
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/annoted/${contigs}
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/annoted/${contigs}
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/annoted/${contigs} --force --usegenus --genus Lactobacillus --locustag Ldel_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/${contigs}.fasta
+  
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/annoted/${contigs}/PROKKA_*.gff
+  ##===================================================Streptococcus_thermophilus
+
+
+  ##===================================================Lactobacillus delbrueckii
+  contigs=S_thermophilus_mag_rmk202
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/unpolished/${contigs}/PROKKA_*.gff
+  #345399
+  
+###---------------extract fragemtent 1-------------------
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs/
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs/
+
+echo -e ${contigs}"\t1\t344900" > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment1.bed
+
+samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+
+bedtools getfasta -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta \
+  -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment1.bed \
+  -fo /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment1.fasta
+
+grep -v ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment1.fasta > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment1_megerable.fasta
+
+
+###---------------extract fragemtent 3-------------------
+
+
+#seq_length.py /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta
+
+echo -e ${contigs}"\t344900\t1895563" > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment2.bed
+
+#samtools faidx /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/circlaring_sterm/input/contig_1.fasta
+
+bedtools getfasta -fi /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/${contigs}.fasta \
+  -bed /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment2.bed \
+  -fo /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment2.fasta
+
+grep -v ">" /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment2.fasta > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment2_mergeable.fasta
+
+
+##-------merging fragments-------
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final
+
+echo ">"${contigs} > /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/${contigs}_unformated.fasta
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/circlaring_sterm/logs/${contigs}_fragment2_mergeable.fasta \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/logs//${contigs}_fragment1_megerable.fasta | sed 's/\n//g' >>  \
+  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/${contigs}_unformated.fasta
+  
+
+fasta_formatter -w 50 -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/${contigs}_unformated.fasta -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/${contigs}.fasta
+
+###------------------checking with annotation
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/${contigs}
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/${contigs}
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/${contigs} --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/${contigs}.fasta
+  
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/${contigs}/PROKKA_*.gff
+  
+
+
+##--------------------------------merge all again
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/
+
+cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_ldel/final/L_delbrueckii_mag_rmk202.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/S_thermophilus_mag_rmk202.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/L_del_plasmid_01.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/S_thermophilus_repA.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/L_del_phage_01.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_mito.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_genome_01.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_genome_02.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_genome_03.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_genome_04.fasta \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Bos_taurus_genome_05.fasta > \
+/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned_unformated.fasta
+
+
+fasta_formatter -w 50 -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned_unformated.fasta -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta
+
+
+
+#/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/splitContigs/Unknown_01.fasta \
+
+###------------------checking with annotation
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta
+  
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all/PROKKA_*.gff
+  
+
+```
+
+
+
+#### ONT polishing Racon
+
+After cirlarication we do several rounds of ONT-based polishing with [Racon](https://github.com/isovic/racon)
+This is then check by continious Quality control steps with the postAssemblyAnylsis tool. 
+
+
+```{bash}
+
+###===========================
+###-----------------
+##Racon polishing with graphmap
+###-----------------
+###===========================    
+     
+##------------------define variables------------------
+#for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt |tail -2)
+#do
+
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+#reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta
+echo "========================================="
+echo $sample
+echo "========================================="
+
+echo $reference_fasta
+echo "---------------------------"
+     
+###===========================
+###-----------------
+##graphmap mapping
+###-----------------
+###===========================      
+
+name=first
+num=1
+
+for name in first second third fourth
+do 
+rm -r $Overall_output_directory/0${num}_${name}Racon_graphmap/
+mkdir -p $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/bamqc
+
+#name=first
+
+graphmap align -t ${threads} \
+  -r $reference_fasta \
+  -d $ont_reads \
+  -o $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam 
+
+#  -d $ont_reads | samtools sort -@${threads} -O BAM -o $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam - 
+
+  
+###===========================
+###-----------------
+##racon polishing
+###-----------------
+###===========================   
+
+#rm -r$Overall_output_directory/0${num}_${name}Racon_graphmap/assembly
+
+mkdir -p $Overall_output_directory/0${num}_${name}Racon_graphmap/assembly
+
+samtools view -bS $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam | samtools sort -@${threads} -O BAM -o $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.bam -
+
+#samtools sort -@${threads} -O SAM $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.bam -
+
+#samtools view -S -b $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam > $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.bam 
+
+/home/vincent/apps/racon/new/racon/build/bin/racon \
+ -t ${threads} \
+  $ont_reads \
+  $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam \
+  $reference_fasta > \
+  $Overall_output_directory/0${num}_${name}Racon_graphmap/assembly/${name}Racon_NWC_2Assembly.fasta
+  
+
+
+samtools index $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.bam 
+
+qualimap bamqc -bam $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.bam \
+  -outdir $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/bamqc --java-mem-size=40G 
+
+#rm $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/${name}Racon_ONT2FinalAssembly_sorted.sam
+
+  reference_fasta=$(echo $Overall_output_directory/0${num}_${name}Racon_graphmap/assembly/${name}Racon_NWC_2Assembly.fasta)
+echo $reference_fasta
+num=$((num+1)) 
+
+done
+
+
+##--------------------cleanup
+
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+#reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta
+name=first
+num=1
+
+for name in first second third fourth
+do 
+
+
+rm -r $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/
+
+  reference_fasta=$(echo $Overall_output_directory/0${num}_${name}Racon_graphmap/assembly/${name}Racon_NWC_2Assembly.fasta)
+echo $reference_fasta
+num=$((num+1)) 
+
+done
+#done # loop for 1AB and 2AB samples
+
+
+##--------------------test PROKKA
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+name=fourth
+num=4
+
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}_Racon
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}_Racon
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}_Racon --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes   $Overall_output_directory/0${num}_${name}Racon_graphmap/assembly/${name}Racon_NWC_2Assembly.fasta
+  
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}_Racon/PROKKA_*.gff
+  
+  echo "=======================================================ALT==============================================================="
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all/PROKKA_*.gff
+
+
+  
+
+
+###===========================
+###-----------------
+##quast
+###-----------------
+###===========================  
+
+#for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+#do
+
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+
+
+echo "========================================="
+echo $sample
+echo "========================================="
+
+echo $reference_fasta
+echo "---------------------------"
+     
+    rm -r $Overall_output_directory/quastwithRaconONT/
+    mkdir -p $Overall_output_directory/quastwithRaconONT
+    quast.py \
+      -t ${threads} -l "FlyeAssembly,firstONTracon,secondONTracon,thirdONTracon" \
+      -R $Overall_output_directory/04_fourthRacon_graphmap/assembly/fourthRacon_NWC_2Assembly.fasta \
+      $reference_fasta \
+      $Overall_output_directory/01_firstRacon_graphmap/assembly/firstRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/02_secondRacon_graphmap/assembly/secondRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/03_thirdRacon_graphmap/assembly/thirdRacon_NWC_2Assembly.fasta \
+      -o $Overall_output_directory/quastwithRaconONT
+ 
+ 
+ ##-------------------making MultiQC output
+ rm $Overall_output_directory/logs_MultiQC_raconONT.txt
+ 
+ echo $Overall_output_directory/quastwithRaconONT/report.tsv >> $Overall_output_directory/logs_MultiQC_raconONT.txt
+ 
+ num=1
+
+for name in first second third fourth
+do 
+
+echo $Overall_output_directory/0${num}_${name}Racon_graphmap/Graphmap_ONT/bamqc >> $Overall_output_directory/logs_MultiQC_raconONT.txt
+num=$((num+1)) 
+
+done ##loop for name
+ 
+#done #loop for sample
+###===========================
+###-----------------
+##MultiQC
+###-----------------
+###===========================  
+
+
+#for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+#do
+name=di_K2_6h
+sample=di_K2_6h
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/04_polishing/01_demultiplexed_Flye_uncirclator/${sample}/
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/assembly.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/${sample}_nanopore_filtered.fastq.gz
+
+echo "========================================="
+echo $sample
+echo "========================================="
+
+
+
+#done #loop for sample
+ 
+rm -r $Overall_output_directory/MultiQCRaconONT/
+mkdir -p $Overall_output_directory/MultiQCRaconONT/
+  /home/vincent/.local/bin/multiqc --config /archiv/logs/multiQC_config.txt --file-list   $Overall_output_directory/logs_MultiQC_raconONT.txt \
+    -o $Overall_output_directory/MultiQCRaconONT/
+
+
+
+###--------------on local
+
+name=di_K2_6h
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/quastwithRaconONT/report.html ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_quast_report.html
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/MultiQCRaconONT/multiqc_report.html ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_multiqc_report.html
+
+
+
+```
+
+
+#### Illumina polishing freebayes 
+
+Now we polish with the high quality Illumina reads
+
+```{bash}
+
+
+###-----------------
+##Illuminamapping rawReads to circlator genome
+###-----------------
+
+   
+##------------------define variables------------------
+#for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+#do
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/04_fourthRacon_graphmap/assembly/fourthRacon_NWC_2Assembly.fasta
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+
+num=5
+
+
+for run in first second third fourth
+   do 
+
+name=run
+##--------------create directories----------------
+rm -r $Overall_output_directory/0${num}_${run}Freebayes/
+mkdir -p $Overall_output_directory/0${num}_${run}Freebayes/{rawIlluminaMapped,freebayesOuput}
+mkdir -p $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/bamqc
+
+#mkdir -p /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fq
+
+# gunzip -c /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${sample}_R1_val_1.fq.gz > \
+#  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fq/${sample}_R1_val_1.fq
+# gunzip -c /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${sample}_R2_val_2.fq.gz > \
+#  /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/fq/${sample}_R2_val_2.fq
+
+
+bwa index $reference_fasta
+
+bwa mem -t ${threads}  $reference_fasta /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${sample}_R1_val_1.fq /archiv/Projects/2019_pilotplant/01_rawData/02_mergedfastq/trimmed_Galore/gz/${sample}_R2_val_2.fq |samtools sort -@8 -O BAM \
+-o $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/rawIllumina_${name}_bwamem_Assembly_sorted.bam - 
+     
+
+qualimap bamqc -bam $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/rawIllumina_${name}_bwamem_Assembly_sorted.bam \
+        -outdir $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/bamqc --java-mem-size=40G
+    
+samtools index $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/rawIllumina_${name}_bwamem_Assembly_sorted.bam
+
+###-----------------
+##freebayesAfterCirclator
+###-----------------
+echo freebayes
+
+    SECONDS=0
+
+    freebayes -F 0.5 --min-coverage 4 -p 1 -f \
+      $reference_fasta \
+      $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped/rawIllumina_${name}_bwamem_Assembly_sorted.bam > \
+      $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/variantCallsfreebayes.vcf
+      
+      
+    echo "RUNTIME (h:min:s)= $(($SECONDS / 3600)):$((($SECONDS / 60) % 60)):$(($SECONDS % 60))"
+    echo END = `date +"%Y-%m-%d %H:%M:%S"`
+
+##-------   
+##bcftools variant integration of Illumina data into Pacbio polished genome
+##-------
+
+    SECONDS=0
+    echo "bgzip"
+bgzip -c  $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/variantCallsfreebayes.vcf > \
+       $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/variantCallsfreebayes.vcf.gz
+      echo "tabix"
+tabix -p vcf  $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/variantCallsfreebayes.vcf.gz
+    echo "bcftools"
+bcftools consensus -f $reference_fasta \
+      -o $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/${num}_${run}Freebayes.fasta \
+       $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/variantCallsfreebayes.vcf.gz
+      
+    echo "RUNTIME (h:min:s)= $(($SECONDS / 3600)):$((($SECONDS / 60) % 60)):$(($SECONDS % 60))"
+    echo END = `date +"%Y-%m-%d %H:%M:%S"`
+  
+  bwa index $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/${num}_${run}Freebayes.fasta 
+  
+   ##-------------------new variable name for next polishing steps-----------
+  reference_fasta=$Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/${num}_${run}Freebayes.fasta  
+  num=$((num+1)) 
+done
+    
+ ##------------------------------------------clean-------------------------  
+
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/04_fourthRacon_graphmap/assembly/fourthRacon_NWC_2Assembly.fasta
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+
+num=5
+
+
+for run in first second third fourth
+   do 
+
+name=run
+
+rm -r $Overall_output_directory/0${num}_${run}Freebayes/rawIlluminaMapped
+
+ num=$((num+1)) 
+
+done
+
+##--------------indexing
+
+
+bwa index $Overall_output_directory/0${num}_${run}Freebayes/freebayesOuput/${num}_${run}Freebayes.fasta  
+
+
+
+
+##--------------------test PROKKA
+#Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+name=second
+num=6
+
+rm -r /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}
+mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}
+    
+prokka --outdir /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num} --force --usegenus --genus Streptococcus --locustag Sterm_202 --proteins proteins.faa --evalue 0.001 --addgenes  /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/0${num}_${name}Freebayes/freebayesOuput/${num}_${name}Freebayes.fasta
+  
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all_0${num}/PROKKA_*.gff
+  
+  echo "=======================================================ALT==============================================================="
+  grep "DNAa" -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly//circlaring_sterm/final/annoted/all/PROKKA_*.gff
+
+
+
+#done #samples
+###===========================
+###-----------------
+##quast
+###-----------------
+###===========================  
+
+#for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
+#do
+#sample=1
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+
+rm $Overall_output_directory/logs_MultiQC_raconFreebayesONT.txt
+
+echo "========================================="
+echo $sample
+echo "========================================="
+
+echo $reference_fasta
+echo "---------------------------"
+     
+    rm -r $Overall_output_directory/quastwithRacon_FreebayesONT/
+    mkdir -p $Overall_output_directory/quastwithRacon_FreebayesONT
+    quast.py \
+      -t ${threads} -l "FlyeAssembly,firstONTracon,secondONTracon,thirdONTracon,fourthONTracon,firstFreebayes,secondFreebayes,thirdFreebayes" \
+      -R $Overall_output_directory/08_fourthFreebayes/freebayesOuput/8_fourthFreebayes.fasta \
+      $reference_fasta \
+      $Overall_output_directory/01_firstRacon_graphmap/assembly/firstRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/02_secondRacon_graphmap/assembly/secondRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/03_thirdRacon_graphmap/assembly/thirdRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/04_fourthRacon_graphmap/assembly/fourthRacon_NWC_2Assembly.fasta \
+      $Overall_output_directory/05_firstFreebayes/freebayesOuput/5_firstFreebayes.fasta \
+      $Overall_output_directory/06_secondFreebayes/freebayesOuput/6_secondFreebayes.fasta  \
+      $Overall_output_directory/07_thirdFreebayes/freebayesOuput/7_thirdFreebayes.fasta  \
+            -o $Overall_output_directory/quastwithRacon_FreebayesONT
+ 
+      
+     
+    
+      
+###===========================
+###-----------------
+##MultiQC
+###-----------------
+###===========================  
+
+
+name=di_K2_6h
+sample=di_K2_6h
+#sample=1
+threads=37
+Overall_output_directory=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL
+reference_fasta=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/assembly/startAligned/di_rmk202_MAG_reference_startaligned.fasta 
+ont_reads=/archiv/Projects/2019_Nano_Meta/01_rawData/01_data/files/Nanopore_demultiplexed_filtered/di_K2_6h_nanopore_filtered.fastq.gz
+
+echo "========================================="
+echo $sample
+echo "========================================="
+
+
+  rm -r $Overall_output_directory/MultiQCRaconFreebayesONT
+    
+  mkdir -p $Overall_output_directory/MultiQCRaconFreebayesONT
+  
+  /home/vincent/.local/bin/multiqc --config /archiv/logs/multiQC_config.txt --file-list  $Overall_output_directory/logs_MultiQC_raconFreebayesONT.txt \
+    -o $Overall_output_directory/MultiQCRaconFreebayesONT/
+
+
+
+
+
+###--------------on local
+
+
+
+ name=di_K2_6h
+ scp -r vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/quastwithRacon_FreebayesONT/ ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/
+
+
+scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/MultiQCRaconFreebayesONT/multiqc_report.html
+~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_multiqc_report_final.html
+
+
+
+```
+
+
