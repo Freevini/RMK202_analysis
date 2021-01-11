@@ -1,9 +1,32 @@
 ---
-title: "Script: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
+title: "02_Main_body_Analysis"
 author: "Vincent Somerville"
 date: "11/01/2021"
-output: html_document
+output:
+  html_document:
+    number_sections: yes
+    theme: readable
+    highlight: tango
+    df_print: paged
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+  #   number_sections: true
+  #   theme: readable
+  #  html_document:
+  #   # code_folding: hide
+  #   df_print: paged
+  #   toc: true
+  #   toc_float:
+  #     collapsed: true
+  #     smooth_scroll: true
+editor_options: 
+  chunk_output_type: console
 ---
+
 
 
 ```{r setup ,echo=FALSE}
@@ -37,13 +60,9 @@ library(officer)
 library(openxlsx)
 library(readr)
 library(ggbiplot)
-library(tidyverse)
 library(patchwork)
 library(plotly)
-library(readr)
 library(tsibble)
-
-library(readr)
 library(ggplot2)
 library(plyr)
 library(plotly)
@@ -52,18 +71,19 @@ library(lubridate)
 library(growthrates)
 library(broom)
 library(drc)
-library(patchwork)
-library(dplyr)
 require(zoo)
-
 library(genoPlotR)
-library(tidyverse)
 library(alluvial)
 library(ggalluvial)
-
 library(genoPlotR)
-
 library(igraph)
+library(grid)
+library(gridExtra)
+library(cowplot) ## for arranging plots
+library(stringr) ##for split string
+library(rlist) ##rbind all dataframe of list
+library(viridis) ##colour palette
+setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202/01_script/")
 
 ```
 
@@ -71,14 +91,22 @@ This script includes the complete workflow how the data for the following public
 
 *Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture*
 
-The structure is mainly in the first part I go through the basic analysis and the second part I focus on the analysi for the figures:
+The scripts are divided into three subscripts. Each on is saved and compiled as a Rmarkdown with extensive comments. The three parts consist of:
 
+1. the general analysis including all genomic and non-genomic data-analysis
+2. the plotting and analysis for the main body figures
+3. the plotting and analysis for the supplemental figures
+
+Here, we look at the second part: **Main Body Figures**
 
 # Main Body Figures
 
 Here, I go through the creation of the different plots for the Figures
 
 ## Figure 1
+
+![**Figure 1. Assembly, annotation, and functional properties of the two metagenome-assembled genomes (MAGs) from the Swiss hard cheese starter culture RMK202.** A) The Metagenome-assembled-genomes of S. thermophilus and L. delbrueckii with different genetic features highlighted (see legend). B) Functional properties potentially involved in the metabolic interaction of the two species. Filled red circles indicate presence, while empty circles indicate absence.](figures/Figure_1.png)
+
 
 ### Circos plot
 
@@ -157,7 +185,6 @@ grep "^#" -v /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S
 
 ##---------------------CRISPR arrays
 
-scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/annotated/CRISPR/S_thermophilus_RMK202.pilarCR_out $home/data/rmk202/MAG_rmk202_sterm/
 #grep "SUMMARY BY POSITION" -A 50 $home/data/rmk202/MAG_rmk202_sterm/S_thermophilus_RMK202.pilarCR_out|grep "^====" -A 50 | sed '1d' | sed 's/^ *//g'| sed 's/ \{1,\}/\t/g'|awk -F "\t" '{OFS="\t"}{print "S_thermophilus_mag_rmk202",$3,$3+$4,"fill_color=blue"}' >  $home/data/rmk202/MAG_rmk202_sterm/CRISPR.txt
 ##--cas genes
 
@@ -171,8 +198,6 @@ grep "CRISPR" /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/
 GCcalc.py -f "/home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/sterm/S_thermophilus_RMK202 (2).fasta" > $home/data/rmk202/MAG_rmk202_sterm/gc_skew_sterm.txt
 awk -F "\t" '{OFS="\t"}{if($5>0) print $1,$2,$2,$5,"fill_color=blue" ; else print $1,$2,$2,$5,"fill_color=orange"}' $home/data/rmk202/MAG_rmk202_sterm/gc_skew_sterm.txt > 
 $home/data/rmk202/MAG_rmk202_sterm/gc_skew_sterm_cleaned.txt
-
-#scp -r vincent@130.223.51.116:/usr/bin/seq_length.py ~
 
 ##example
 cp etc/repeat_nwc1_sterm_01.conf etc/sterm_rmk202_mag_circos.conf
@@ -255,8 +280,6 @@ GCcalc.py -f /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/final/ldel/L_
 awk -F "\t" '{OFS="\t"}{if($5>0) print $1,$2,$2,$5,"fill_color=blue" ; else print $1,$2,$2,$5,"fill_color=orange"}' $home/data/rmk202/MAG_rmk202_ldel/gc_skew_ldel.txt > $home/data/rmk202/MAG_rmk202_ldel/gc_skew_ldel_cleaned.txt
 
 
-#scp -r vincent@130.223.51.116:/usr/bin/seq_length.py ~
-
 ##example
 #cp etc/repeat_nwc1_sterm_01.conf etc/ldel_rmk202_mag_circos.conf
 
@@ -271,22 +294,6 @@ bin/circos -conf etc/ldel_rmk202_mag_circos.conf -outputfile ./ldel_mag_rmk202.s
 This is the analysis done with [POGENOM](https://pogenom.readthedocs.io/en/latest/POGENOM_Usage.html)
 We do this to get population genomic insights such as dN/dS ratios.
 Important to note is that the gff file should not contain any fasta entries. 
-
-```{bash}
-
-
-scp /home/vincent/Downloads/*eggnog.annotations vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/ForPOGENOM/ 
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Sterm/S_I_202_SMAG/PROKKA_08282020.faa /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/
-
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/Ldel/L_I_202_LMAG/*.faa /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/
-
-
-/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA_new/all_interaction_functioning_Genes_cleaned.txt
-
-```
-
 
 ```{bash}
 VCFFILE=/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_Final/freebayesOuput_WithONT_Parallel_default/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL.recode.vcf
@@ -416,43 +423,16 @@ perl /home/vincent/apps/POGENOM/POGENOM-0.8.1/pogenom.pl --vcf_file ${VCFFILE} -
 
 
 
-move local for Anders
-```{bash}
-
-mkdir -p ~/Desktop/Projects/2019_RMK202_analysis/POGENOM_test/
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/ForPOGENOM/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_onlyMeta.recode.vcf ~/Desktop/Projects/2019_RMK202_analysis/POGENOM_test/longitudinalSamples_snv.vcf
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/RMK202_MAG_assembly.fasta ~/Desktop/Projects/2019_RMK202_analysis/POGENOM_test/MAG_assembly.fasta
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA/ForPOGENOM/bothSpecies_prepped.gff ~/Desktop/Projects/2019_RMK202_analysis/POGENOM_test/MAG_annotation_onlyBAC.gff
-
-##-------------------------final
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/POGENOM_PGAP/bothGEnomes_allSamples/Ldel/RunPogenome_all_rmk202_new.pNpS-per-gene.txt ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Ldel.pNpS-per-gene.txt
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/POGENOM_PGAP/bothGEnomes_allSamples/sterm/RunPogenome_all_rmk202_new.pNpS-per-gene.txt ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Sterm.pNpS-per-gene.txt
-
-sed -i 's/ID=//g' ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Ldel.pNpS-per-gene.txt
-sed -i 's/ID=//g' ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Sterm.pNpS-per-gene.txt
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/03_annotation/PROKKA_new/all_interaction_functioning_Genes_cleaned.txt ~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/
-
-
-
-
-```
-
 ```{r}
 library(readr)
 library(ggplot2)
 library(lubridate)
 library(tidyverse)
-Genes_of_Interest <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/all_interaction_functioning_Genes.txt",  "\t", escape_double = FALSE, col_names = c("species","gene","OG","numberGenomes"),  trim_ws = TRUE) %>% select(-numberGenomes)
+Genes_of_Interest <- read_delim("../data_zenodo/non_genomic_data//all_interaction_functioning_Genes.txt",  "\t", escape_double = FALSE, col_names = c("species","gene","OG","numberGenomes"),  trim_ws = TRUE) %>% select(-numberGenomes)
 
 
-OGs_Ldel <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/OGs_Ldel.txt", "\t", escape_double = FALSE, col_names = c("OG","Gene"), trim_ws = TRUE)
-OGs_Sterm <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/OGs_Sterm.txt", "\t", escape_double = FALSE, col_names = c("OG","Gene"), trim_ws = TRUE)
+OGs_Ldel <- read_delim("../data_zenodo/non_genomic_data/OGs_Ldel.txt", "\t", escape_double = FALSE, col_names = c("OG","Gene"), trim_ws = TRUE)
+OGs_Sterm <- read_delim("../data_zenodo/non_genomic_data/OGs_Sterm.txt", "\t", escape_double = FALSE, col_names = c("OG","Gene"), trim_ws = TRUE)
 Genes_of_Interest_Ldel <- Genes_of_Interest %>% filter(species=="Ldel")
 Genes_of_Interest_Sterm <- Genes_of_Interest %>% filter(species=="Sterm")
 
@@ -463,13 +443,13 @@ GENES_Sterm <- merge(OGs_Sterm,Genes_of_Interest_Sterm,by="OG",all = TRUE)
 
 table(GENES_Ldel_extended$gene)
 
-RunPogenome_Ldel_pNpS_per_gene <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Ldel.pNpS-per-gene.txt",   "\t", escape_double = FALSE, trim_ws = TRUE) %>% select(-c(`RMK202 pNpS`,`Konserve_202 pNpS`,`Versand_202 pNpS`,`Lyo_202_2012 pNpS`,`lyo202_96 pNpS`,`Lyo_202_2014 pNpS`))
-RunPogenome_Sterm_pNpS_per_gene <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/RunPogenome_Sterm.pNpS-per-gene.txt",   "\t", escape_double = FALSE, trim_ws = TRUE) %>% select(-c(`RMK202 pNpS`,`Konserve_202 pNpS`,`Versand_202 pNpS`,`Lyo_202_2012 pNpS`,`lyo202_96 pNpS`,`Lyo_202_2014 pNpS`))
+RunPogenome_Ldel_pNpS_per_gene <- read_delim("../data_zenodo/non_genomic_data/RunPogenome_Ldel.pNpS-per-gene.txt",   "\t", escape_double = FALSE, trim_ws = TRUE) %>% select(-c(`RMK202 pNpS`,`Konserve_202 pNpS`,`Versand_202 pNpS`,`Lyo_202_2012 pNpS`,`lyo202_96 pNpS`,`Lyo_202_2014 pNpS`))
+RunPogenome_Sterm_pNpS_per_gene <- read_delim("../data_zenodo/non_genomic_data/RunPogenome_Sterm.pNpS-per-gene.txt",   "\t", escape_double = FALSE, trim_ws = TRUE) %>% select(-c(`RMK202 pNpS`,`Konserve_202 pNpS`,`Versand_202 pNpS`,`Lyo_202_2012 pNpS`,`lyo202_96 pNpS`,`Lyo_202_2014 pNpS`))
 
 ggplot(RunPogenome_Sterm_pNpS_per_gene,aes(x=`All_samples_combined pNpS`))+geom_density()
 ggplot(RunPogenome_Ldel_pNpS_per_gene,aes(x=`All_samples_combined pNpS`))+geom_density()
 
-all_interaction_functioning_Genes_cleaned <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder/For_dN_dS/all_interaction_functioning_Genes_cleaned.txt",   "\t", escape_double = FALSE, col_names = c("geness","Name"),  trim_ws = TRUE)
+all_interaction_functioning_Genes_cleaned <- read_delim("../data_zenodo/non_genomic_data/all_interaction_functioning_Genes_cleaned.txt",   "\t", escape_double = FALSE, col_names = c("geness","Name"),  trim_ws = TRUE)
 
 
 
@@ -542,7 +522,7 @@ print(ggheatmap_CRISPR)
 ##plot
 ##=================================================== 
 
-  svg("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder//HEATMAP_interactionGenes_pN_pS.svg",width=3,height=9)
+  svg("../03_results//HEATMAP_interactionGenes_pN_pS.svg",width=3,height=9)
 
 print(ggheatmap_CRISPR)
 
@@ -579,7 +559,7 @@ dnDSplot <- ggplot(GENES_complete,aes(x=`All_samples_combined pNpS`,y=Num_loci,f
 dnDSplot
 
 
-  svg("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_Orthofinder//dot_plot_pN_pS.svg",width=4.5,height=4)
+  svg("../03_results/dot_plot_pN_pS.svg",width=4.5,height=4)
 
 dnDSplot
 
@@ -590,12 +570,13 @@ dnDSplot
 
 ## Figure 2
 
+![**Figure 2. Metagenomic sampling design and species abundance.** A) The starter culture propagation scheme as applied in the cheese starter culture production. The samples subjected to metagenomic sequencing are indicated by darker colors and labelled with numbers. Every propagation cycle includes a freeze drying, reactivation, and working stock step. From the working stock, commercial starter cultures for weekly shipments to cheesemakers are produced. The propagation experiment was carried out in the same way as in production and in five replicates corresponding to samples 7-11.The numbers between the working stock (x) indicate the number of cycles in between. B) Relative abundance of the two bacterial species in the eleven starter cultures samples (1-6, historical samples; 7-11, replicates of the propagation experiment). C) Bacterial counts throughout the propagation experiment for both species and the five replicates (lines are colored according to species and points according to samples within the propagation cycle Fig. 2A). D) Acidification potential throughout the propagation experiment, as measured by pH reached after 18h incubation at 37°C in sterile milk..](figures/Figure_2_v5.png)
+
 ### taxon plot
 
 Do this by looking at the coverage of S.thermophilus and L.delbrueckii in the different metagenomic samples. 
 
 ```{bash}
-
 
 ###================
 ##description file
@@ -653,35 +634,17 @@ bedtools coverage -bed -a /archiv/Projects/2019_RMK202_analysis/00_FINAL/07_abun
 
 ```
 
-```{bash}
-
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/
-
-scp  vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed
-
-
-```
-
-
 ```{r}
 
 
-source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(tidyverse)
-library(grid)
-library(gridExtra)
-library(cowplot) ## for arranging plots
-library(stringr) ##for split string
-library(rlist) ##rbind all dataframe of list
-library(viridis) ##colour palette
+
 ##===================================
 #-------------file import
 
+  read_count <- read_delim("../data_zenodo/non_genomic_data/Coverage_bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
 
-  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
+
+  # read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
 
 table(read_count$chr)
 
@@ -714,9 +677,9 @@ table(read_count$chr)
   all_final$sample <- factor(all_final$sample, levels=(c("lyo202_96","Lyo_202_2012","Konserve_202","Lyo_202_2014","RMK202","Versand_202","G1_6_18","G2_6_18","G3_6_18","G4_6_18","G5_6_18")))
 
 # table(total_samples$phage) %>% length()
-write.table(all_final,"/home/vincent/Desktop/Projects/2019_Pilotplan/coverage_rmk202.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
+write.table(all_final,"../03_results/coverage_rmk202.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
 
-write.table(all_final,"/home/vincent/Desktop/Projects/2019_Pilotplan/coverage_rmk202_n32.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
+write.table(all_final,"../03_results/coverage_rmk202_n32.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
 
  # all_colours <-c("#C5F6FA" ,"#6CF5A3" ,"#36E37B" ,"#10B552", "darkorange",  "#FAA0A0","#EB4D4D")
  all_colours <-c("#C5F6FA" ,"#6CF5A3" ,"#36E37B" ,"#10B552", "darkorange",  "#FAA0A0","#EB4D4D")
@@ -790,7 +753,7 @@ PrelAbundance_bacteria <-  ggplot( data = all_final_bacteria,aes(y = percent_cov
 library(patchwork)
 
   PrelAbundance_bacteria
-  svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/relative_abundance_all.svg",width=10,height=4.5)
+  svg("../03_results/relative_abundance_all.svg",width=10,height=4.5)
 #    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 # 
 (PrelAbundance+theme(legend.position = "none"))+(PrelAbundance_bacteria+theme(legend.position = "none"))+PrelAbundance
@@ -806,9 +769,8 @@ dev.off()
 In this project we have created a propagation experiment. Here we analyse the phenotypic data. 
 
 ```{r}
-setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202")
 
-rmk202_test_cellCounts <- read_csv("02_data/rmk202_Evol_experiment_data.csv",skip = 2) %>% filter(sample!="sample") %>% select(c("sample","step","pH","average BM","average SR.9.3","calculated Ldel","generations_all" ,"generations_sterm","generations_ldel","cummulative_generation_all"  ,"cummulative_generation_sterm","cummulative_generation_ldel","doublingTime_all","doublingTime_sterm","doublingTime_ldel","survival_rate_all","survival_rate_sterm","survival_rate_ldel" ))
+rmk202_test_cellCounts <- read_csv("../data_zenodo/non_genomic_data/rmk202_propagation_experiment_data.csv",skip = 2) %>% filter(sample!="sample") %>% select(c("sample","step","pH","average BM","average SR.9.3","calculated Ldel","generations_all" ,"generations_sterm","generations_ldel","cummulative_generation_all"  ,"cummulative_generation_sterm","cummulative_generation_ldel","doublingTime_all","doublingTime_sterm","doublingTime_ldel","survival_rate_all","survival_rate_sterm","survival_rate_ldel" ))
 
 rmk202_test_cellCounts$sampleNAME <- str_split_fixed(rmk202_test_cellCounts$sample, fixed("_"), 3)[,1]
 rmk202_test_cellCounts$week <- str_split_fixed(rmk202_test_cellCounts$sample, fixed("_"), 3)[,2]
@@ -920,13 +882,15 @@ pHPLOT
 plotFinal <- CFUPLOT+plot1+pHPLOT+plot_layout(nrow = 3,heights = c(1,1,0.5))
 plotFinal
 
-svg("03_results/evolutionExperiment_plot.svg",width=6,height=8)
+svg("../03_results/evolutionExperiment_plot.svg",width=6,height=8)
 plotFinal
 dev.off()
  
 ```
 
 ## Figure 3
+
+![**Figure 3. Strain-level diversity of S. thermophilus in cheese starter cultures.** A) Alternative allele frequencies of all S. thermophilus SNVs over the metagenomic samples. Recurring SNVs from different samples are connected with a line. Clustering of lines indicates a large amount of SNVs with similar frequencies suggesting genomic coupling. Sample labels on the x-axis correspond to samples highlighted in Fig. 2A). Phylogeny of the isolated S. thermophilus strains based on maximum likelihood analysis on 1788 core genes. The isolates split into four lineages indicated by different color shadings. Strains sequenced with Nanopore are labelled with an asterisk. Values on branches indicate bootstrap values (100 replicates). C) Relative abundance of each of the four sub-lineages of S. thermophilus across the eleven metagenomes as based on the average frequency of lineage-specific SNVs identified on the basis of the isolates in Fig 3B.](figures/Figure_3_v4.png)
 
 
 ### SNV calling and phasing
@@ -1245,16 +1209,6 @@ Assembly=/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/d
 ##!!!!!!!!!!!!!change names of Forward and Reverse reads
 
 
-##----------------
-##bring PGAP LOCAL
-##----------------
-
-mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP
-
-scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/LD_singu vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/
-
-scp -r /home/vincent/Desktop/Projects/2019_Pilotplan/11_PGAP/vincent_2/ST_singu vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_undeplexed_plasmids/1AB/Polishing_FINAL_stiched/single/02_PGAP/
-
 ##=======================================================================================================================
 ##-----------------------------------------------all together----------------------------------------------
 ##=======================================================================================================================
@@ -1416,7 +1370,9 @@ library(xlsx)
 ##01_import data
 ##==================
 #snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT/variantCallsfreebayes_all_f_005_min_20x_prepforR.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
-snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT_new/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR_new.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
+# snps_freebayes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/06_snpCalling2ONT_new/variantCallsfreebayes_minAlt3x_0.05_minCov10x_QC_noINDEL_prepR_new.vcf", "\t", escape_double = FALSE, trim_ws = TRUE)
+snps_freebayes <- read_delim("../data_zenodo/non_genomic_data/variantCallsfreebayes.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+../data_zenodo/non_genomic_data/Coverage_bacteria_and_phages_from_MAG.bed
 
 
 table(snps_freebayes$`#CHROM`)
@@ -2563,6 +2519,7 @@ dev.off()
 
 ## Figure 4
 
+![**Figure 4. Phenotypic properties of individual strains, pairwise combination of strains, and original starter culture.** A) Colony forming units (CFUs) of S. thermophilus and L. delbrueckii over 18h of growth when cultured alone, in pairwise combinations, or in the original starter cultures (RMK). The ribbons illustrate the interquartile range and the lines the modeled growth curves. (* indicates t-test, p-value<0.001) B) Acidification curves of the same samples. The ribbons illustrate the min and max pH of the different samples. C) Principal component analysis of the metabolic profiles after 24 h of growth at 37 °C. Different treatments are highlighted in colors and with the surrounding eclipse.](figures/Figure_4.png)
 
 ### Acidification
 
@@ -2575,7 +2532,7 @@ I measured platte one which was pippetted with the robo, first ph 4.6 than milk 
 ##variables
 ###-----------------------------
 
-location="/home/vincent/Desktop/Manuscripts/2019_RMK202/02_data/acidifciation_20200714/"
+location="../data_zenodo/non_genomic_data//acidifciation_20200714/"
 plateName="20200712_rmk202_strains_curated_02.txt"
 NamesWell="200714_names.csv"
 SampleNamesWell="200714_samples_names.csv"
@@ -2921,7 +2878,7 @@ lagsss_mean$hours_corrected <- lagsss_mean$hours-2
 CFU count of the same time series
 
 ```{r}
-rmk202_strain_timeseries_Sheet1 <- read_csv("02_data/rmk202_strain_timeseries.csv", skip = 1)
+rmk202_strain_timeseries_Sheet1 <- read_csv("../data_zenodo/non_genomic_data/rmk202_growth_strain_timeseries.csv", skip = 1)
 
 rmk202_strain_timeseries_Sheet1_long <- rmk202_strain_timeseries_Sheet1 %>% gather(.,"sampless","CFU",`0_BM`:`24_MR`)
  rmk202_strain_timeseries_Sheet1_long$time <- as.numeric(str_split_fixed(rmk202_strain_timeseries_Sheet1_long$sampless, "_", 2)[,1])
@@ -3327,10 +3284,10 @@ Here, I analyse the metabolomics data. I received from the GC/MS of Pascal an Yi
 
 ```{r}
 
-X20200810_Vincent_cultures_profinder_untargeted <- read.xlsx("02_data/20200810_Vincent_cultures_profinder_untargeted.xlsx")
+X20200810_Vincent_cultures_profinder_untargeted <- read.xlsx("../data_zenodo/non_genomic_data/20200810_Vincent_cultures_profinder_untargeted.xlsx")
 pca_res <- prcomp(df, scale. = TRUE)
 
-Metabolites_information_reduced <- read_delim("02_data/Metabolites_information_reduced.csv",  "\t", escape_double = FALSE, trim_ws = TRUE)
+Metabolites_information_reduced <- read_delim("../data_zenodo/non_genomic_data/Metabolites_information_reduced.csv",  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 nrow(Metabolites_information_reduced)
 par(mfrow=c(1,1))
@@ -3387,6 +3344,8 @@ dev.off()
 
 ## Figure 5
 
+![**Figure 5. CRISPR spacer diversity of L. delbrueckii and  S. thermophilus.** A) The correlation of fraction of shared CRISPR spacers and ANI of all L. delbrueckii and S. thermophilus with the corresponding densities and heatmaps on the x and y-axis.  B) The heatmap of the genomic and CRISPR spacer diversities of all S.thermophilus illustrated with ANI (top heatmap; from white to red) and percent shared CRISPR spacers (bottom heatmap; from white to blue) C) The amount of metagenomic and genomic CRISPR spacers according to the five arrays.](figures/Figuer_5.png)
+
 ### ANI
 
 [FastANI](https://github.com/ParBLiSS/FastANI) was used to calculate all pairwise ANI values
@@ -3416,7 +3375,6 @@ done # species
 ###-----------------------------------------
 
 
-
 for species in $(echo "Ldel Sterm")
 do
 
@@ -3433,12 +3391,8 @@ done # species
 ```{r}
 ##==============================
 ##Sterm
-##==============================
 
-library(readr)
-library(plyr)
-library(tidyverse)
-final_ANI <- read_delim("02_data/fastaANI_comparision_sterm.txt",  "\t", escape_double = FALSE, col_names = c("GenomeA","GenomeB","ANI","mappedFragemnts","totFragemnts"),  trim_ws = TRUE)
+final_ANI <- read_delim("../data_zenodo/non_genomic_data//fastaANI_comparision_sterm.txt",  "\t", escape_double = FALSE, col_names = c("GenomeA","GenomeB","ANI","mappedFragemnts","totFragemnts"),  trim_ws = TRUE)
 final_ANI$coverage_ANI <- 100*(final_ANI$mappedFragemnts/final_ANI$totFragemnts)
 
 
@@ -3453,7 +3407,7 @@ final_ANI$GenomeB <- str_remove(final_ANI$GenomeB,"/archiv/Projects/2019_RMK202_
 
 final_ANI$ANI <- round(final_ANI$ANI,digits = 2)
 
-write.table(final_ANI,"02_data/fastaANI_comparision_curated_sterm.txt",sep = "\t",quote = FALSE,row.names = FALSE,col.names = TRUE)
+write.table(final_ANI,"../03_results/fastaANI_comparision_curated_sterm.txt",sep = "\t",quote = FALSE,row.names = FALSE,col.names = TRUE)
 
 ##==============================
 ##Ldel
@@ -3462,7 +3416,7 @@ write.table(final_ANI,"02_data/fastaANI_comparision_curated_sterm.txt",sep = "\t
 library(readr)
 library(plyr)
 library(tidyverse)
-final_ANI <- read_delim("02_data/fastaANI_comparision_ldel.txt",  "\t", escape_double = FALSE, col_names = c("GenomeA","GenomeB","ANI","mappedFragemnts","totFragemnts"),  trim_ws = TRUE)
+final_ANI <- read_delim("../data_zenodo/non_genomic_data//fastaANI_comparision_ldel.txt",  "\t", escape_double = FALSE, col_names = c("GenomeA","GenomeB","ANI","mappedFragemnts","totFragemnts"),  trim_ws = TRUE)
 final_ANI$coverage_ANI <- 100*(final_ANI$mappedFragemnts/final_ANI$totFragemnts)
 
 
@@ -3477,7 +3431,7 @@ final_ANI$GenomeB <- str_remove(final_ANI$GenomeB,"/archiv/Projects/2019_RMK202_
 
 final_ANI$ANI <- round(final_ANI$ANI,digits = 2)
 final_ANI
-write.table(final_ANI,"02_data/fastaANI_comparision_curated_ldel.txt",sep = "\t",quote = FALSE,row.names = FALSE,col.names = TRUE)
+write.table(final_ANI,"../03_results/fastaANI_comparision_curated_ldel.txt",sep = "\t",quote = FALSE,row.names = FALSE,col.names = TRUE)
 ##------------
 ```
 
@@ -3608,7 +3562,7 @@ F24855=$(grep ">24855" -c /archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRIS
 Now I look at how many SPACERS ARE SHARED amongst strains
 
 ```{r}
-clusterCRISPRs <- read_delim("02_data/clusterCRISPRs_sterm.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+clusterCRISPRs <- read_delim("../data_zenodo/non_genomic_data//clusterCRISPRs_sterm.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 
 pairwiseSharedSpacers <- data.frame()
@@ -3631,7 +3585,7 @@ for (rowss in colnames(clusterCRISPRs)[-1]) {
 }
 }
 
-write.table(pairwiseSharedSpacers, "02_data/clusterCRISPRs_curated_sterm.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
+write.table(pairwiseSharedSpacers, "../03_results/clusterCRISPRs_curated_sterm.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
 ```
 
 
@@ -3641,7 +3595,7 @@ write.table(pairwiseSharedSpacers, "02_data/clusterCRISPRs_curated_sterm.txt",na
 ##----------------------
 
 library(readr)
-clusterCRISPRs <- read_delim("02_data/clusterCRISPRs_ldel.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+clusterCRISPRs <- read_delim("../data_zenodo/non_genomic_data//clusterCRISPRs_ldel.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # rowss="mst1" 
 # Colss="F13493"
@@ -3671,7 +3625,7 @@ for (rowss in colnames(clusterCRISPRs)[-1]) {
 }
 }
 
-write.table(pairwiseSharedSpacers, "02_data/clusterCRISPRs_curated_ldel.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
+write.table(pairwiseSharedSpacers, "../03_results/clusterCRISPRs_curated_ldel.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names = TRUE)
 
 ```
 
@@ -3689,8 +3643,8 @@ here I combine the fastANI heatmap and the CRISPR spacer heatmap to make one big
 library(readr)
 library(plyr)
 library(tidyverse)
-pairwiseSharedSpacers <- read_delim("02_data/clusterCRISPRs_curated_sterm.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
-final_ANI <- read_delim("02_data/fastaANI_comparision_curated_sterm.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+pairwiseSharedSpacers <- read_delim("../data_zenodo/non_genomic_data//clusterCRISPRs_curated_sterm.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+final_ANI <- read_delim("../data_zenodo/non_genomic_data//fastaANI_comparision_curated_sterm.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 unique(final_ANI$GenomeA)
 unique(pairwiseSharedSpacers$Ref1)
@@ -3865,21 +3819,21 @@ library(patchwork)
 ##plot
 ##=================================================== 
 
-  svg("03_results/HEATMAP_ani_crispr_density.svg",width=20,height=12)
+  svg("../03_results/HEATMAP_ani_crispr_density.svg",width=20,height=12)
 
 (densityANI+densityCRISPR) / (ggheatmap_ANI+ggheatmap_CRISPR)
 
  dev.off()
 
  
-  svg("03_results/HEATMAP_ani_crispr.svg",width=15,height=7.5)
+  svg("../03_results/HEATMAP_ani_crispr.svg",width=15,height=7.5)
 
 ggheatmap_ANI+ggheatmap_CRISPR+dendro.plot
 
  dev.off()
 
  
-  svg("03_results/HEATMAP_ani_crispr_woLegend.svg",width=9,height=7.5)
+  svg("../03_results/HEATMAP_ani_crispr_woLegend.svg",width=9,height=7.5)
 
 (ggheatmap_ANI+theme(legend.position = "none"))+(ggheatmap_CRISPR+theme(legend.position = "none"))
 
@@ -3899,12 +3853,9 @@ all_together_sterm <-  merge(pairwiseSharedSpacers_tmp_03,final_ANI_02,by.x=c("R
 ##--------------------------
  #Ldel
 ##--------------------------
- 
-library(readr)
-library(plyr)
-library(tidyverse)
-pairwiseSharedSpacers <- read_delim("02_data/clusterCRISPRs_curated_ldel.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
-final_ANI <- read_delim("02_data/fastaANI_comparision_curated_ldel.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+
+pairwiseSharedSpacers <- read_delim("../data_zenodo/non_genomic_data//clusterCRISPRs_curated_ldel.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
+final_ANI <- read_delim("../data_zenodo/non_genomic_data//fastaANI_comparision_curated_ldel.txt",  "\t", escape_double = FALSE, trim_ws = TRUE)
 
 unique(final_ANI$GenomeA)
 unique(pairwiseSharedSpacers$Ref1)
@@ -4079,7 +4030,7 @@ densityCRISPR
 ##plot
 ##=================================================== 
 
-  svg("03_results/HEATMAP_ani_crispr_density_ldel.svg",width=20,height=12)
+  svg("../03_results/HEATMAP_ani_crispr_density_ldel.svg",width=20,height=12)
 
 (densityANI+densityCRISPR) / (ggheatmap_ANI+ggheatmap_CRISPR)
 
@@ -4088,14 +4039,14 @@ densityCRISPR
 
 
  
-  svg("03_results/HEATMAP_ani_crispr_ldel.svg",width=15,height=7.5)
+  svg("../03_results/HEATMAP_ani_crispr_ldel.svg",width=15,height=7.5)
 
 ggheatmap_ANI+ggheatmap_CRISPR+dendro.plot
 
  dev.off()
 
  
-  svg("03_resultsHEATMAP_ani_crispr_woLegend_ldel.svg",width=9,height=7.5)
+  svg("../03_resultsHEATMAP_ani_crispr_woLegend_ldel.svg",width=9,height=7.5)
 
 (ggheatmap_ANI+theme(legend.position = "none"))+(ggheatmap_CRISPR+theme(legend.position = "none"))
 
@@ -4135,7 +4086,7 @@ plots_correlation
 # all_together_all$ANI
   plots_correlation
   
-    svg("03_results/correaltion_all.svg",width=3,height=3)
+    svg("../03_results/correaltion_all.svg",width=3,height=3)
 
 plots_correlation
 
@@ -4149,7 +4100,7 @@ plots_correlation
 library(readr)
 library(ggplot2)
 # uniqueSpacers_count_Ref_wOLDstrains <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
-uniqueSpacers_count_Ref_wOLDstrains <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers_ldel/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+uniqueSpacers_count_Ref_wOLDstrains <- read_delim("../data_zenodo/non_genomic_data//uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
 
 uniqueSpacers_count_Ref_wOLDstrains$explained <- ifelse(uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains>0,"both Meta & strains",ifelse(
   uniqueSpacers_count_Ref_wOLDstrains$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains$Strains==0,"explained only by meta","explained only by strains"
@@ -4171,7 +4122,7 @@ table(uniqueSpacers_count_Ref_wOLDstrains$explained,uniqueSpacers_count_Ref_wOLD
 #  dev.off()
  
  ##new and wider
-svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerexplained_wide_Ldel.svg",width=4,height=3)
+svg("../03_results//spacerexplained_wide_Ldel.svg",width=4,height=3)
 ggplot(uniqueSpacers_count_Ref_wOLDstrains,aes(x=ARRAYINFO,group=explained,fill=explained))+geom_bar()+theme_classic()+scale_fill_manual(values=colorsss)+theme(axis.title.x = element_blank(),axis.text.x =element_text(angle = 45, hjust = 1,size=9) )+labs(y="spacer counts",fill="")+scale_y_continuous(breaks =c(0,10,27,39,92,117,139,163),labels=c(0,10,27,39,92,117,139,163))
  dev.off()
  ##------------------------
@@ -4188,7 +4139,7 @@ merge(ONlyIsolateSPACERS,uniqueSpacersss_extended,by.x="ClusterINFO",by.y="Clust
  #include Sterm
   ##------------------------
 
-uniqueSpacers_count_Ref_wOLDstrains_sterm <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+uniqueSpacers_count_Ref_wOLDstrains_sterm <- read_delim("../data_zenodo/non_genomic_data//uniqueSpacers_count_Ref_wOLDstrains_both.txt","\t", escape_double = FALSE, trim_ws = TRUE)
 
 uniqueSpacers_count_Ref_wOLDstrains_sterm$explained <- ifelse(uniqueSpacers_count_Ref_wOLDstrains_sterm$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains_sterm$Strains>0,"both Meta & strains",ifelse(
   uniqueSpacers_count_Ref_wOLDstrains_sterm$dadaSpacer>0&uniqueSpacers_count_Ref_wOLDstrains_sterm$Strains==0,"explained only by meta","explained only by strains"
@@ -4214,7 +4165,7 @@ uniqueSpacers_count_Ref_wOLDstrains_merge <- rbind(uniqueSpacers_count_Ref_wOLDs
 table(uniqueSpacers_count_Ref_wOLDstrains_merge$explained,uniqueSpacers_count_Ref_wOLDstrains_merge$ARRAYINFO)
 
 ggplot(uniqueSpacers_count_Ref_wOLDstrains_merge,aes(x=ARRAYINFO,group=explained,fill=explained))+geom_bar()+theme_classic()+scale_fill_manual(values=colorsss)+theme(axis.title.x = element_blank(),axis.text.x =element_text(angle = 45, hjust = 1,size=9) )+labs(y="spacer counts",fill="")+scale_y_continuous(breaks =c(0,10,17,27,39,54,92,101,117,139,163),labels=c(0,10,17,27,39,54,92,101,117,139,163))
-svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerexplained_wide_merged.svg",width=5,height=3)
+svg("../03_results//spacerexplained_wide_merged.svg",width=5,height=3)
 ggplot(uniqueSpacers_count_Ref_wOLDstrains_merge,aes(x=ARRAYINFO,group=explained,fill=explained))+geom_bar()+theme_classic()+scale_fill_manual(values=colorsss)+theme(axis.title.x = element_blank(),axis.text.x =element_text(angle = 45, hjust = 1,size=9) )+labs(y="spacer counts",fill="")+scale_y_continuous(breaks =c(0,10,17,27,39,54,92,101,117,139,163),labels=c(0,10,17,27,39,54,92,101,117,139,163))
  dev.off()
 ```
@@ -4222,6 +4173,7 @@ ggplot(uniqueSpacers_count_Ref_wOLDstrains_merge,aes(x=ARRAYINFO,group=explained
 
 ## Figure 6
 
+![**Figure 6. Characteristics of the phages identified in the cheese starter cultures.** A) Gene annotation of the two Streptococcus  starter culture phages, RMK202_1 and RMK202_2, and the two closest relatives (illustrated in lighter colors). Protein similarity between genes are indicated in grey (80-95% identity) and black (95-100%). B)  Relative abundance of  bacteria and phages over all metagenomic samples based on genome read coverage. C) Fraction of Streptococcus genomes with an integrated phage as based on the read coverage of phage-bacteria spanning regions relative to the coverage of the S. thermophilus genome. D) Fraction of Streptococcus phages which show signs of integration as based on the read coverage of phage-bacteria spanning regions relative to the coverage of the Streptococcus phage genomes. E) The number of spacers mapping against the different phage types. F) The Streptococcus phage network with the protospacer containing phages colored or labeled according to phage type. G) The spacer abundance versus the protospacer abundance from all phage spacers. The database specific linear regression and distributions are indicated in the figure and the axis figures accordingly.](figures/Figure_6_v2.png)
 
 ### Phage annotation
 
@@ -4261,7 +4213,7 @@ comparisons
 ##Streptococcus_phage_Sterm_1_vs_2
 ##-------------------------
 library(readr)
-Sterm_1_vs_2_cleaned <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/alignments/Sterm_1_vs_2_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
+Sterm_1_vs_2_cleaned <- read_delim("../data_zenodo/non_genomic_data//Sterm_1_vs_2_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
 
 Sterm_1_vs_2_cleaned$start1 <- str_split_fixed(Sterm_1_vs_2_cleaned$query, fixed("-"), 4)[,2]%>% as.numeric()
 Sterm_1_vs_2_cleaned$end1 <- str_split_fixed(Sterm_1_vs_2_cleaned$query, fixed("-"), 4)[,3]%>% as.numeric()
@@ -4271,13 +4223,13 @@ Sterm_1_vs_2_cleaned$end2 <- str_split_fixed(Sterm_1_vs_2_cleaned$subject, fixed
 
 Sterm_1_vs_2_cleaned$col <- ifelse(Sterm_1_vs_2_cleaned$score<95,"grey66", ifelse(Sterm_1_vs_2_cleaned$score<99,"grey88","black"))
 
-Sterm_1_vs_2_cleaned_final <- Sterm_1_vs_2_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% select(start1,end1,start2,end2,direction,col) %>% as.comparison()
+Sterm_1_vs_2_cleaned_final <- Sterm_1_vs_2_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% dplyr::select(start1,end1,start2,end2,direction,col) %>% as.comparison()
 
 ##-------------------------
 ##Streptococcus_phage_Sterm_2_vs_sw30
 ##-------------------------
 library(readr)
-Sterm_2_vs_sw30_cleaned <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/alignments/Sterm_2_vs_sw30_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
+Sterm_2_vs_sw30_cleaned <- read_delim("../data_zenodo/non_genomic_data//Sterm_2_vs_sw30_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
 
 Sterm_2_vs_sw30_cleaned$start1 <- str_split_fixed(Sterm_2_vs_sw30_cleaned$query, fixed("-"), 4)[,2]%>% as.numeric()
 Sterm_2_vs_sw30_cleaned$end1 <- str_split_fixed(Sterm_2_vs_sw30_cleaned$query, fixed("-"), 4)[,3]%>% as.numeric()
@@ -4287,14 +4239,14 @@ Sterm_2_vs_sw30_cleaned$end2 <- str_split_fixed(Sterm_2_vs_sw30_cleaned$subject,
 
 Sterm_2_vs_sw30_cleaned$col <- ifelse(Sterm_2_vs_sw30_cleaned$score<95,"grey66", ifelse(Sterm_2_vs_sw30_cleaned$score<99,"grey88","black"))
 
-Sterm_2_vs_sw30_cleaned_final <- Sterm_2_vs_sw30_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% select(start1,end1,start2,end2,direction,col) %>% as.comparison()
+Sterm_2_vs_sw30_cleaned_final <- Sterm_2_vs_sw30_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% dplyr::select(start1,end1,start2,end2,direction,col) %>% as.comparison()
 
 
 ##-------------------------
 ##Streptococcus_phage_Sterm_9874_vs_1
 ##-------------------------
 library(readr)
-Sterm_9874_vs_1_cleaned <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/alignments/Sterm_9874_vs_1_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
+Sterm_9874_vs_1_cleaned <- read_delim("../data_zenodo/non_genomic_data//Sterm_9874_vs_1_cleaned.txt",  "\t", escape_double = FALSE, col_names = c("query","subject","score"),  trim_ws = TRUE)
 
 Sterm_9874_vs_1_cleaned$start1 <- str_split_fixed(Sterm_9874_vs_1_cleaned$query, fixed("-"), 4)[,2] %>% as.numeric()
 Sterm_9874_vs_1_cleaned$end1 <- str_split_fixed(Sterm_9874_vs_1_cleaned$query, fixed("-"), 4)[,3]%>% as.numeric()
@@ -4306,7 +4258,7 @@ Sterm_9874_vs_1_cleaned$end2 <- str_split_fixed(Sterm_9874_vs_1_cleaned$subject,
 Sterm_9874_vs_1_cleaned$col <- ifelse(Sterm_9874_vs_1_cleaned$score<95,"grey66", ifelse(Sterm_9874_vs_1_cleaned$score<99,"grey88","black"))
 
 
-Sterm_9874_vs_1_cleaned_final <- Sterm_9874_vs_1_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% select(start1,end1,start2,end2,direction,col) %>% as.comparison()
+Sterm_9874_vs_1_cleaned_final <- Sterm_9874_vs_1_cleaned %>%  add_column(.,"direction"="1") %>% filter(score>80) %>% dplyr::select(start1,end1,start2,end2,direction,col) %>% as.comparison()
 
 ##-----------------
 ##bring togethere
@@ -4357,7 +4309,7 @@ library(tidyverse)
 ##Streptococcus_phage_SW30
 ##-------------------------
 library(readr)
-SW30 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/annotation/Streptococcus_phage_SW30_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
+SW30 <- read_delim("../data_zenodo/non_genomic_data/Streptococcus_phage_SW30_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
 
 table(SW30$fill)
 
@@ -4373,7 +4325,7 @@ plot_gene_map(dna_segs=dna_segs_SW30)
 ##Streptococcus_phage_2
 ##-------------------------
 library(readr)
-rmk_2 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/annotation/Streptococcus_phage_2_startAligned_Final_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
+rmk_2 <- read_delim("../data_zenodo/non_genomic_data/Streptococcus_phage_2_startAligned_Final_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
 
 table(rmk_2$fill)
 
@@ -4392,7 +4344,7 @@ plot_gene_map(dna_segs=dna_segs_rmk_2)
 ##Streptococcus_phage_987
 ##-------------------------
 library(readr)
-phage_9874 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/annotation/Streptococcus_virus_9874_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
+phage_9874 <- read_delim("../data_zenodo/non_genomic_data/Streptococcus_virus_9874_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
 
 table(phage_9874$fill)
 
@@ -4409,8 +4361,7 @@ plot_gene_map(dna_segs=dna_segs_9874)
 ##-------------------------
 ##Streptococcus_phage_2
 ##-------------------------
-library(readr)
-rmk_1 <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/startaligned/annotation/Streptococcus_phage_1_startAligned_Final_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
+rmk_1 <- read_delim("../data_zenodo/non_genomic_data/Streptococcus_phage_1_startAligned_Final_for_genoplotR.gff", "\t", escape_double = FALSE, trim_ws = TRUE)  %>% as.data.frame() #%>% filter(name!="spacer") #%>% select(-fill)
 
 table(rmk_1$fill)
 
@@ -4453,22 +4404,13 @@ Here, we quantify not only the bacteria but also the phage abundance by taking t
 ```{r}
 
 
-source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
-library(readr)
-library(ggplot2)
-library(dplyr)
-library(tidyverse)
-library(grid)
-library(gridExtra)
-library(cowplot) ## for arranging plots
-library(stringr) ##for split string
-library(rlist) ##rbind all dataframe of list
-library(viridis) ##colour palette
+# source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
+
 ##===================================
 #-------------file import
 
 
-  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
+  read_count <- read_delim("../data_zenodo/non_genomic_data//all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
 
 table(read_count$chr)
 
@@ -4517,9 +4459,9 @@ table(read_count$chr)
 
 
 # table(total_samples$phage) %>% length()
-write.table(all_final,"/home/vincent/Desktop/Projects/2019_Pilotplan/coverage_rmk202.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
+write.table(all_final,"../03_results//coverage_rmk202.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
 
-write.table(all_final,"/home/vincent/Desktop/Projects/2019_Pilotplan/coverage_rmk202_n32.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
+write.table(all_final,"../03_results//coverage_rmk202_n32.tsv",sep = "\t",quote = FALSE,col.names = FALSE)
 
  # all_colours <-c("#C5F6FA" ,"#6CF5A3" ,"#36E37B" ,"#10B552", "darkorange",  "#FAA0A0","#EB4D4D")
  all_colours <-c("#C5F6FA" ,"#6CF5A3" ,"#36E37B" ,"#10B552", "darkorange",  "#FAA0A0","#EB4D4D")
@@ -4575,7 +4517,7 @@ PrelAbundance <-  ggplot( data = all_final,aes(y = percent_coverage, x = sample,
           )
 
   PrelAbundance
-  svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/relative_abundance.svg",width=4.5,height=3)
+  svg("../03_results//relative_abundance.svg",width=4.5,height=3)
 #    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 # 
 PrelAbundance
@@ -4700,7 +4642,7 @@ plasmidCopyNUMber <- ggplot(all_final_copyNUMBER,aes(x=sample,y=copyNUMBER))+geo
 
 plasmidCopyNUMber
 
-svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/20201006/supplement/plasmidCopyNUMBER.svg",width=4.5,height=3)
+svg("../03_results//plasmidCopyNUMBER.svg",width=4.5,height=3)
    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 
 plasmidCopyNUMber
@@ -4731,7 +4673,7 @@ phageCopyNUMber <- ggplot(all_final_copyNUMBER_phage,aes(x=sample,y=copyNUMBER))
 
 phageCopyNUMber
 
-svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/20201006/supplement/phageCopyNUMBER.svg",width=4.5,height=3)
+svg("../03_results//phageCopyNUMBER.svg",width=4.5,height=3)
    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 
 phageCopyNUMber
@@ -4764,7 +4706,7 @@ phage_lactoCopyNUMber
 
 mean(all_final_copyNUMBER_phage_LACTO$copyNUMBER)
 sd(all_final_copyNUMBER_phage_LACTO$copyNUMBER)
-svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/20201006/supplement/phageCopyNUMBER_lacto.svg",width=4.5,height=3)
+svg("../03_results//phageCopyNUMBER_lacto.svg",width=4.5,height=3)
    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 
 phage_lactoCopyNUMber
@@ -4868,7 +4810,7 @@ PrelAbundance_bacteria <-  ggplot( data = all_final_bacteria,aes(y = percent_cov
 library(patchwork)
 
   PrelAbundance_bacteria
-  svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/relative_abundance_all.svg",width=10,height=4.5)
+  svg("../03_results//relative_abundance_all.svg",width=10,height=4.5)
 #    # png("~/Desktop/Manuscripts/2019_RMK202/Figures/F1_relativeAbundance.png", width = 1000, height = 800,res=300)
 # 
 (PrelAbundance+theme(legend.position = "none"))+(PrelAbundance_bacteria+theme(legend.position = "none"))+PrelAbundance
@@ -5099,30 +5041,9 @@ echo ${names}
 
 
 
-#samtools view ${BaseLocation}/${names}/bwaMapping2DB/${names}_rawIllumina_bwamem_sorted.bam |awk -F "\t" '{OFS="\t"}{if($7!="=")print $0}' |> /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam
-
-
-##------select only mappings with max EDit distance 1
-#grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |cut -f 12|sort|uniq -c
-
-#grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |awk -F "\t" '{OFS="\t"}{if($12=="NM:i:0"||$12=="NM:i:1")print $0}' |cut -f 12|sort|uniq -c
-
-
 ##------include only reads with soft or hard clipping--> must lie on the inseration site
 grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |wc -l 
 #grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |awk -F "\t" '{OFS="\t"}{if($12=="NM:i:0"||$12=="NM:i:1")print $0}' |awk -F "\t" '{OFS="\t"}{if($6~"S"||$6~"H")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings_polished.sam
-
-
-
-##------inlcude only reads that have one end soft or hard clipped (if both ends are--> potential CRISPR array)
-#grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |awk -F "\t" '{OFS="\t"}{if($12=="NM:i:0"||$12=="NM:i:1")print $0}' |awk -F "\t" '{OFS="\t"}{if($6~"S"||$6~"H")print $0}' |grep "H[0-9]\{1,3\}M[0-9]\{1,3\}H" -v |grep "S[0-9]\{1,3\}M[0-9]\{1,3\}S" -v  > /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings_polished.sam
-
-#grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |awk -F "\t" '{OFS="\t"}{if($12=="NM:i:0"||$12=="NM:i:1")print $0}' |awk -F "\t" '{OFS="\t"}{if($6~"S"||$6~"H")print $0}' > /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings_polished.sam
-
-###-------------take only paired reads
-
-#grep "phage" /archiv/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/${names}_reads_2_mappings.sam |awk -F "\t" '{OFS="\t"}{if($12=="NM:i:0"||$12=="NM:i:1")print $0}' |awk -F "\t" '{OFS="\t"}{if($6~"S"||$6~"H")print $0}' |grep "H[0-9]\{1,3\}M[0-9]\{1,3\}H" -v |grep "S[0-9]\{1,3\}M[0-9]\{1,3\}S" -v |cut -f 1|sort|uniq -c |sort|cut -d ' ' -f 7|sort|uniq -c
-##NO--not yet
 
 
 
@@ -5279,7 +5200,7 @@ done
 ```{r}
 library(readr)
 library(tidyverse)
-allGenomes_mapping_2_genomes <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/mappingLocation/allGenomes_mapping_2_genomes_cleaned.txt", "\t", escape_double = FALSE, col_names = c("phageGenome","phageStart","phageEnd","SecondGenome","SecondStart","SecondEnd","sample","MAPQ"),trim_ws = TRUE) 
+allGenomes_mapping_2_genomes <- read_delim("../data_zenodo/non_genomic_data//allGenomes_mapping_2_genomes_cleaned.txt", "\t", escape_double = FALSE, col_names = c("phageGenome","phageStart","phageEnd","SecondGenome","SecondStart","SecondEnd","sample","MAPQ"),trim_ws = TRUE) 
 
 
 ggplot(allGenomes_mapping_2_genomes,aes(x=SecondStart,fill=phageGenome,color=phageGenome))+geom_histogram(alpha=0.5)+theme_classic()+facet_wrap(~SecondGenome+sample,scales = "free")
@@ -5331,7 +5252,7 @@ p2 <- ggplot(allGenomes_mapping_3_genomes_sterm,aes(x=SecondStart,fill=SecondGen
 p2
 
 
-png("~/Desktop/mid_thesis/report/figures/20200430/chapter1/20201006/supplement/mapping_location_phages_unique.png", width = 1900, height = 1200,res=300)
+png("../03_results//mapping_location_phages_unique.png", width = 1900, height = 1200,res=300)
 
 p2
 
@@ -5362,7 +5283,7 @@ integrationSite
    
 ##---------------------------------newappraoch with coverage
 
-allGenomes_mapping_2_genomes_coverage <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/06_phage/activePhagemapping/mappingLocation/allGenomes_mapping_2_genomes_cleaned_StermPhages_bothtoegther_coverage.bed", "\t", escape_double = FALSE, col_names = c("Genome","position","coverage","sample"),trim_ws = TRUE) 
+allGenomes_mapping_2_genomes_coverage <- read_delim("../data_zenodo/non_genomic_data//allGenomes_mapping_2_genomes_cleaned_StermPhages_bothtoegther_coverage.bed", "\t", escape_double = FALSE, col_names = c("Genome","position","coverage","sample"),trim_ws = TRUE) 
 
 
 # ggplot(allGenomes_mapping_2_genomes_coverage,aes(x=position,y=coverage,color=sample))+geom_bar(stat="identity",alpha=0.5)+theme_classic()+facet_wrap(~Genome+sample,scales = "free")
@@ -5380,7 +5301,7 @@ colnames(summary_mapping) <- plyr::revalue(colnames(summary_mapping), c("max"="p
 
 ###-------------------------------coverage genome
 
-  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
+  read_count <- read_delim("../data_zenodo/non_genomic_data//Coverage_bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
 
 table(read_count$chr)
 
@@ -5445,7 +5366,7 @@ ggplot(final_phage_long_phage,aes(x=sample,y=percent,fill=species))+geom_bar(sta
 library(patchwork)
 integrationSite+NUMpLOT +   plot_layout(nrow=2,heights = c(2, 1)) #
 
-svg("~/Desktop/Projects/2019_RMK202_analysis/plot/IntegrationProphage.svg",width=6.5,height=11.5)
+svg("../03_results/IntegrationProphage.svg",width=6.5,height=11.5)
 integrationSite+NUMpLOT+NUMpLOT_phage +   plot_layout(nrow=3,heights = c(2, 1,1)) #
    dev.off()
    
@@ -5468,19 +5389,19 @@ integrationSite+NUMpLOT+NUMpLOT_phage +   plot_layout(nrow=3,heights = c(2, 1,1)
 groupingRMK202Strains <- data.frame(strain=c("13492","13491","24854","24837","13500","13493","13498","SMAG","24853","13494","24855","S72","13499c1","13499","13499c2","24838","24840","S50","13497","24839","13495","13496"),group=c(rep("lineage 1",9),rep("lineage 2",3),rep("lineage 3",6),rep("lineage 4",4)),colors=c(rep("#0000FF",9),rep("#6699FF",3),rep("#99CCFF",6),rep("#00FFFF",4)))
 
 
-write.table(groupingRMK202Strains, "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/log/ReferenceGenomeGrouping.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
+write.table(groupingRMK202Strains, "../03_results//ReferenceGenomeGrouping.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
 
 #error with wrong number as genome labels e.g. 24839 instead of the right 24739
 #ReferenceGenomeGrouping <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/log/ReferenceGenomeGrouping.txt<",  "\t", escape_double = FALSE, col_names = c("strain","lineage","colors"),  trim_ws = TRUE)
 
-ReferenceGenomeGrouping <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/log/ReferenceGenomeGrouping2.txt",  "\t", escape_double = FALSE, col_names = c("strain","lineage","colors"),  trim_ws = TRUE)
+ReferenceGenomeGrouping <- read_delim("../data_zenodo/non_genomic_data//ReferenceGenomeGrouping2.txt",  "\t", escape_double = FALSE, col_names = c("strain","lineage","colors"),  trim_ws = TRUE)
 
 ##=========================
 ##new
 
 ##-------------spacer count DADA over metagenomic samples
 
-dada_spacer_count <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract/FinalSpacers/ForDADA2_woREverse/dada_spacer_count.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+dada_spacer_count <- read_delim("../data_zenodo/non_genomic_data/dada_spacer_count_sterm.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 
 ##=========================
@@ -5491,7 +5412,7 @@ dada_spacer_count <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINA
 ##genome coverage
 ###-------------------------
 
-  read_count <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/07_abundances/mapping/all_2bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
+  read_count <- read_delim("../data_zenodo/non_genomic_data/Coverage_bacteria_and_phages_from_MAG.bed","\t", escape_double = FALSE, col_names = c("chr","start","end","count","length_mapped","geneLength","unknown","sample"),trim_ws = TRUE)
 
   read_count$geneCoverage  <- (read_count$count*600)/read_count$geneLength
   
@@ -5508,8 +5429,8 @@ dada_spacer_count <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINA
 #CRISPR_spacer_coverage <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/CRISPR_spacer_coverage.bed",   "\t", escape_double = FALSE, col_names = c("Name","startSpacer","endSpacer","ClusterName","numReads","basesCoverd","basesTotal","numcov","sample"),  trim_ws = TRUE)
 #reads4normalization <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/reads4normalization.txt", "\t", escape_double = FALSE, col_names = c("sample","readNumber","species"), trim_ws = TRUE) ;  reads4normalization <- reads4normalization[,-3]
 
-CRISPR_spacer_coverage <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//bwaMapping/final/CRISPR_spacer_coverage.bed",   "\t", escape_double = FALSE, col_names = c("Name","startSpacer","endSpacer","ClusterName","numReads","basesCoverd","basesTotal","numcov","sample"),  trim_ws = TRUE)
-reads4normalization <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//bwaMapping/log/reads4normalization.txt", "\t", escape_double = FALSE, col_names = c("sample","readNumber","species"), trim_ws = TRUE) ;  reads4normalization <- reads4normalization[,-3]
+CRISPR_spacer_coverage <- read_delim("../data_zenodo/non_genomic_data/CRISPR_spacer_coverage_sterm.bed",   "\t", escape_double = FALSE, col_names = c("Name","startSpacer","endSpacer","ClusterName","numReads","basesCoverd","basesTotal","numcov","sample"),  trim_ws = TRUE)
+reads4normalization <- read_delim("../data_zenodo/non_genomic_data/reads4normalization.txt", "\t", escape_double = FALSE, col_names = c("sample","readNumber","species"), trim_ws = TRUE) ;  reads4normalization <- reads4normalization[,-3]
 ###----------------normalize with reads mapped to the CRISPR spacers
 # CRISPR_spacer_coverage <- merge(CRISPR_spacer_coverage,reads4normalization,by="sample",all.x = TRUE)
 # CRISPR_spacer_coverage$CPM <- 1000000*(CRISPR_spacer_coverage$numReads/CRISPR_spacer_coverage$readNumber)
@@ -5529,7 +5450,7 @@ bwaSPACERCount_wide <- CRISPR_spacer_coverage %>% dplyr::select(sample,Name,CPM)
 ##-----------------------------------------------
 ##-------------------------bwa protospacer count normalised
 ##-----------------------------------------------
-CRISPR_protospacer_coverage <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//bwaMapping/final//CRISPR_spacer_coverage_protospacer.bed",   "\t", escape_double = FALSE, col_names = c("Name","startSpacer","endSpacer","ClusterName","numReads","basesCoverd","basesTotal","numcov","sample"),  trim_ws = TRUE)
+CRISPR_protospacer_coverage <- read_delim("./data_zenodo/non_genomic_data/CRISPR_spacer_coverage_protospacer_sterm.bed",   "\t", escape_double = FALSE, col_names = c("Name","startSpacer","endSpacer","ClusterName","numReads","basesCoverd","basesTotal","numcov","sample"),  trim_ws = TRUE)
 # reads4normalization <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/reads4normalization.txt", "\t", escape_double = FALSE, col_names = c("sample","readNumber","species"), trim_ws = TRUE) ;  reads4normalization <- reads4normalization[,-3]
 ###----------------normalize with reads mapped to the CRISPR spacers
 # CRISPR_protospacer_coverage <- merge(CRISPR_protospacer_coverage,reads4normalization,by="sample",all.x = TRUE)
@@ -5576,19 +5497,18 @@ onlyExperimentSpacers
   sampleDF <- metasample_colors
   
 ##!!!!!!!!!!!!!!!spacer file
-library(readr)
 ##-------information array assignment
   
-metaspacer_info <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt", "\t", escape_double = FALSE, trim_ws = TRUE)  
+  metaspacer_info <- read_delim("../data_zenodo/non_genomic_data/uniqueSpacers_count_Ref_wOLDstrains_both.txt", "\t", escape_double = FALSE, trim_ws = TRUE)  
 metaspacer_info$METAClusterName <- gsub(">","",metaspacer_info$METAClusterName)
- spacers_info <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//FinalSpacers//ForDADA2_woREverse//spacers_info.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+ spacers_info <- read_delim("../data_zenodo/non_genomic_data/spacers_info.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 ##-------information spacer blast
 # spacers_info_blast <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
-spacers_info_blast <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract//CRISPRspacerBLAST/blast/all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
+spacers_info_blast <- read_delim("../data_zenodo/non_genomic_data//all_differentBlastHits.txt", "\t", escape_double = FALSE, trim_ws = TRUE,col_names = c("DB","spacer","assigned")) %>% spread(., DB, assigned)
 
 ##-------clustering vContact blast
 # Streptococcus_phage_Cluster_assignment <- read_csv("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new//allPhages_vContact/Streptococcus_phage_Cluster_assignment.txt",col_types = cols(.default = "c")) %>% mutate(Size = as.double(Size), Quality = as.double(Quality)) %>% select(-c(Order,Family,Genus,Quality,Type.x))
-Streptococcus_phage_Cluster_assignment <- read_csv("~/Desktop/Projects/2019_PhageDB/Vcontact_with_meta_new_03///allPhages_vContact/Streptococcus_phage_Cluster_assignment.txt",col_types = cols(.default = "c")) %>% mutate(Size = as.double(Size), Quality = as.double(Quality)) %>% select(-c(Order,Family,Genus,Quality,Type.x))
+Streptococcus_phage_Cluster_assignment <- read_csv("../data_zenodo/non_genomic_data/Streptococcus_phage_Cluster_assignment.txt",col_types = cols(.default = "c")) %>% mutate(Size = as.double(Size), Quality = as.double(Quality)) %>% dplyr::select(-c(Order,Family,Genus,Quality,Type.x))
 
 # Streptococcus_phage_Cluster_assignment[grep("rmk",Streptococcus_phage_Cluster_assignment$Genome),"Genome"]
 
@@ -5599,7 +5519,7 @@ Streptococcus_phage_Cluster_assignment <- read_csv("~/Desktop/Projects/2019_Phag
   # CRISPR_spacer_coverage_extended_wide <-  CRISPR_spacer_coverage %>% select(sample,Name,CPM) %>% spread(sample, CPM)
   
 library(readr)
-dada_spacer_count <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Spacers_from_Metagenome/SpacerExtract/FinalSpacers/ForDADA2_woREverse/dada_spacer_count.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+dada_spacer_count <- read_delim("../data_zenodo/non_genomic_data//dada_spacer_count_sterm.txt","\t", escape_double = FALSE, trim_ws = TRUE)
 
 metaspacer_info_tmp <- metaspacer_info %>% select(METAClusterName,spacer)
 
@@ -5615,7 +5535,7 @@ dada_spacer_count <- merge(dada_spacer_count,metaspacer_info_tmp,by.x="spacer",b
 #----new----
 
 # unique(spacer_Infos_Sterm_final$sample)
-spacer_Infos_Sterm_final <- read_delim("~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/CRISPRspacerAnalysis/Sterm/spacer_Infos_Sterm_final.txt",  "\t", escape_double = FALSE, col_names = c("ClusterName","numSpacers_in_CLUSTER","sample","array","spc","ARRAY","SPACER"),  col_types = cols(SPACER = col_number()),  trim_ws = TRUE)
+spacer_Infos_Sterm_final <- read_delim("../data_zenodo/non_genomic_data/spacer_Infos_Sterm_final.txt",  "\t", escape_double = FALSE, col_names = c("ClusterName","numSpacers_in_CLUSTER","sample","array","spc","ARRAY","SPACER"),  col_types = cols(SPACER = col_number()),  trim_ws = TRUE)
 # spacer_Infos_Sterm_final <- unique(spacer_Infos_Sterm_final)
 
 # spacer_Infos_Sterm_final_tmp <- spacer_Infos_Sterm_final %>% select(ClusterName,numSpacers_in_CLUSTER)
@@ -5713,7 +5633,7 @@ Streptococcus_phage_Cluster_assignment %>% filter(VC=="251_1")
 # Streptococcus_phage_Cluster_assignment[grep("Javan63",Streptococcus_phage_Cluster_assignment$Genome),]
 spacers_final %>% filter(!is.na(phageDB)) %>% filter(is.na(VC))
 
-  write.table(spacers_final, "~/Desktop/Projects/2019_RMK202_analysis/00_FINAL/log/Clusters_spacers_final.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
+  write.table(spacers_final, "../03_results//Clusters_spacers_final.txt",na = "", quote = FALSE, sep = "\t",row.names = FALSE, col.names =FALSE)
 
 
 ###-----------------------------------
@@ -5744,7 +5664,7 @@ spacerlocation_explained
 
 
 
- svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacerlocation_explained.svg",width=5,height=3)
+ svg("../03_results//spacerlocation_explained.svg",width=5,height=3)
 
 spacerlocation_explained#   
    dev.off()
@@ -5823,7 +5743,7 @@ geom_smooth(method="lm",se = FALSE)+
 plot
 
   # svg("~/Desktop/Manuscripts/2019_RMK202/Figures/S05_rawReadMapping.svg",width=6,height=4)
-    png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_protospacer_regression.png", width = 2800, height = 2500,res=300)
+    png("../03_results//spacer_protospacer_regression.png", width = 2800, height = 2500,res=300)
 
 
 plot
@@ -5881,18 +5801,18 @@ library(patchwork)
 
 
 
-  svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_01.svg",width=8,height=6)
+  svg("../03_results//spacer_vs_proto_01.svg",width=8,height=6)
 (plot+theme(legend.position = "none"))+plot_density_y+plot_layout(widths =c(3,1))
  dev.off()
  
-   svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_02.svg",width=6,height=8)
+   svg("../03_results//spacer_vs_proto_02.svg",width=6,height=8)
 plot_density_x/(plot+theme(legend.position = "none"))+plot_layout(heights = c(1,3))
  dev.off()
  
  
-  png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_03.png", width = 2000, height = 2000,res=300)
+  png("../03_results//spacer_vs_proto_03.png", width = 2000, height = 2000,res=300)
 
-    svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_03.svg",width=5.5,height=7)
+    svg("../03_results//spacer_vs_proto_03.svg",width=5.5,height=7)
 (plot_density_x+plot_spacer()+plot_layout(widths = c(3,1)))/((plot+theme(legend.position = "none")+plot_density_y)+plot_layout(widths =c(3,1)))+plot_layout(heights = c(2,3))
  dev.off()
 
@@ -5919,7 +5839,7 @@ plot_density_x/(plot+theme(legend.position = "none"))+plot_layout(heights = c(1,
   
     # svg("~/Desktop/mid_thesis/report/figures/20200430/chapter1/20201006/supplement/Protospacer_distribution.svg",width=6,height=6)
 
- png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_protospacer_regression_boxplot.png", width = 2000, height = 2500,res=300)
+ png("../03_results/spacer_protospacer_regression_boxplot.png", width = 2000, height = 2500,res=300)
 
 ggridgplot
  dev.off()
@@ -5941,26 +5861,25 @@ plot_box_y
 
 plot_box_x+plot_box_y
 
- png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_protospacer_regression_boxplot.png", width = 2000, height = 2500,res=300)
+ png("../03_results/spacer_protospacer_regression_boxplot.png", width = 2000, height = 2500,res=300)
 
 plot_box_x+plot_box_y
  dev.off()
 
  
- source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
 # legend_1 <- g_legend(p_mst1_sterm_woModi_clustered)
  
  library(gridExtra)
 grid.arrange(p1,p2,p3,p4, ncol=2, heights=c(1,2))
 
-  svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/polishing_K1.svg",width=6,height=5)
+  svg("../03_results//polishing_K1.svg",width=6,height=5)
 grid.arrange(p1,p2,p3,p4, ncol=2, heights=c(2,3))
  dev.off()
  
 library(gridExtra)
 grid.arrange(p1,p2,p3,p4, ncol=2, heights=c(1,2))
 
-  svg("~/Desktop/presenations/my_presentations/20190708_groupmeeting/figures/polishing_K1.svg",width=6,height=5)
+  svg("../03_results//polishing_K1.svg",width=6,height=5)
 grid.arrange(p1,p2,p3,p4, ncol=2, heights=c(2,3))
  dev.off()
 
@@ -5997,7 +5916,7 @@ geom_smooth(method="lm")+
                parse = TRUE,)   
 plot
 
-  png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_04.png", width = 4000, height = 12000,res=300)
+  png("../03_results//spacer_vs_proto_04.png", width = 4000, height = 12000,res=300)
 
     # svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_03.svg",width=6,height=6)
 plot
@@ -6034,12 +5953,9 @@ countComparison_ggprep_03 <- countComparison_ggprep_02 %>%  filter(!sample %in% 
           )
 
 p4 
-library(plotly)
-ggp <- ggplotly(p3)
- htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_05.html")
 
 
-  png("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_05.png", width = 2500, height = 12000,res=300)
+  png("~../03_results//spacer_vs_proto_05.png", width = 2500, height = 12000,res=300)
 
     # svg("~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_03.svg",width=6,height=6)
 p3 /p4
@@ -6093,9 +6009,4 @@ plot
           )
 
 p4 
-library(plotly)
-ggp <- ggplotly(p4)
- htmlwidgets::saveWidget(ggp, "~/Desktop/Projects/2019_RMK202_analysis/plot/spacer_vs_proto_06.html")
-
- 
 ```

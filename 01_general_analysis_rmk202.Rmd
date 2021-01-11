@@ -1,9 +1,30 @@
 ---
-title: "Script: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
+title: "01_General_Analysis"
 author: "Vincent Somerville"
 date: "11/01/2021"
-output: html_document
+output:
+  html_document:
+    number_sections: yes
+    theme: readable
+    highlight: tango
+    df_print: paged
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+  #   number_sections: true
+  #   theme: readable
+  #  html_document:
+  #   # code_folding: hide
+  #   df_print: paged
+  #   toc: true
+  #   toc_float:
+  #     collapsed: true
+  #     smooth_scroll: true
 ---
+
 
 
 ```{r setup ,echo=FALSE}
@@ -71,7 +92,13 @@ This script includes the complete workflow how the data for the following public
 
 *Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture*
 
-The structure is mainly in the first part I go through the basic analysis and the second part I focus on the analysi for the figures:
+The scripts are divided into three subscripts. Each on is saved and compiled as a Rmarkdown with extensive comments. The three parts consist of:
+
+1. the general analysis including all genomic and non-genomic data-analysis
+2. the plotting and analysis for the main body figures
+3. the plotting and analysis for the supplemental figures
+
+Here, we look at the the first part: **General analysis**
 
 # General analysis
 
@@ -79,6 +106,7 @@ Here, I go through the basic analysis on which the figures are the created upon.
 
 ## Genomic data analysis
 
+This is the analysis of the sequenced isolate data. 
 
 ### FastQC
 
