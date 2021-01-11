@@ -3,6 +3,9 @@
 This is the script repository for the following manuscript:
 
 
+Somerville, Vincent, Berthoud, Hélène, Schmidt, Remo S., Bachmann, Hans-Peter, Meng, Yi Hélène, Fuchsmann, Pascal, von Ah, Ueli, Engel, Philipp. 2021. “Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture.” *BioRXiv*
+
+
 ## Abstract
 
 Undefined starter cultures are bacterial communities used in cheese making. They are phenotypically stable and propagated under constant conditions in milk. This makes them interesting to understand the eco-evolutionary dynamics of microbial communities. While cheese starter cultures are known to be dominated by a few bacterial species, little is known about the composition, functional relevance, and temporal dynamics of strain-level diversity. Here, we applied shotgun metagenomics to analyze historical samples spanning 22 years and continuous propagation for 123 generations of an important Swiss cheese starter culture. We found that the bacterial community is highly stable and dominated by two species, *Streptococcus thermophilus* and *Lactobacillus delbrueckii subsp. lactis*. Each species is represented by a few coexisting strains. Genome sequencing, metabolomics analysis, and co-culturing experiments show that these strains are functionally redundant, but differ tremendously in their phage resistance potential. Moreover, we identified two highly abundant *Streptococcus* phages that seem to stably coexist in the community without any negative impact on bacterial growth or strain persistence, and despite the presence of a large diversity of matching CRISPR spacers. Our findings provide novel insights into strain-level diversity in domesticated microbial communities and highlight an important role of bacteria-phage interactions in cheese starter cultures.  
