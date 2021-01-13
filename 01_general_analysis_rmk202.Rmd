@@ -1,5 +1,5 @@
 ---
-title: "01_General_Analysis"
+title: "Analysis: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
 author: "Vincent Somerville"
 date: "11/01/2021"
 output:
@@ -58,13 +58,9 @@ library(officer)
 library(openxlsx)
 library(readr)
 library(ggbiplot)
-library(tidyverse)
 library(patchwork)
 library(plotly)
-library(readr)
 library(tsibble)
-
-library(readr)
 library(ggplot2)
 library(plyr)
 library(plotly)
@@ -73,18 +69,19 @@ library(lubridate)
 library(growthrates)
 library(broom)
 library(drc)
-library(patchwork)
-library(dplyr)
 require(zoo)
-
 library(genoPlotR)
-library(tidyverse)
 library(alluvial)
 library(ggalluvial)
-
 library(genoPlotR)
-
 library(igraph)
+library(grid)
+library(gridExtra)
+library(cowplot) ## for arranging plots
+library(stringr) ##for split string
+library(rlist) ##rbind all dataframe of list
+library(viridis) ##colour palette
+setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202/01_script/")
 
 ```
 
@@ -102,7 +99,7 @@ Here, we look at the the first part: **General analysis**
 
 # General analysis
 
-Here, I go through the basic analysis on which the figures are the created upon. 
+Here, I go through the basic analysis on which the figures are the then created upon (see 02_figure_mainBody_rmk202.Rmd)
 
 ## Genomic data analysis
 
@@ -111,7 +108,7 @@ This is the analysis of the sequenced isolate data.
 ### FastQC
 
 In a first step we creat [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) reports for all the libraries. 
-These are then visualized with [MultiQC](https://multiqc.info/)
+These are then visualized with [MultiQC](https://multiqc.info/). 
 
 ```{bash fastqc}
 threads=8
@@ -137,7 +134,8 @@ for id in $(cut -f 2 /archiv/Projects/2018_Culturomics/02_script/names_changed.t
 ```
 
 ### Trim-galore
-In the following we clip adaptors with [trim-galore]()
+
+In the following we clip adaptors with [trim-galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
 
 ```{bash }
 source /archiv/Projects/2018_Culturomics/02_script/fileShortcuts.sh
@@ -523,8 +521,6 @@ for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
   done
 
 
-scp -r vincent@130.223.51.151:/archiv/Projects/2019_pilotplant/01_rawData/Multiqc /home/vincent/Desktop/Projects/2019_Nano_Meta/Illumina_analysis
-
 
 ```
 
@@ -568,11 +564,7 @@ for sample in $(cat /archiv/Projects/2019_Nano_Meta/nanoporeSamples.txt)
 sample=th_K2_8h
 
 
-mkdir -p ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/assembly/
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/${sample}/assembly/assembly_graph.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/assembly/${sample}_assembly_Graph_plasmid.gfa
-
-
+##do bandage on the local computer. 
 
 ##-------assembly length
 
@@ -1010,15 +1002,6 @@ mkdir -p $Overall_output_directory/MultiQCRaconONT/
 
 
 
-###--------------on local
-
-name=di_K2_6h
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/quastwithRaconONT/report.html ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_quast_report.html
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/MultiQCRaconONT/multiqc_report.html ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/01_polishingQC/${name}_multiqc_report.html
-
-
-
 ```
 
 
@@ -1277,17 +1260,6 @@ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_
 fasta_formatter -w 50 -i /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/Final_Polished_withoutCow/di_rmk202_MAG_reference_polished_unformated.fasta -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/Final_Polished_withoutCow/di_rmk202_MAG_reference_polished.fasta
 
 
-##---------------------------------------------BRING LOCAL
-
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_FINALgENOMEassembly/
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/08_fourthFreebayes/splitContigs/S_thermophilus_mag_rmk202.fasta ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_FINALgENOMEassembly/
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/08_fourthFreebayes/splitContigs/L_delbrueckii_mag_rmk202.fasta ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_FINALgENOMEassembly/
-
-
-##-------------phage for RAST
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/08_fourthFreebayes/splitContigs/L_del_phage_01.fasta ~/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_FINALgENOMEassembly/
-
 
 ```
 
@@ -1332,12 +1304,6 @@ mkdir -p /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/d
   -o /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly_meta
   
 ###--------------------------------move local
-
-
-names=di_K2_6h
-mkdir -p ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/asssembly/assembly_graph_with_scaffolds.gfa ~/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/01_raw_demupliplex/assembly/${names}_graph.gfa
-
 
 ###======================================single sample unmapped assembly
 
@@ -1384,8 +1350,6 @@ grep -A 100 ">>>> Coverage per contig" /archiv/Projects/2019_RMK202_analysis/03_
 
 done
 
-
-scp vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP/log/mappingcoverage.txt ~/Desktop/Projects/2019_Pilotplan/PhagemappingCoverage.txt
 
 ```
 
@@ -1502,13 +1466,6 @@ cd-hit-est -i Phages_rmk202.fasta\
     -o cd_hit_phages/phages.txt -c 0.90 -M 30000 -T 37 -sc 1 -sf 1
 
 
-###------------------------
-#bring  bigmachine
-###------------------------
-
-
-scp /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/02_againstpolished_single_K1/gfa/02_blast_nonBacterialReadsAssembled/PlasmidSpades/AssemblyGraphs/Phages_rmk202.fasta vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/FINAL_assembly_withPlasmids_PGAP/
-
 
 ###------------------------
 #merge with bacterial genomes
@@ -1580,11 +1537,6 @@ for names in $(cat ${samplesss})
   
   done
   mkdir -p ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/bamQCs
-```
-
-
-```{bash}
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_withPhageAssembly/log  ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/bamQCs
 ```
 
 
@@ -1736,16 +1688,6 @@ echo "---------------------------"
 ```
 look at Quast 
 
-```{bash}
-
-###------------------------
-##local
-###------------------------
-mkdir -p ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/Quast
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/03_mapping2Nanopre/02_againstpolished_single_rmk202_final_kneaddata_withStrains_PGAP_withPhageAssembly/polishing/Quast/  ~/Desktop/Projects/2019_Pilotplan/02_mapping2referenceDB/Quast
-
-
-```
 extract polished contigs and merge with Bacterial contigs for Final Reference file
 for Streptococcus_phage_1 and Streptococcus_phage_2 take lyo202_96
 for Streptococcus_phage_3 and di_K2_6h
@@ -1916,12 +1858,6 @@ cp $Overall_output_directory/07_thirdFreebayes/freebayesOuput/7_thirdFreebayes.f
 cd ..
 
 snakemake
-
-###________________________move local
-
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/IDEEL/ideel/hists/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
-
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/IDEEL/ideel/lengths/ /home/vincent/Desktop/Projects/2019_Nano_Meta/02_flye_Assembly/ideel/
 
 
 ```
@@ -2126,18 +2062,6 @@ cat /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_
   /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/spades_nonMapping_assembly/splitContigs/L_del_plasmid_02.fasta > \
   /archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/PGAP_prep/L_delbrueckii_RMK202.fasta
   
-##------------------------------------BRING LOCAL
-
-
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/assembly/  
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/PGAP_prep/L_delbrueckii_RMK202.fasta /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/assembly/
-
-
-mkdir -p /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/assembly/  
-
-scp vincent@130.223.51.151:/archiv/Projects/2019_Nano_Meta/02_flye_Assembly/02_raw_demultiplexed/di_K2_6h/Polishing_FINAL/circlatorAfter/PGAP_prep/S_thermophilus_RMK202.fasta /home/vincent/Desktop/Projects/2019_Pilotplan/04_mapping2ONT/assembly/
-
 
 ```
 
@@ -3032,13 +2956,6 @@ done #arrayzzz
 done #species
 ```
 file of interest is the .dnd file which contains the alignment score.
-
-```{bash}
-
-mkdir -p /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/genoPlotR/Sterm//GeneID/
-scp -r vincent@130.223.51.116:/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/genoPlotR/Sterm//GeneID/alignmentScore.txt /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/genoPlotR/Sterm//GeneID/
-
-```
 
 
 
@@ -5514,8 +5431,6 @@ BaseLocation_mapping=/archiv/Projects/2019_RMK202_analysis/00_FINAL/02_CRISPR/Sp
 metaSpacerFile=${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_oldStrain/uniqueSpacers_count_Ref_wOLDstrains.txt #inlcudes in column four the name of array
 
 
-
-  
  # ${BaseLocation}/FinalSpacers/cdHit_spacers/uniqueSpacers_rmk202_sterm_allsamples_allArrays_mappabable_final.fasta
   
   
@@ -5523,10 +5438,6 @@ metaSpacerFile=${BaseLocation}/FinalSpacers//FinalSpacers/cdhit_withReference_ol
 ##-----------create mappable and blastable file
 ##=============================================
   
-  
-#scp ~/Desktop/Projects/2019_RMK202_analysis/04_CRISPR_spacer/ForDADA2/spacersAssigned.txt vincent@130.223.51.116:/data/Project/CRISPRspacers/02_PilerCR/20190112_Streptococcus_thermophilus_withRMK202/ReadsWithRepeats//FinalSpacers/ForDADA2/
-
-
 ##--------------------------------------------------
 ##--------------------------------------------------
 rm ${BaseLocation}/FinalSpacers/cdHit_spacers/uniqueSpacers_rmk202_sterm_allsamples_allArrays_mappabable.fasta

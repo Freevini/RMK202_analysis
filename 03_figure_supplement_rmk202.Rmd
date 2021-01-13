@@ -1,5 +1,5 @@
 ---
-title: "03: Supplemental analysis"
+title: "Analysis: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
 author: "Vincent Somerville"
 date: "11/01/2021"
 output:
@@ -58,13 +58,9 @@ library(officer)
 library(openxlsx)
 library(readr)
 library(ggbiplot)
-library(tidyverse)
 library(patchwork)
 library(plotly)
-library(readr)
 library(tsibble)
-
-library(readr)
 library(ggplot2)
 library(plyr)
 library(plotly)
@@ -73,18 +69,19 @@ library(lubridate)
 library(growthrates)
 library(broom)
 library(drc)
-library(patchwork)
-library(dplyr)
 require(zoo)
-
 library(genoPlotR)
-library(tidyverse)
 library(alluvial)
 library(ggalluvial)
-
 library(genoPlotR)
-
 library(igraph)
+library(grid)
+library(gridExtra)
+library(cowplot) ## for arranging plots
+library(stringr) ##for split string
+library(rlist) ##rbind all dataframe of list
+library(viridis) ##colour palette
+setwd("/home/vincent/Desktop/Manuscripts/2019_RMK202/01_script/")
 
 ```
 
@@ -105,10 +102,10 @@ Here, we look at the the third part: **Supplemental analysis**
 
 ### starter culture stability
 
-Here, I loock at the historical data from rmk202 received from the cheese starter culture production. 
+Here, I lock at the historical data from rmk202 received from the cheese starter culture production. 
 
 ```{r}
-ph_workingStock_rmk202 <- read_delim("02_data/ph_workingStock_rmk202.csv", "\t", escape_double = FALSE, trim_ws = TRUE)
+ph_workingStock_rmk202 <- read_delim("../data_zenodo/supplement/ph_workingStock_rmk202.csv", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # Path$New.Week <-
   # strftime(ph_workingStock_rmk202$mixDate, format = "%W/%Y")
@@ -135,12 +132,12 @@ lactatePlot <- ggplot(ph_workingStock_rmk202_sub,aes(x=mixDate,y=`D(-)%`))+geom_
  
  lactatePlot
  
-png("03_results/lactatePlot.png", width = 2100, height = 1500,res=300)
+png("../03_results/lactatePlot.png", width = 2100, height = 1500,res=300)
 lactatePlot
 dev.off()
  
 
-png("03_results//acidificationPlot.png", width = 2100, height = 1500,res=300)
+png("../03_results//acidificationPlot.png", width = 2100, height = 1500,res=300)
 acidicationPlot
 dev.off()
 ```
@@ -150,19 +147,15 @@ dev.off()
 eggnog of pandarooo results
 
 ```{r}
-library(readr)
-library(plyr)
-library(ggplot2)
-library(tidyverse)
 
-accesoryGenesNames <- read_csv("02_data/accesoryGenes.names",  col_names = "names")
+accesoryGenesNames <- read_csv("../data_zenodo/supplement/accesoryGenes.names",  col_names = "names")
 
-genes_soacer <- read_delim("02_data/query_seqs.fa.emapper_accessory.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3))
+genes_soacer <- read_delim("../data_zenodo/supplement/query_seqs.fa.emapper_accessory.annotations", "\t", escape_double = FALSE, trim_ws = TRUE, skip = 4,col_names = FALSE) %>% slice( 1:(n()-3))
 
 
 colnames(genes_soacer) <- c("query_name","seed_eggNOG_ortholog","seed_ortholog_evalue","seed_ortholog_score","best_tax_level","Preferred_name","GOs","EC","KEGG_ko","KEGG_Pathway","KEGG_Module","KEGG_Reaction","KEGG_rclass","BRITE","KEGG_TC","CAZy","BiGG_Reaction","tax_scope","eggNOG OGs","bestOG","COG_Functional_Category","eggNOG free text description")
 
-COG_functional_categories <- read_delim("02_data/COG_functional_categories.csv",  ",", escape_double = FALSE, col_names = c("short","long","divided"),trim_ws = TRUE, na = "NA")
+COG_functional_categories <- read_delim("../data_zenodo/supplement/COG_functional_categories.csv",  ",", escape_double = FALSE, col_names = c("short","long","divided"),trim_ws = TRUE, na = "NA")
 
 ##----------------COG
 
@@ -225,7 +218,7 @@ CogPlotSterm
 library(patchwork)
 
 
-svg("03_results/accessory_genes_eggnog.svg",width=6,height=5)
+svg("../03_results/accessory_genes_eggnog.svg",width=6,height=5)
 
 CogPlotSterm
 
@@ -237,11 +230,6 @@ dev.off()
 
 moving genomes from local (previously downloaded from NCBI submission portal) to big machine
 
-```{bash}
-
-scp /home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/PGAP_genomes/* vincent@130.223.51.116:/data/Project/2020_StarterCultureDiversity/10_REFERENCE_GEN0MES/NCBI_PGAP_FINAL/allRMKs/
-
-```
 
 change names of files
 
@@ -850,21 +838,19 @@ done
 
 ####rAnalysis
 ```{r}
-library(readr)
-library(plyr)
-library(tidyverse)
+
 #source("/home/vincent/Desktop/ScriptRepository/R_functions-master/R_functions/g_legend.R") ##for plotting only legends
 
 ##=========================================
 ##---Pseudo
-RMK_pseudogene <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/pseudogene_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_contigs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/contigs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_genome <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/genome_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_genes <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/genes_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_CRISPR <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/CRISPR_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_ncRNAs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/ncRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_plasmid <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_plasmid2 <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/plasmid3_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE) %>% dplyr::select(-LdelCov) %>% dplyr::select(-Ldelplasmid2) 
+RMK_pseudogene <- read_delim("../data_zenodo/supplement//comparativeGenomics/pseudogene_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_contigs <- read_delim("../data_zenodo/supplement//comparativeGenomics/contigs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_genome <- read_delim("../data_zenodo/supplement//comparativeGenomics/genome_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_genes <- read_delim("../data_zenodo/supplement//comparativeGenomics/genes_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_CRISPR <- read_delim("../data_zenodo/supplement//comparativeGenomics/CRISPR_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_ncRNAs <- read_delim("../data_zenodo/supplement//comparativeGenomics/ncRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_plasmid <- read_delim("../data_zenodo/supplement//comparativeGenomics/plasmid_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_plasmid2 <- read_delim("../data_zenodo/supplement//comparativeGenomics/plasmid3_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE) %>% dplyr::select(-LdelCov) %>% dplyr::select(-Ldelplasmid2) 
 
 RMK_plasmid2$plasmid <- ifelse(RMK_plasmid2$Ldelplasmid1>0.5,1,0)
 RMK_plasmid3 <- RMK_plasmid2 %>% dplyr::select(-Ldelplasmid1)
@@ -872,11 +858,11 @@ RMK_plasmid <- RMK_plasmid %>% filter(!Genome %in% RMK_plasmid3$Genome)
 
 RMK_plasmid <- rbind(RMK_plasmid3,RMK_plasmid)
 
-RMK_rRNA <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/rRNA_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_transposase <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/transposase_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
-RMK_tRNAs <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/tRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_rRNA <- read_delim("../data_zenodo/supplement//comparativeGenomics/rRNA_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_transposase <- read_delim("../data_zenodo/supplement//comparativeGenomics/transposase_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_tRNAs <- read_delim("../data_zenodo/supplement//comparativeGenomics/tRNAs_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
 
-RMK_Busco <- read_delim("/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/Busco_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
+RMK_Busco <- read_delim("../data_zenodo/supplement//comparativeGenomics/Busco_RMK202.txt",  "\t", escape_double = FALSE,  trim_ws = TRUE)
 
 ##=========================================
 ##merge all samples
@@ -932,7 +918,7 @@ library(kableExtra)
 knitr::kable(RMK_final_again, "latex", booktabs = TRUE, linesep = "") %>%
     kable_styling(full_width = TRUE, font_size = 9) %>%  as_image()
     # column_spec(1, width = "4cm") %>%
-    # save_kable(file = "/home/vincent/Desktop/Projects/2019_RMK202_analysis/00_FINAL/01_genomes/comparativeGenomics/table.png")
+    # save_kable(file = "../data_zenodo/supplement//comparativeGenomics/table.png")
 
 
 ##-----transposases
@@ -956,7 +942,7 @@ pseudoPlot
 ##=========================================
 ##---rRNA
 
-Lactobacillus_rRNA <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/rRNA/all_rRNA.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_rRNA <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/rRNA/all_rRNA.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 rRNAPlot <- ggplot(Lactobacillus_rRNA,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -973,7 +959,7 @@ rRNAPlot
 ##=========================================
 ##---ncRNAs
 
-Lactobacillus_ncRNAs <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/ncRNAs/all_ncRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_ncRNAs <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/ncRNAs/all_ncRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 ncRNAsPlot <- ggplot(Lactobacillus_ncRNAs,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -989,7 +975,7 @@ ncRNAsPlot
 ##=========================================
 ##---genes
 
-Lactobacillus_genes <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/genes/all_genes.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_genes <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/genes/all_genes.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 genesPlot <- ggplot(Lactobacillus_genes,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -1005,7 +991,7 @@ genesPlot
 ##=========================================
 ##---CRISPR
 
-Lactobacillus_CRISPR <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/CRISPR/all_CRISPR.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_CRISPR <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/CRISPR/all_CRISPR.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 CRISPRPlot <- ggplot(Lactobacillus_CRISPR,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -1023,7 +1009,7 @@ CRISPRPlot
 ##=========================================
 ##---transposase
 
-Lactobacillus_transposase <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/transposase/all_transposase.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_transposase <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/transposase/all_transposase.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 transposasePlot <- ggplot(Lactobacillus_transposase,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -1040,7 +1026,7 @@ transposasePlot
 ##=========================================
 ##---tRNAs
 
-Lactobacillus_tRNAs <- read_delim("~/Projects/2019_pilotplant/comparativeGenomics/tRNAs/all_tRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
+Lactobacillus_tRNAs <- read_delim("../data_zenodo/supplement//comparativeGenomics_Ldel/tRNAs/all_tRNAs.txt",  "\t", escape_double = FALSE, col_names =c("genome","species","location","count"),  trim_ws = TRUE)
 
 tRNAsPlot <- ggplot(Lactobacillus_transposase,aes(x=species,y=count))+geom_boxplot()+geom_dotplot(aes(color=location,fill=location),binaxis='y', stackdir='center', dotsize=1)+
   labs(x="",
@@ -1061,7 +1047,7 @@ legend <- g_legend(genesPlot)
 grid.arrange(genesPlot+theme(legend.position="none"),rRNAPlot,tRNAsPlot,legend,pseudoPlot,transposasePlot,CRISPRPlot , ncol=4)
 
 
-svg("~/Desktop/presenations/my_presentations/20190807_committeeMeeting/figures/ldelGenomes.svg",width=10,height=5)
+svg("../03_results/ldelGenomes.svg",width=10,height=5)
 grid.arrange(genesPlot+theme(legend.position="none"),rRNAPlot,tRNAsPlot,legend,pseudoPlot,transposasePlot,CRISPRPlot , ncol=4)
 
 dev.off()

@@ -1,5 +1,5 @@
 ---
-title: "02_Main_body_Analysis"
+title: "Analysis: Functional strain redundancy and persistent phage infection in a Swiss hard cheese starter culture"
 author: "Vincent Somerville"
 date: "11/01/2021"
 output:
